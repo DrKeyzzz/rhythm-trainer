@@ -435,6 +435,7 @@ const BANKS = {
     { id: 'ess',  name: 'Eighth + two sixteenths',      notes: [2, 1, 1],    weight: 2 },
     { id: 'sse',  name: 'Two sixteenths + eighth',      notes: [1, 1, 2],    weight: 2 },
     { id: 'des',  name: 'Dotted eighth + sixteenth',    notes: [3, 1],       weight: 2 },
+    { id: 'ses',  name: 'Sixteenth, eighth, sixteenth', notes: [1, 2, 1],    weight: 1 },
   ]},
   simple2: { slotUnits: 8, cells: [
     { id: 'h',    name: 'Half note',                    notes: [8],          weight: 4, ending: true },
@@ -444,6 +445,15 @@ const BANKS = {
     { id: 'eeee', name: 'Four eighth notes',            notes: [2, 2, 2, 2], weight: 3 },
     { id: 'dqe',  name: 'Dotted quarter + eighth',      notes: [6, 2],       weight: 3 },
     { id: 'eqe',  name: 'Eighth, quarter, eighth',      notes: [2, 4, 2],    weight: 2 },
+    { id: 'qess',  name: 'Quarter + eighth, two sixteenths',  notes: [4, 2, 1, 1],    weight: 2 },
+    { id: 'essq',  name: 'Eighth, two sixteenths + quarter',  notes: [2, 1, 1, 4],    weight: 2, ending: true },
+    { id: 'qsse',  name: 'Quarter + two sixteenths, eighth',  notes: [4, 1, 1, 2],    weight: 2 },
+    { id: 'sseq',  name: 'Two sixteenths, eighth + quarter',  notes: [1, 1, 2, 4],    weight: 2, ending: true },
+    { id: 'qssss', name: 'Quarter + four sixteenths',         notes: [4, 1, 1, 1, 1], weight: 2 },
+    { id: 'ssssq', name: 'Four sixteenths + quarter',         notes: [1, 1, 1, 1, 4], weight: 2, ending: true },
+    { id: 'eeess', name: 'Two eighths + eighth, two sixteenths', notes: [2, 2, 2, 1, 1], weight: 2 },
+    { id: 'essee', name: 'Eighth, two sixteenths + two eighths', notes: [2, 1, 1, 2, 2], weight: 2 },
+    { id: 'desq',  name: 'Dotted eighth, sixteenth + quarter', notes: [3, 1, 4],      weight: 2, ending: true },
   ]},
   compound1: { slotUnits: 6, cells: [
     { id: 'dq',   name: 'Dotted quarter',               notes: [6],          weight: 6, ending: true },
@@ -708,7 +718,7 @@ const Engine = {
    4. NOTATION RENDERING  (hand-drawn SVG on a one-line rhythm staff)
    ===================================================================== */
 const G = { lineH: 104, lineY: 70, stemTop: 37, rx: 6.3, ry: 4.5, header: 62, endPad: 14, slotTop: 12, slotH: 80, padL: 10, padR: 14 };
-const SLOT_MIN = { simple1: 100, simple2: 124, compound1: 106, compound2: 164 };
+const SLOT_MIN = { simple1: 100, simple2: 140, compound1: 106, compound2: 164 };
 const r1 = n => Math.round(n * 10) / 10;
 
 function beamGroups(durs, beatU) {
