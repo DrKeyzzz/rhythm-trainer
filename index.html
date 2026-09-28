@@ -150,7 +150,8 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .nh{fill:currentColor}
 .nh.hollow{fill:none;stroke:currentColor;stroke-width:1.9}
 .stem{stroke:currentColor;stroke-width:1.5}
-.beam,.flag,.dot{fill:currentColor}
+.beam,.flag,.dot,.rest{fill:currentColor}
+.rest-stroke{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .rhythm .slot-bg{fill:transparent;stroke:var(--border);stroke-width:1.5;stroke-dasharray:5 4;transition:fill .12s,stroke .12s}
 .rhythm .slot.filled .slot-bg{stroke:transparent}
 .rhythm.interactive .slot{cursor:pointer}
@@ -199,6 +200,11 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .ri-head .ri-score{font-weight:700;margin-right:auto}
 .ri-score.perfect{color:var(--ok)}
 .end-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 8px}
+.level-pick{display:grid;gap:10px}
+.level-btn{flex-direction:column;align-items:flex-start;text-align:left;white-space:normal;padding:12px 16px;gap:2px}
+.level-btn b{font-size:17px}
+.level-btn span{font-weight:500;color:var(--muted);font-size:14px}
+.board-tabs{margin-bottom:10px}
 .testmode{background:var(--play-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin:0 0 10px}
 
 /* ---------- modal & toast ---------- */
@@ -281,6 +287,9 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
         <div class="seg" id="typeSeg" role="group" aria-label="Meter type">
           <button type="button" data-v="simple">Simple</button><button type="button" data-v="compound">Compound</button>
         </div>
+        <div class="seg" id="levelSeg" role="group" aria-label="Level">
+          <button type="button" data-v="easy">Easy</button><button type="button" data-v="hard">Hard</button>
+        </div>
         <div class="seg" id="lenSeg" role="group" aria-label="Length">
           <button type="button" data-v="2">2 measures</button><button type="button" data-v="4">4 measures</button>
         </div>
@@ -288,7 +297,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
       </div>
 
       <div class="challenge-bar" id="challengeBar" hidden>
-        <span class="cb-badge">🏆 Challenge</span>
+        <span class="cb-badge">🏆 <span id="cbLevel">Easy</span> Challenge</span>
         <span class="cb-progress"><span class="pips" id="cbPips"></span><span id="cbText">Rhythm 1 of 5</span></span>
         <span class="cb-plays" id="cbPlays">Plays left: 4</span>
         <span class="cb-timer" id="cbTimer">⏱ 0:00</span>
@@ -339,7 +348,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
   <div id="endScreen" hidden>
     <section class="card end-hero">
       <div class="trophy">🏆</div>
-      <h2>Challenge complete!</h2>
+      <h2 id="endTitle">Challenge complete!</h2>
       <div class="big-score" id="endScore">0%</div>
       <div class="muted" id="endDetail"></div>
     </section>
@@ -425,53 +434,83 @@ const TIME_SIGS = {
 const SIMPLE_TS = ['2/4', '3/4', '4/4'];
 const COMPOUND_TS = ['6/8', '9/8', '12/8'];
 
+// level: 'easy' cells appear in Easy and Hard; 'hard' cells (syncopations, dotted
+//        sixteenth figures, off-beat rests) appear only in Hard.
 // weight = how often the generator uses a cell (bigger = more often).
 // ending = allowed as the very last slot (ends on a longer note).
+// A negative number is a rest: -2 = eighth rest.
 const BANKS = {
   simple1: { slotUnits: 4, cells: [
-    { id: 'q',    name: 'Quarter note',                 notes: [4],          weight: 6, ending: true },
-    { id: 'ee',   name: 'Two eighth notes',             notes: [2, 2],       weight: 6 },
-    { id: 'ssss', name: 'Four sixteenth notes',         notes: [1, 1, 1, 1], weight: 2 },
-    { id: 'ess',  name: 'Eighth + two sixteenths',      notes: [2, 1, 1],    weight: 2 },
-    { id: 'sse',  name: 'Two sixteenths + eighth',      notes: [1, 1, 2],    weight: 2 },
-    { id: 'des',  name: 'Dotted eighth + sixteenth',    notes: [3, 1],       weight: 2 },
-    { id: 'ses',  name: 'Sixteenth, eighth, sixteenth', notes: [1, 2, 1],    weight: 1 },
+    { id: 'q',    name: 'Quarter note',                   notes: [4],          weight: 6, level: 'easy', ending: true },
+    { id: 'ee',   name: 'Two eighth notes',               notes: [2, 2],       weight: 6, level: 'easy' },
+    { id: 'ssss', name: 'Four sixteenth notes',           notes: [1, 1, 1, 1], weight: 3, level: 'easy' },
+    { id: 'ess',  name: 'Eighth + two sixteenths',        notes: [2, 1, 1],    weight: 3, level: 'easy' },
+    { id: 'sse',  name: 'Two sixteenths + eighth',        notes: [1, 1, 2],    weight: 3, level: 'easy' },
+    { id: 'er',   name: 'Eighth note + eighth rest',      notes: [2, -2],      weight: 2, level: 'easy' },
+    { id: 're',   name: 'Eighth rest + eighth note',      notes: [-2, 2],      weight: 2, level: 'easy' },
+    { id: 'des',  name: 'Dotted eighth + sixteenth',      notes: [3, 1],       weight: 3, level: 'hard' },
+    { id: 'ses',  name: 'Sixteenth, eighth, sixteenth',   notes: [1, 2, 1],    weight: 3, level: 'hard' },
+    { id: 'sdes', name: 'Sixteenth + dotted eighth',      notes: [1, 3],       weight: 2, level: 'hard' },
+    { id: 'rss',  name: 'Eighth rest + two sixteenths',   notes: [-2, 1, 1],   weight: 2, level: 'hard' },
   ]},
   simple2: { slotUnits: 8, cells: [
-    { id: 'h',    name: 'Half note',                    notes: [8],          weight: 4, ending: true },
-    { id: 'qq',   name: 'Two quarter notes',            notes: [4, 4],       weight: 6, ending: true },
-    { id: 'qee',  name: 'Quarter + two eighths',        notes: [4, 2, 2],    weight: 4 },
-    { id: 'eeq',  name: 'Two eighths + quarter',        notes: [2, 2, 4],    weight: 4, ending: true },
-    { id: 'eeee', name: 'Four eighth notes',            notes: [2, 2, 2, 2], weight: 3 },
-    { id: 'dqe',  name: 'Dotted quarter + eighth',      notes: [6, 2],       weight: 3 },
-    { id: 'eqe',  name: 'Eighth, quarter, eighth',      notes: [2, 4, 2],    weight: 2 },
-    { id: 'qess',  name: 'Quarter + eighth, two sixteenths',  notes: [4, 2, 1, 1],    weight: 2 },
-    { id: 'essq',  name: 'Eighth, two sixteenths + quarter',  notes: [2, 1, 1, 4],    weight: 2, ending: true },
-    { id: 'qsse',  name: 'Quarter + two sixteenths, eighth',  notes: [4, 1, 1, 2],    weight: 2 },
-    { id: 'sseq',  name: 'Two sixteenths, eighth + quarter',  notes: [1, 1, 2, 4],    weight: 2, ending: true },
-    { id: 'qssss', name: 'Quarter + four sixteenths',         notes: [4, 1, 1, 1, 1], weight: 2 },
-    { id: 'ssssq', name: 'Four sixteenths + quarter',         notes: [1, 1, 1, 1, 4], weight: 2, ending: true },
-    { id: 'eeess', name: 'Two eighths + eighth, two sixteenths', notes: [2, 2, 2, 1, 1], weight: 2 },
-    { id: 'essee', name: 'Eighth, two sixteenths + two eighths', notes: [2, 1, 1, 2, 2], weight: 2 },
-    { id: 'desq',  name: 'Dotted eighth, sixteenth + quarter', notes: [3, 1, 4],      weight: 2, ending: true },
+    { id: 'h',     name: 'Half note',                         notes: [8],             weight: 4, level: 'easy', ending: true },
+    { id: 'qq',    name: 'Two quarter notes',                 notes: [4, 4],          weight: 6, level: 'easy', ending: true },
+    { id: 'qee',   name: 'Quarter + two eighths',             notes: [4, 2, 2],       weight: 4, level: 'easy' },
+    { id: 'eeq',   name: 'Two eighths + quarter',             notes: [2, 2, 4],       weight: 4, level: 'easy', ending: true },
+    { id: 'eeee',  name: 'Four eighth notes',                 notes: [2, 2, 2, 2],    weight: 3, level: 'easy' },
+    { id: 'dqe',   name: 'Dotted quarter + eighth',           notes: [6, 2],          weight: 3, level: 'easy' },
+    { id: 'qess',  name: 'Quarter + eighth, two sixteenths',  notes: [4, 2, 1, 1],    weight: 2, level: 'easy' },
+    { id: 'essq',  name: 'Eighth, two sixteenths + quarter',  notes: [2, 1, 1, 4],    weight: 2, level: 'easy', ending: true },
+    { id: 'qssss', name: 'Quarter + four sixteenths',         notes: [4, 1, 1, 1, 1], weight: 2, level: 'easy' },
+    { id: 'ssssq', name: 'Four sixteenths + quarter',         notes: [1, 1, 1, 1, 4], weight: 2, level: 'easy', ending: true },
+    { id: 'qer',   name: 'Quarter, eighth + eighth rest',     notes: [4, 2, -2],      weight: 2, level: 'easy' },
+    { id: 'erq',   name: 'Eighth, eighth rest + quarter',     notes: [2, -2, 4],      weight: 2, level: 'easy', ending: true },
+    { id: 'eqe',   name: 'Eighth, quarter, eighth (syncopation)', notes: [2, 4, 2],   weight: 3, level: 'hard' },
+    { id: 'qsse',  name: 'Quarter + two sixteenths, eighth',  notes: [4, 1, 1, 2],    weight: 2, level: 'hard' },
+    { id: 'sseq',  name: 'Two sixteenths, eighth + quarter',  notes: [1, 1, 2, 4],    weight: 2, level: 'hard', ending: true },
+    { id: 'desq',  name: 'Dotted eighth, sixteenth + quarter', notes: [3, 1, 4],      weight: 3, level: 'hard', ending: true },
+    { id: 'sesq',  name: 'Sixteenth, eighth, sixteenth + quarter', notes: [1, 2, 1, 4], weight: 2, level: 'hard', ending: true },
+    { id: 'rqe',   name: 'Eighth rest, quarter, eighth (syncopation)', notes: [-2, 4, 2], weight: 2, level: 'hard' },
+    { id: 'rere',  name: 'Off-beat eighths (rest, eighth, rest, eighth)', notes: [-2, 2, -2, 2], weight: 2, level: 'hard' },
+    { id: 'reee',  name: 'Eighth rest + three eighths',       notes: [-2, 2, 2, 2],   weight: 2, level: 'hard' },
   ]},
   compound1: { slotUnits: 6, cells: [
-    { id: 'dq',   name: 'Dotted quarter',               notes: [6],          weight: 6, ending: true },
-    { id: 'eee',  name: 'Three eighth notes',           notes: [2, 2, 2],    weight: 6 },
-    { id: 'qe',   name: 'Quarter + eighth',             notes: [4, 2],       weight: 5 },
-    { id: 'eq',   name: 'Eighth + quarter',             notes: [2, 4],       weight: 2, ending: true },
-    { id: 'dese', name: 'Dotted eighth, sixteenth, eighth', notes: [3, 1, 2], weight: 2 },
-    { id: 'ssee', name: 'Two sixteenths + two eighths', notes: [1, 1, 2, 2], weight: 2 },
+    { id: 'dq',   name: 'Dotted quarter',                    notes: [6],          weight: 6, level: 'easy', ending: true },
+    { id: 'eee',  name: 'Three eighth notes',                notes: [2, 2, 2],    weight: 6, level: 'easy' },
+    { id: 'qe',   name: 'Quarter + eighth',                  notes: [4, 2],       weight: 5, level: 'easy' },
+    { id: 'ree',  name: 'Eighth rest + two eighths',         notes: [-2, 2, 2],   weight: 2, level: 'easy' },
+    { id: 'eer',  name: 'Two eighths + eighth rest',         notes: [2, 2, -2],   weight: 2, level: 'easy' },
+    { id: 'eq',   name: 'Eighth + quarter',                  notes: [2, 4],       weight: 3, level: 'hard', ending: true },
+    { id: 'dese', name: 'Dotted eighth, sixteenth, eighth',  notes: [3, 1, 2],    weight: 3, level: 'hard' },
+    { id: 'ssee', name: 'Two sixteenths + two eighths',      notes: [1, 1, 2, 2], weight: 2, level: 'hard' },
+    { id: 'eess', name: 'Two eighths + two sixteenths',      notes: [2, 2, 1, 1], weight: 2, level: 'hard' },
+    { id: 'rq',   name: 'Eighth rest + quarter',             notes: [-2, 4],      weight: 2, level: 'hard' },
+    { id: 'ere',  name: 'Eighth, eighth rest, eighth',       notes: [2, -2, 2],   weight: 2, level: 'hard' },
   ]},
   compound2: { slotUnits: 12, cells: [
-    { id: 'dh',    name: 'Dotted half',                     notes: [12],               weight: 3, ending: true },
-    { id: 'dqdq',  name: 'Two dotted quarters',             notes: [6, 6],             weight: 6, ending: true },
-    { id: 'dqeee', name: 'Dotted quarter + three eighths',  notes: [6, 2, 2, 2],       weight: 4 },
-    { id: 'eeedq', name: 'Three eighths + dotted quarter',  notes: [2, 2, 2, 6],       weight: 4, ending: true },
-    { id: 'e6',    name: 'Six eighth notes',                notes: [2, 2, 2, 2, 2, 2], weight: 3 },
-    { id: 'qedq',  name: 'Quarter, eighth + dotted quarter', notes: [4, 2, 6],         weight: 4, ending: true },
+    { id: 'dh',     name: 'Dotted half',                        notes: [12],               weight: 3, level: 'easy', ending: true },
+    { id: 'dqdq',   name: 'Two dotted quarters',                notes: [6, 6],             weight: 6, level: 'easy', ending: true },
+    { id: 'dqeee',  name: 'Dotted quarter + three eighths',     notes: [6, 2, 2, 2],       weight: 4, level: 'easy' },
+    { id: 'eeedq',  name: 'Three eighths + dotted quarter',     notes: [2, 2, 2, 6],       weight: 4, level: 'easy', ending: true },
+    { id: 'e6',     name: 'Six eighth notes',                   notes: [2, 2, 2, 2, 2, 2], weight: 3, level: 'easy' },
+    { id: 'qedq',   name: 'Quarter, eighth + dotted quarter',   notes: [4, 2, 6],          weight: 4, level: 'easy', ending: true },
+    { id: 'dqqe',   name: 'Dotted quarter + quarter, eighth',   notes: [6, 4, 2],          weight: 3, level: 'easy' },
+    { id: 'dqree',  name: 'Dotted quarter + eighth rest, two eighths', notes: [6, -2, 2, 2], weight: 2, level: 'easy' },
+    { id: 'eqdq',   name: 'Eighth, quarter + dotted quarter',   notes: [2, 4, 6],          weight: 3, level: 'hard', ending: true },
+    { id: 'dqeq',   name: 'Dotted quarter + eighth, quarter',   notes: [6, 2, 4],          weight: 3, level: 'hard', ending: true },
+    { id: 'desedq', name: 'Dotted eighth, sixteenth, eighth + dotted quarter', notes: [3, 1, 2, 6], weight: 3, level: 'hard', ending: true },
+    { id: 'sseedq', name: 'Two sixteenths, two eighths + dotted quarter', notes: [1, 1, 2, 2, 6], weight: 2, level: 'hard', ending: true },
+    { id: 'rqdq',   name: 'Eighth rest, quarter + dotted quarter', notes: [-2, 4, 6],      weight: 2, level: 'hard', ending: true },
+    { id: 'eeerq',  name: 'Three eighths + eighth rest, quarter', notes: [2, 2, 2, -2, 4], weight: 2, level: 'hard' },
   ]},
 };
+
+const LEVELS = ['easy', 'hard'];
+const LEVEL_NAME = { easy: 'Easy', hard: 'Hard' };
+const inLevel = (cell, level) => level === 'hard' || cell.level === 'easy';
+const cellsFor = (bankId, level) => BANKS[bankId].cells.filter(c => inLevel(c, level));
+const absSum = notes => sum(notes.map(Math.abs));
 
 const SLOT_DESCRIPTION = {
   '2/4': 'half a measure (1 beat)', '3/4': 'one beat', '4/4': 'half a measure (2 beats)',
@@ -491,11 +530,14 @@ function validateData() {
   const errors = [];
   const seen = new Set();
   for (const [bankId, bank] of Object.entries(BANKS)) {
-    if (!bank.cells.some(c => c.ending)) errors.push(`${bankId}: needs at least one "ending" cell`);
+    for (const lv of LEVELS) if (!cellsFor(bankId, lv).some(c => c.ending)) errors.push(`${bankId}: needs an "ending" cell for ${lv}`);
     for (const c of bank.cells) {
       if (seen.has(c.id)) errors.push(`Duplicate cell id "${c.id}"`);
       seen.add(c.id);
-      if (sum(c.notes) !== bank.slotUnits) errors.push(`${bankId} → "${c.name}" adds up to ${sum(c.notes)}, should be ${bank.slotUnits}`);
+      if (absSum(c.notes) !== bank.slotUnits) errors.push(`${bankId} → "${c.name}" adds up to ${absSum(c.notes)}, should be ${bank.slotUnits}`);
+      if (!LEVELS.includes(c.level)) errors.push(`"${c.name}" needs level 'easy' or 'hard'`);
+      if (c.notes.some(d => d < 0 && d !== -2)) errors.push(`"${c.name}": only eighth rests (-2) are supported`);
+      if (c.ending && c.notes[c.notes.length - 1] < 0) errors.push(`"${c.name}" ends on a rest, so it can't be an ending cell`);
     }
   }
   for (const ts of Object.values(TIME_SIGS)) {
@@ -512,31 +554,35 @@ function validateData() {
    ===================================================================== */
 const rand = n => Math.floor(Math.random() * n);
 
-function pickWeighted(pool) {
-  let r = Math.random() * sum(pool.map(c => c.weight));
-  for (const c of pool) { r -= c.weight; if (r < 0) return c; }
+// In Hard, the hard cells come up twice as often so every rhythm has a real challenge.
+const cellWeight = (c, level) => (level === 'hard' && c.level === 'hard' ? c.weight * 2 : c.weight);
+function pickWeighted(pool, level) {
+  let r = Math.random() * sum(pool.map(c => cellWeight(c, level)));
+  for (const c of pool) { r -= cellWeight(c, level); if (r < 0) return c; }
   return pool[pool.length - 1];
 }
 
-function generateRhythm(tsId, measures, avoidCells) {
+function generateRhythm(tsId, measures, avoidCells, level = 'easy') {
   const ts = TIME_SIGS[tsId];
-  const bank = BANKS[ts.bank];
+  const available = cellsFor(ts.bank, level);
   const n = measures * slotsPerMeasure(ts);
+  const minHard = level === 'hard' ? (measures >= 4 ? 3 : 2) : 0;
   for (let attempt = 0; attempt < 500; attempt++) {
     const cells = [];
     let ok = true;
     for (let i = 0; i < n; i++) {
-      let pool = bank.cells;
+      let pool = available;
       if (i === n - 1) pool = pool.filter(c => c.ending);                       // finish on a longer note
       if (i >= 2 && cells[i - 1] === cells[i - 2]) pool = pool.filter(c => c.id !== cells[i - 1]); // max 2 in a row
       if (!pool.length) { ok = false; break; }
-      cells.push(pickWeighted(pool).id);
+      cells.push(pickWeighted(pool, level).id);
     }
     if (!ok) continue;
     const distinct = new Set(cells).size;
     if (distinct < 2 || (n >= 8 && distinct < 3)) continue;                      // not all one cell
     if (avoidCells && avoidCells.join() === cells.join()) continue;              // don't repeat last question
-    return { ts: tsId, measures, cells };
+    if (cells.filter(id => CELLS[id].level === 'hard').length < minHard) continue; // Hard always has hard figures
+    return { ts: tsId, measures, cells, level };
   }
   throw new Error('Could not generate a rhythm for ' + tsId);
 }
@@ -581,9 +627,11 @@ function buildSchedule(rhythm, cells, voice, bpm, metronome) {
     let pos = 0;
     CELLS[id].notes.forEach((d, j) => {
       const t = s0 + pos * u;
-      events.push({ kind: 'tone', voice, t, dur: d * u });
-      notes.push({ slot: i, n: j, start: t, end: t + d * u });
-      pos += d;
+      if (d > 0) {
+        events.push({ kind: 'tone', voice, t, dur: d * u });
+        notes.push({ slot: i, n: j, start: t, end: t + d * u });
+      }
+      pos += Math.abs(d);
     });
   });
 
@@ -726,11 +774,11 @@ function beamGroups(durs, beatU) {
   let cur = null, pos = 0;
   durs.forEach((d, i) => {
     const beat = Math.floor(pos / beatU);
-    if (d < 4) {                                   // sixteenths, eighths, dotted eighths can be beamed
+    if (d > 0 && d < 4) {                          // sixteenths, eighths, dotted eighths can be beamed (rests break beams)
       if (cur && cur.beat === beat) cur.idx.push(i);
       else { cur = { beat, idx: [i] }; groups.push(cur); }
     } else cur = null;
-    pos += d;
+    pos += Math.abs(d);
   });
   return groups;
 }
@@ -738,11 +786,15 @@ function beamGroups(durs, beatU) {
 function flagPath(sx, y) {
   return `<path class="flag" d="M${r1(sx)} ${r1(y)}C${r1(sx + 0.6)} ${r1(y + 6)} ${r1(sx + 9.5)} ${r1(y + 8.5)} ${r1(sx + 8)} ${r1(y + 19)}C${r1(sx + 9.2)} ${r1(y + 11.5)} ${r1(sx + 3)} ${r1(y + 9.8)} ${r1(sx - 0.7)} ${r1(y + 8.6)}Z"/>`;
 }
+function eighthRest(cx, cy) {
+  const x = cx - 3, y = cy - 6;
+  return `<circle class="rest" cx="${r1(x)}" cy="${r1(y)}" r="2.7"/><path class="rest-stroke" d="M${r1(x + 0.5)} ${r1(y + 1.8)}Q${r1(x + 4.5)} ${r1(y + 2.6)} ${r1(x + 7.5)} ${r1(y - 2)}L${r1(x + 2.8)} ${r1(y + 17)}"/>`;
+}
 const rect = (x, y, w, h, cls) => `<rect class="${cls}" x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}"/>`;
 
 // Draw one cell's notes. Returns per-note SVG strings plus the beams.
 function notesSVG(durs, x0, innerW, cy, stemTop, beatU) {
-  const weights = durs.map(d => 1 + 0.55 * d);
+  const weights = durs.map(d => 1 + 0.55 * Math.abs(d));
   const total = sum(weights);
   let acc = 0;
   const xs = durs.map((d, i) => { const x = x0 + (acc / total) * innerW; acc += weights[i]; return x; });
@@ -753,6 +805,7 @@ function notesSVG(durs, x0, innerW, cy, stemTop, beatU) {
   const parts = durs.map((d, i) => {
     const cx = xs[i] + G.rx + 1, sx = cx + G.rx - 0.9;
     stemX[i] = sx;
+    if (d < 0) return eighthRest(cx, cy);
     const hollow = d >= 8;
     let s = `<ellipse class="nh${hollow ? ' hollow' : ''}" cx="${r1(cx)}" cy="${cy}" rx="${hollow ? G.rx - 0.6 : G.rx}" ry="${hollow ? G.ry - 0.6 : G.ry}" transform="rotate(-20 ${r1(cx)} ${cy})"/>`;
     s += `<line class="stem" x1="${r1(sx)}" y1="${cy - 1}" x2="${r1(sx)}" y2="${stemTop}"/>`;
@@ -865,7 +918,7 @@ const $ = s => document.querySelector(s);
 const els = {
   staff: $('#staff'), staffWrap: $('#staffWrap'), correctStaff: $('#correctStaff'), bank: $('#bank'), bankWrap: $('#bankWrap'), bankLabel: $('#bankLabel'),
   tsBadge: $('#tsBadge'), qInfo: $('#qInfo'), status: $('#status'), hint: $('#hint'), feedback: $('#feedback'), fbMsg: $('#fbMsg'),
-  typeSeg: $('#typeSeg'), lenSeg: $('#lenSeg'), tsSelect: $('#tsSelect'), practiceSettings: $('#practiceSettings'),
+  typeSeg: $('#typeSeg'), levelSeg: $('#levelSeg'), lenSeg: $('#lenSeg'), tsSelect: $('#tsSelect'), practiceSettings: $('#practiceSettings'),
   tempo: $('#tempo'), tempoOut: $('#tempoOut'), metro: $('#metro'), tempoNote: $('#tempoNote'), settingsSummary: $('#settingsSummary'), settingsCaret: $('#settingsCaret'), settingsToggle: $('#settingsToggle'), controls: $('#controls'), audioSettings: $('#audioSettings'),
   challengeBar: $('#challengeBar'), cbPips: $('#cbPips'), cbText: $('#cbText'), cbPlays: $('#cbPlays'), cbTimer: $('#cbTimer'),
   playQBtn: $('#playQBtn'), playABtn: $('#playABtn'), stopBtn: $('#stopBtn'), checkBtn: $('#checkBtn'), checkLabel: $('#checkLabel'), playsBadge: $('#playsBadge'),
@@ -883,7 +936,7 @@ const store = {
 
 const S = {
   mode: 'practice',                // 'practice' | 'challenge' | 'end'
-  settings: { type: 'simple', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false },
+  settings: { type: 'simple', level: 'easy', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false },
   q: null, answer: [], selected: null, checked: false, nextLockUntil: 0,
   stats: { rhythms: 0, correct: 0, total: 0, streak: 0 },
   ch: null, playing: null,
@@ -901,6 +954,7 @@ function loadSettings() {
     const saved = JSON.parse(store.get('rdt_settings') || '{}');
     if (saved.type === 'simple' || saved.type === 'compound') S.settings.type = saved.type;
     if (saved.measures === 2 || saved.measures === 4) S.settings.measures = saved.measures;
+    if (LEVELS.includes(saved.level)) S.settings.level = saved.level;
     if (saved.lock && (saved.lock === 'random' || TIME_SIGS[saved.lock])) S.settings.lock = saved.lock;
     if (saved.tempo >= 50 && saved.tempo <= 120) S.settings.tempo = saved.tempo;
     S.settings.metronome = !!saved.metronome;
@@ -935,7 +989,7 @@ function newPracticeRhythm() {
   const list = tsListFor(type);
   const tsId = list.includes(lock) ? lock : list[rand(list.length)];
   const avoid = S.q && S.q.ts === tsId && S.q.measures === measures ? S.q.cells : null;
-  loadQuestion(generateRhythm(tsId, measures, avoid));
+  loadQuestion(generateRhythm(tsId, measures, avoid, S.settings.level));
 }
 
 function loadQuestion(rhythm) {
@@ -956,12 +1010,13 @@ let bankFor = null;
 function renderBank() {
   const ts = TIME_SIGS[S.q.ts];
   els.bankLabel.textContent = `Answer bank: each rhythm fills one slot, ${SLOT_DESCRIPTION[ts.id]}`;
-  if (bankFor === ts.bank) return;
-  bankFor = ts.bank;
-  const bank = BANKS[ts.bank];
+  const key = ts.bank + ':' + S.q.level;
+  if (bankFor === key) return;
+  bankFor = key;
+  S.bankCells = cellsFor(ts.bank, S.q.level);
   els.bank.classList.toggle('wide', ts.bank === 'compound2');
   els.bank.style.setProperty('--cell-min', ts.bank === 'compound2' ? '150px' : '108px');
-  els.bank.innerHTML = bank.cells.map((c, i) =>
+  els.bank.innerHTML = S.bankCells.map((c, i) =>
     `<button type="button" class="cell-btn" data-id="${c.id}" aria-label="${esc(c.name)}" title="${esc(c.name)}${i < 9 ? ` (key ${i + 1})` : ''}">${i < 9 ? `<span class="key">${i + 1}</span>` : ''}${cellSVG(c)}</button>`
   ).join('');
 }
@@ -1161,16 +1216,17 @@ function updateUI() {
   els.metro.checked = s.metronome;
   els.settingsSummary.textContent = inChallenge
     ? `${tempo} BPM · Metronome ${s.metronome ? 'on' : 'off'}`
-    : `${s.type === 'simple' ? 'Simple' : 'Compound'} · ${s.measures} measures · ${s.lock === 'random' ? 'Random' : s.lock} · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`;
+    : `${LEVEL_NAME[s.level]} · ${s.type === 'simple' ? 'Simple' : 'Compound'} · ${s.measures} measures · ${s.lock === 'random' ? 'Random' : s.lock} · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`;
   els.settingsCaret.textContent = els.controls.classList.contains('open') ? '▴' : '▾';
 
   for (const b of els.typeSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.type));
   for (const b of els.lenSeg.children) b.setAttribute('aria-pressed', String(+b.dataset.v === s.measures));
+  for (const b of els.levelSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.level));
 
   if (!S.q) return;
   const ts = TIME_SIGS[S.q.ts];
   els.tsBadge.textContent = ts.id;
-  els.qInfo.textContent = `${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${S.q.measures} measures`;
+  els.qInfo.textContent = `${LEVEL_NAME[S.q.level]} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${S.q.measures} measures`;
 
   const filled = S.answer.filter(Boolean).length;
   const full = filled === S.answer.length;
@@ -1188,6 +1244,7 @@ function updateUI() {
     els.cbPlays.textContent = left > 0 ? `Plays left: ${left}` : 'No plays left';
     els.cbPlays.classList.toggle('out', left <= 0);
     els.cbText.textContent = `Rhythm ${ch.idx + 1} of ${ch.rhythms.length}`;
+    $('#cbLevel').textContent = LEVEL_NAME[ch.level];
     els.cbPips.innerHTML = ch.rhythms.map((_, i) => `<i class="${i < ch.idx ? 'done' : i === ch.idx ? 'now' : ''}"></i>`).join('');
     els.checkLabel.textContent = ch.idx === ch.rhythms.length - 1 ? 'Finish' : 'Submit';
     els.checkBtn.disabled = !full;
@@ -1212,13 +1269,25 @@ function populateTsSelect() {
 }
 
 // ---------- challenge ----------
-function startChallenge() {
+function chooseChallenge() {
+  openModal(`<h3>🏆 Challenge Mode</h3>
+    <p class="muted">5 rhythms, 4 measures each, mixing simple and compound meters. You get ${CONFIG.challengePlays} plays of each question. Pick your level:</p>
+    <div class="level-pick">
+      <button class="btn level-btn" type="button" data-level="easy"><b>Easy</b><span>Quarters, eighths, basic sixteenths, eighth rests</span></button>
+      <button class="btn level-btn" type="button" data-level="hard"><b>Hard</b><span>Adds syncopation, dotted-sixteenth figures, off-beat rests</span></button>
+    </div>
+    <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button></div>`);
+  els.modalBox.querySelectorAll('[data-level]').forEach(b => { b.onclick = () => startChallenge(b.dataset.level); });
+}
+
+function startChallenge(level) {
   Engine.stop();
   closeModal();
   const meters = pickChallengeMeters();
   S.mode = 'challenge';
   S.ch = {
-    rhythms: meters.map(t => generateRhythm(t, CONFIG.challengeMeasures)),
+    level,
+    rhythms: meters.map(t => generateRhythm(t, CONFIG.challengeMeasures, null, level)),
     answers: [], idx: 0,
     plays: meters.map(() => CONFIG.challengePlays),
     start: Date.now(), end: null, submitted: false, timer: 0,
@@ -1268,10 +1337,12 @@ function showEndScreen() {
   const ch = S.ch;
   showView('end');
   els.endScore.textContent = `${ch.score}%`;
+  $('#endTitle').textContent = `${LEVEL_NAME[ch.level]} Challenge complete!`;
   els.endDetail.textContent = `${ch.correct} of ${ch.total} slots correct · ${fmtTime(ch.timeSec)}`;
   els.submitForm.hidden = false;
   els.boardArea.hidden = true;
   els.boardArea.innerHTML = '';
+  lastBoardId = null;
   els.formError.textContent = '';
   els.submitBtn.disabled = false;
   els.testModeNote.hidden = Board.remote;
@@ -1312,9 +1383,9 @@ function showView(which) {
    ===================================================================== */
 const rankSort = (a, b) => (b.score - a.score) || (a.timeSec - b.timeSec) || String(a.date).localeCompare(String(b.date));
 const publicEntry = e => ({ id: e.id, name: e.name, score: e.score, correct: e.correct, total: e.total, timeSec: e.timeSec, date: e.date });
-function summarize(all, id) {
-  const sorted = [...all].sort(rankSort);
-  return { top: sorted.slice(0, 10).map(publicEntry), rank: id ? sorted.findIndex(e => e.id === id) + 1 : null, count: sorted.length, id };
+function summarize(all, id, level) {
+  const sorted = all.filter(e => (e.level || 'easy') === level).sort(rankSort);
+  return { level, top: sorted.slice(0, 10).map(publicEntry), rank: id ? sorted.findIndex(e => e.id === id) + 1 : null, count: sorted.length, id };
 }
 
 // Supabase REST API (no library needed). The publishable/anon key is meant to be public;
@@ -1336,17 +1407,17 @@ async function sb(path, { method = 'GET', body, prefer } = {}) {
     throw err;
   } finally { clearTimeout(timer); }
 }
-const fromRow = r => ({ id: r.id, name: r.name, score: Number(r.score), correct: r.correct, total: r.total, timeSec: r.time_sec, date: r.created_at, email: '' });
-const COLS = 'id,name,score,correct,total,time_sec,created_at';
+const fromRow = r => ({ id: r.id, name: r.name, level: r.level || 'easy', score: Number(r.score), correct: r.correct, total: r.total, timeSec: r.time_sec, date: r.created_at, email: '' });
+const COLS = 'id,name,level,score,correct,total,time_sec,created_at';
 
 const SupabaseBoard = {
   remote: true,
-  async all() { return (await sb(`rhythm_scores?select=${COLS}&order=score.desc,time_sec.asc,created_at.asc&limit=2000`)).map(fromRow); },
+  async all(level) { return (await sb(`rhythm_scores?select=${COLS}&level=eq.${level}&order=score.desc,time_sec.asc,created_at.asc&limit=2000`)).map(fromRow); },
   async submit(entry) {
-    const rows = await sb(`rhythm_scores?select=${COLS}`, { method: 'POST', prefer: 'return=representation', body: { name: entry.name, correct: entry.correct, total: entry.total, time_sec: entry.timeSec } });
-    return summarize(await this.all(), rows[0].id);
+    const rows = await sb(`rhythm_scores?select=${COLS}`, { method: 'POST', prefer: 'return=representation', body: { name: entry.name, level: entry.level, correct: entry.correct, total: entry.total, time_sec: entry.timeSec } });
+    return summarize(await this.all(entry.level), rows[0].id, entry.level);
   },
-  async get() { return summarize(await this.all(), null); },
+  async get(level) { return summarize(await this.all(level), null, level); },
   async teacherList(pin) { return (await sb('rpc/teacher_list', { method: 'POST', body: { pin: String(pin) } })).map(fromRow); },
   async teacherDelete(pin, id) { await sb('rpc/teacher_delete', { method: 'POST', body: { pin: String(pin), score_id: id } }); return this.teacherList(pin); },
   async teacherReset(pin) { await sb('rpc/teacher_reset', { method: 'POST', body: { pin: String(pin) } }); return []; },
@@ -1363,10 +1434,10 @@ const LocalBoard = {
     const e = { ...entry, score: Math.round(entry.correct / entry.total * 1000) / 10, id: Math.random().toString(36).slice(2, 10), date: new Date().toISOString(), email: '' };
     all.push(e);
     this.write(all);
-    return summarize(all, e.id);
+    return summarize(all, e.id, e.level);
   },
-  async get() { return summarize(this.read(), null); },
-  async teacherList(pin) { this.checkPin(pin); return this.read().sort(rankSort); },
+  async get(level) { return summarize(this.read(), null, level); },
+  async teacherList(pin) { this.checkPin(pin); return this.read().sort((a, b) => String(a.level || 'easy').localeCompare(String(b.level || 'easy')) || rankSort(a, b)); },
   async teacherDelete(pin, id) { this.checkPin(pin); this.write(this.read().filter(e => e.id !== id)); return this.teacherList(pin); },
   async teacherReset(pin) { this.checkPin(pin); this.write([]); return []; },
 };
@@ -1375,8 +1446,10 @@ const Board = supabaseOn ? SupabaseBoard : LocalBoard;
 const errMsg = err => (err && err.message ? err.message : String(err || 'Something went wrong.')).replace(/^Error:\s*/, '').replace(/^Exception:\s*/, '');
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
 
+let lastBoardId = null;
 function renderBoard(res) {
-  const me = res.id;
+  if (res.id) lastBoardId = res.id;
+  const me = lastBoardId;
   let note = '';
   if (me && res.rank) {
     note = res.rank <= 10
@@ -1384,7 +1457,8 @@ function renderBoard(res) {
       : `<p class="rank-note">You placed <b>#${res.rank}</b> of ${res.count}. Keep practicing to crack the top 10!</p>`;
   }
   const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
-  els.boardArea.innerHTML = note + (res.top.length
+  const tabs = `<div class="seg board-tabs" role="group" aria-label="Leaderboard level">${LEVELS.map(lv => `<button type="button" data-board="${lv}" aria-pressed="${lv === res.level}">${LEVEL_NAME[lv]}</button>`).join('')}</div>`;
+  els.boardArea.innerHTML = tabs + (res.level === (S.ch && S.ch.level) ? note : '') + (res.top.length
     ? `<table class="board"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Time</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`
     : '<p class="muted">No scores yet. Be the first!</p>');
   els.boardArea.hidden = false;
@@ -1403,7 +1477,7 @@ async function submitScore(e) {
   els.submitBtn.disabled = true;
   els.submitBtn.textContent = 'Submitting…';
   try {
-    const res = await Board.submit({ name, correct: ch.correct, total: ch.total, timeSec: ch.timeSec });
+    const res = await Board.submit({ name, level: ch.level, correct: ch.correct, total: ch.total, timeSec: ch.timeSec });
     ch.submitted = true;
     els.submitForm.hidden = true;
     renderBoard(res);
@@ -1417,9 +1491,15 @@ async function submitScore(e) {
 
 async function viewBoardOnly() {
   els.formError.textContent = '';
-  try { renderBoard(await Board.get()); }
+  try { renderBoard(await Board.get(S.ch ? S.ch.level : 'easy')); }
   catch (err) { els.formError.textContent = `Couldn't load the leaderboard: ${errMsg(err)}`; }
 }
+els.boardArea.addEventListener('click', async e => {
+  const b = e.target.closest('[data-board]');
+  if (!b) return;
+  try { renderBoard(await Board.get(b.dataset.board)); }
+  catch (err) { toast(`Couldn't load the leaderboard: ${errMsg(err)}`); }
+});
 
 // ---------- teacher panel ----------
 function teacherLogin() {
@@ -1437,11 +1517,11 @@ function teacherLogin() {
 
 function teacherPanel(pin, list) {
   const hasEmail = list.some(e => e.email);
-  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>${hasEmail ? `<td class="muted">${esc(e.email)}</td>` : ''}<td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
+  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>${hasEmail ? `<td class="muted">${esc(e.email)}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
     <td><button class="btn btn-sm" type="button" data-del="${esc(e.id)}">Delete</button></td></tr>`).join('');
   openModal(`<h3>Leaderboard: all scores (${list.length})</h3>
     ${Board.remote ? '' : '<p class="testmode">Test mode: these scores are only in this browser.</p>'}
-    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th>${hasEmail ? '<th>Account</th>' : ''}<th>Score</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No scores yet.</p>'}
+    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th>${hasEmail ? '<th>Account</th>' : ''}<th>Level</th><th>Score</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No scores yet.</p>'}
     <div class="form-error" id="tErr"></div>
     <div class="modal-actions" id="tActions"><button class="btn btn-danger" type="button" id="resetBtn" ${list.length ? '' : 'disabled'}>Reset leaderboard</button><button class="btn" type="button" data-close>Close</button></div>`, true);
   els.modalBox.querySelectorAll('[data-del]').forEach(b => {
@@ -1507,10 +1587,10 @@ els.deleteBtn.onclick = deleteSlot;
 els.clearBtn.onclick = clearAll;
 $('#challengeBtn').onclick = () => {
   if (S.mode === 'challenge') { toast('You are already in a challenge.'); return; }
-  startChallenge();
+  chooseChallenge();
 };
 $('#quitBtn').onclick = quitChallenge;
-$('#againBtn').onclick = startChallenge;
+$('#againBtn').onclick = chooseChallenge;
 $('#backBtn').onclick = () => { Engine.stop(); S.ch = null; S.mode = 'practice'; showView('play'); newPracticeRhythm(); };
 $('#teacherBtn').onclick = teacherLogin;
 els.submitForm.addEventListener('submit', submitScore);
@@ -1532,6 +1612,12 @@ els.typeSeg.addEventListener('click', e => {
   S.settings.type = b.dataset.v;
   S.settings.lock = 'random';
   populateTsSelect(); saveSettings(); newPracticeRhythm();
+});
+els.levelSeg.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.dataset.v === S.settings.level) return;
+  S.settings.level = b.dataset.v;
+  saveSettings(); newPracticeRhythm();
 });
 els.lenSeg.addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -1564,7 +1650,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'ArrowRight') { e.preventDefault(); moveSelection(1); }
   else if (k === 'ArrowLeft') { e.preventDefault(); moveSelection(-1); }
   else if (/^[1-9]$/.test(k) && S.q) {
-    const cell = BANKS[TIME_SIGS[S.q.ts].bank].cells[+k - 1];
+    const cell = (S.bankCells || [])[+k - 1];
     if (cell) { e.preventDefault(); const b = els.bank.querySelector(`[data-id="${cell.id}"]`); pickCell(cell.id); if (b) { b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); } }
   }
 });
@@ -1574,26 +1660,28 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) Engin
 /* ---------- self-test (open with ?selftest to expose it) ---------- */
 function selfTest() {
   const out = { dataErrors: validateData(), generatorProblems: {}, challengeProblems: 0, sameTiming: null, partialAnswerClicks: null };
-  for (const tsId of Object.keys(TIME_SIGS)) for (const m of [2, 4]) {
+  for (const lv of LEVELS) for (const tsId of Object.keys(TIME_SIGS)) for (const m of [2, 4]) {
     const ts = TIME_SIGS[tsId], n = m * slotsPerMeasure(ts);
     let bad = 0;
-    for (let k = 0; k < 400; k++) {
-      const r = generateRhythm(tsId, m);
+    for (let k = 0; k < 300; k++) {
+      const r = generateRhythm(tsId, m, null, lv);
       if (r.cells.length !== n) bad++;
-      if (sum(r.cells.map(id => sum(CELLS[id].notes))) !== m * ts.measureUnits) bad++;
+      if (sum(r.cells.map(id => absSum(CELLS[id].notes))) !== m * ts.measureUnits) bad++;
       if (r.cells.some(id => CELLS[id].bank !== ts.bank)) bad++;
+      if (r.cells.some(id => !inLevel(CELLS[id], lv))) bad++;
+      if (lv === 'hard' && !r.cells.some(id => CELLS[id].level === 'hard')) bad++;
       if (!CELLS[r.cells[n - 1]].ending) bad++;
       for (let i = 2; i < n; i++) if (r.cells[i] === r.cells[i - 1] && r.cells[i] === r.cells[i - 2]) bad++;
       if (new Set(r.cells).size < 2) bad++;
     }
-    out.generatorProblems[`${tsId} x${m}`] = bad;
+    out.generatorProblems[`${lv} ${tsId} x${m}`] = bad;
   }
   for (let k = 0; k < 400; k++) {
     const p = pickChallengeMeters();
     const simple = p.filter(t => TIME_SIGS[t].type === 'simple').length;
     if (p.length !== 5 || simple < 2 || 5 - simple < 2 || Object.keys(TIME_SIGS).some(t => p.filter(x => x === t).length > 2)) out.challengeProblems++;
   }
-  const r = generateRhythm('12/8', 4);
+  const r = generateRhythm('12/8', 4, null, 'hard');
   const qs = buildSchedule(r, r.cells, 'question', 72, false), as = buildSchedule(r, r.cells, 'answer', 72, false);
   out.sameTiming = JSON.stringify(qs.notes) === JSON.stringify(as.notes) && qs.total === as.total && qs.countIn === as.countIn;
   const partial = r.cells.map((c, i) => (i % 2 ? null : c));
