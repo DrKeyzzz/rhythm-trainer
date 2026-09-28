@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rhythm Dictation Trainer</title>
+<style>
+[hidden]{display:none!important}
+:root{
+  --bg:#f3f4f8; --surface:#ffffff; --surface-2:#eceef4; --text:#141824; --muted:#5d6477; --border:#d8dce6;
+  --accent:#5a48d8; --accent-soft:#ebe8fc;
+  --q:#1d66d6; --q-soft:#e2ecfd; --a:#c2530f; --a-soft:#fcebdf;
+  --ok:#17864a; --ok-soft:#dcf2e5; --bad:#cc3434; --bad-soft:#fbe4e4;
+  --play:#d99a00; --play-soft:#fff1bf;
+  --accent-btn:#5a48d8; --q-btn:#1d66d6; --a-btn:#c2530f; --bad-btn:#c62f2f;
+  --shadow:0 1px 2px rgba(16,20,36,.05),0 6px 20px rgba(16,20,36,.06);
+  --radius:16px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1016; --surface:#171a23; --surface-2:#232735; --text:#eceef4; --muted:#9ba2b4; --border:#2e3344;
+    --accent:#9a8fff; --accent-soft:#29244d;
+    --q:#6ea6ff; --q-soft:#162642; --a:#ff9a5a; --a-soft:#3a2415;
+    --ok:#46d18a; --ok-soft:#12301f; --bad:#ff7a7a; --bad-soft:#3b1b1b;
+    --play:#f5c518; --play-soft:#3a3212;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1016; --surface:#171a23; --surface-2:#232735; --text:#eceef4; --muted:#9ba2b4; --border:#2e3344;
+  --accent:#9a8fff; --accent-soft:#29244d;
+  --q:#6ea6ff; --q-soft:#162642; --a:#ff9a5a; --a-soft:#3a2415;
+  --ok:#46d18a; --ok-soft:#12301f; --bad:#ff7a7a; --bad-soft:#3b1b1b;
+  --play:#f5c518; --play-soft:#3a3212;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{width:100%;max-width:1120px;margin:0 auto;padding:10px 16px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));flex:1}
+.muted{color:var(--muted)} .small{font-size:13px}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 0 10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{flex:none;width:38px;height:38px;border-radius:11px;background:var(--accent-btn);color:#fff;display:grid;place-items:center}
+.logo svg{width:22px;height:22px}
+h1{font-size:19px;line-height:1.15;margin:0;letter-spacing:-.01em}
+h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0;margin-top:2px}
+
+/* ---------- buttons ---------- */
+.btn{appearance:none;-webkit-appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--text);font-weight:650;border-radius:12px;padding:9px 16px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.1;transition:transform .06s ease,filter .15s ease,background .15s ease;user-select:none;-webkit-user-select:none;white-space:nowrap}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn svg{width:18px;height:18px;flex:none}
+.btn-sm{padding:6px 12px;font-size:14px}
+@media (pointer:fine){.btn-sm{min-height:36px}}
+.btn-primary{background:var(--accent-btn);border-color:transparent;color:#fff}
+.btn-q{background:var(--q-btn);border-color:transparent;color:#fff}
+.btn-a{background:var(--a-btn);border-color:transparent;color:#fff}
+.btn-danger{background:var(--bad-btn);border-color:transparent;color:#fff}
+.btn-challenge{background:linear-gradient(135deg,#5a48d8,#a23fd0);border:0;color:#fff;box-shadow:0 4px 14px rgba(110,60,210,.35);padding:10px 18px;font-size:15px}
+.btn .badge{background:rgba(255,255,255,.25);border-radius:999px;padding:1px 7px;font-size:12px;font-weight:700}
+.linkbtn{background:none;border:0;padding:10px 4px;min-height:44px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:13px}
+@media (hover:hover){
+  .btn:hover:not(:disabled){filter:brightness(1.06)}
+  .btn:not(.btn-primary):not(.btn-q):not(.btn-a):not(.btn-danger):not(.btn-challenge):hover:not(:disabled){background:var(--surface-2)}
+  .linkbtn:hover{color:var(--text)}
+}
+
+/* ---------- controls row ---------- */
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.settings{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:13px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--muted);font-weight:650;padding:6px 14px;border-radius:10px;min-height:44px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.field{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);font-weight:600}
+.field select{min-height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:6px 10px;font-weight:650}
+.audio{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.settings-toggle{display:none}
+.audio-settings{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tempo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted)}
+.tempo input{width:140px;accent-color:var(--accent-btn);min-height:44px}
+.tempo output{min-width:62px;color:var(--text);font-variant-numeric:tabular-nums}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;min-height:44px}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.switch .track{width:40px;height:24px;border-radius:12px;background:var(--border);position:relative;transition:background .15s}
+.switch .track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s}
+.switch input:checked + .track{background:var(--accent-btn)}
+.switch input:checked + .track::after{transform:translateX(16px)}
+.switch input:focus-visible + .track{outline:3px solid var(--accent);outline-offset:2px}
+
+/* ---------- challenge bar ---------- */
+.challenge-bar{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:14px;padding:6px 8px 6px 14px}
+.cb-badge{font-weight:800;color:var(--accent)}
+.cb-progress{display:flex;align-items:center;gap:8px;font-weight:650}
+.pips{display:flex;gap:4px}
+.pips i{width:10px;height:10px;border-radius:50%;background:var(--surface);border:1.5px solid var(--accent)}
+.pips i.done{background:var(--accent)}
+.pips i.now{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.cb-plays,.cb-timer{font-weight:650;font-variant-numeric:tabular-nums}
+.cb-plays.out{color:var(--bad)}
+
+/* ---------- question card ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px 14px}
+.card + .card{margin-top:12px}
+.card-head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;justify-content:space-between;margin-bottom:4px;min-height:44px}
+.qmeta{display:flex;align-items:center;gap:10px}
+.ts-badge{font-weight:800;font-size:16px;background:var(--surface-2);border-radius:8px;padding:3px 10px;font-variant-numeric:tabular-nums}
+.status{flex:1;display:flex;justify-content:center;align-items:center;gap:8px;min-height:28px;font-size:14px;font-weight:650;color:var(--muted)}
+.countin{display:flex;gap:6px;align-items:center}
+.countin i{width:12px;height:12px;border-radius:50%;background:var(--surface-2);border:1.5px solid var(--border)}
+.countin i.on{background:var(--play);border-color:var(--play)}
+.pill{border-radius:999px;padding:3px 12px;font-size:13px;font-weight:700}
+.pill.question{background:var(--q-soft);color:var(--q)}
+.pill.answer{background:var(--a-soft);color:var(--a)}
+.edit-tools{display:flex;gap:8px}
+.staff-wrap{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-gutter:stable;margin:0 -4px;padding:0 4px;scroll-behavior:smooth}
+.staff{width:100%}
+.hint{margin:4px 0 0;font-size:13px;color:var(--muted);text-align:center}
+.feedback{margin-top:8px;border-top:1px solid var(--border);padding-top:10px}
+.fb-msg{font-weight:700;font-size:16px;text-align:center;margin-bottom:4px}
+.fb-msg.perfect{color:var(--ok)}
+.fb-next{text-align:center;font-size:13px;margin:0 0 4px}
+.fb-label,.ri-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:6px 0 0}
+.bank-wrap{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.bank-label{font-size:13px;color:var(--muted);font-weight:600;margin:0 0 8px}
+.bank{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell-min,108px),1fr));gap:8px}
+.cell-btn{position:relative;min-height:64px;padding:6px 8px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;transition:transform .06s ease,border-color .15s,background .15s}
+.cell-btn:active{transform:scale(.97);background:var(--accent-soft);border-color:var(--accent)}
+.cell-btn svg{width:100%;height:52px;display:block;color:var(--text)}
+.cell-btn .key{position:absolute;top:4px;left:7px;font-size:11px;font-weight:700;color:var(--muted)}
+.cell-btn.flash{animation:flash .3s ease}
+@keyframes flash{0%{background:var(--accent-soft);border-color:var(--accent)}100%{background:var(--surface)}}
+@media (hover:hover){.cell-btn:hover{border-color:var(--accent)}}
+
+/* ---------- notation ---------- */
+.rhythm{display:block;color:var(--text);user-select:none;-webkit-user-select:none;overflow:visible}
+.rhythm .staffline{stroke:var(--muted);stroke-width:1.3}
+.staffline{stroke:var(--muted);stroke-width:1.3}
+.rhythm .bar{stroke:var(--text);stroke-width:1.5}
+.rhythm .bar-thick,.rhythm .clef{fill:var(--text)}
+.rhythm .tsig{font:800 25px Georgia,"Times New Roman",serif;text-anchor:middle;fill:var(--text)}
+.rhythm .mnum{font:600 11px system-ui,sans-serif;fill:var(--muted)}
+.nh{fill:currentColor}
+.nh.hollow{fill:none;stroke:currentColor;stroke-width:1.9}
+.stem{stroke:currentColor;stroke-width:1.5}
+.beam,.flag,.dot{fill:currentColor}
+.rhythm .slot-bg{fill:transparent;stroke:var(--border);stroke-width:1.5;stroke-dasharray:5 4;transition:fill .12s,stroke .12s}
+.rhythm .slot.filled .slot-bg{stroke:transparent}
+.rhythm.interactive .slot{cursor:pointer}
+.rhythm .slot.active .slot-bg{stroke:var(--accent);stroke-width:2;stroke-dasharray:6 4;fill:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
+.rhythm .slot.selected .slot-bg{stroke:var(--accent);stroke-width:2.5;stroke-dasharray:none;fill:var(--accent-soft)}
+.rhythm .slot.selected{color:var(--accent)}
+.rhythm .slot.correct .slot-bg{fill:var(--ok-soft);stroke:var(--ok);stroke-dasharray:none;stroke-width:1.5}
+.rhythm .slot.correct{color:var(--ok)}
+.rhythm .slot.wrong .slot-bg{fill:var(--bad-soft);stroke:var(--bad);stroke-dasharray:none;stroke-width:1.5}
+.rhythm .slot.wrong{color:var(--bad)}
+.rhythm .slot.playing .slot-bg{fill:var(--play-soft);stroke:var(--play);stroke-dasharray:none;stroke-width:2.5}
+.rhythm .note.sounding{color:var(--a)}
+@media (hover:hover){.rhythm.interactive .slot:not(.selected):hover .slot-bg{stroke:var(--accent);stroke-dasharray:none}}
+
+/* ---------- footer ---------- */
+.foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--muted)}
+.foot b{color:var(--text)}
+
+/* ---------- action bar ---------- */
+.actionbar{position:sticky;bottom:0;z-index:20;background:var(--surface);background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+.actionbar-inner{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 72px 1.1fr;gap:8px}
+.actionbar .btn{min-height:50px;font-size:15px}
+.kbd{font-size:11px;opacity:.75;font-weight:600;border:1px solid rgba(255,255,255,.45);border-radius:5px;padding:0 5px}
+.btn:not(.btn-q):not(.btn-a):not(.btn-primary) .kbd{border-color:var(--border)}
+
+/* ---------- end screen ---------- */
+.end-hero{text-align:center;padding:20px 16px}
+.end-hero h2{margin:4px 0 0;font-size:22px}
+.trophy{font-size:40px;line-height:1}
+.big-score{font-size:56px;font-weight:850;letter-spacing:-.02em;line-height:1.1;margin-top:6px;background:linear-gradient(135deg,#5a48d8,#a23fd0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card h3{margin:2px 0 10px;font-size:17px}
+.form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.form-row label,.modal label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:650;color:var(--muted)}
+.form-row input,.modal input{min-height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;font-size:16px}
+#fname{width:190px} #linit{width:70px;text-transform:uppercase;text-align:center}
+.form-error{color:var(--bad);font-weight:650;font-size:14px;min-height:20px;margin-top:6px}
+.board{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.board th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+.board td{padding:9px 8px;border-bottom:1px solid var(--border)}
+.board tr.me td{background:var(--accent-soft);font-weight:750}
+.board td:first-child{width:56px;white-space:nowrap;font-weight:750;color:var(--muted)}
+.board tr:nth-child(1) td:first-child::after{content:" 🥇"} .board tr:nth-child(2) td:first-child::after{content:" 🥈"} .board tr:nth-child(3) td:first-child::after{content:" 🥉"}
+.rank-note{margin:0 0 10px;font-size:15px}
+.review-item{border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-top:10px}
+.ri-head{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap}
+.ri-head .ri-score{font-weight:700;margin-right:auto}
+.ri-score.perfect{color:var(--ok)}
+.end-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 8px}
+.testmode{background:var(--play-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin:0 0 10px}
+
+/* ---------- modal & toast ---------- */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(10,12,20,.5);display:grid;place-items:center;padding:16px}
+.modal-box{background:var(--surface);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:100%;max-width:440px;max-height:calc(100dvh - 32px);overflow:auto;padding:18px}
+.modal-box.wide{max-width:720px}
+.modal h3{margin:0 0 8px;font-size:18px}
+.modal p{margin:0 0 12px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.teacher-table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.teacher-table th,.teacher-table td{text-align:left;padding:6px;border-bottom:1px solid var(--border)}
+.teacher-table td:last-child{text-align:right}
+.toast{position:fixed;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);z-index:60;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:650;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
+.banner-error{background:var(--bad-soft);color:var(--bad);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-weight:650}
+
+/* ---------- small screens (phones) ---------- */
+.only-wide{display:inline}
+@media (max-width:700px){
+  .staff-wrap{max-height:36vh;max-height:36dvh}
+  .settings-toggle{display:flex;width:100%;justify-content:flex-start}
+  .settings-toggle #settingsSummary{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
+  .controls:not(.open) .settings,.controls:not(.open) .audio{display:none!important}
+  .challenge-bar{order:-1;width:100%}
+  .audio{width:100%}
+  .audio-settings{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px 12px}
+  .tempo input{flex:1;width:auto}
+  .tempo{flex:1;min-width:200px}
+}
+@media (max-width:600px){
+  .app{padding-top:8px}
+  h1{font-size:17px}
+  h1 small{display:none}
+  .only-wide{display:none}
+  .btn-challenge{padding:9px 14px}
+  .controls{gap:8px}
+  .settings{gap:8px;width:100%}
+  .settings .seg{flex:1}
+  .settings .seg button{flex:1;padding:6px 8px}
+  .field{width:100%}
+  .field select{flex:1}
+  .card{padding:10px 12px 12px;border-radius:14px}
+  .card-head{gap:6px}
+  .status{order:3;flex-basis:100%;justify-content:flex-start;min-height:0}
+  .hint{display:none}
+  .bank-label{font-size:12px}
+  .status:empty{display:none}
+  .bank{grid-template-columns:repeat(3,1fr)}
+  .bank.wide{grid-template-columns:repeat(2,1fr)}
+  .cell-btn .key{display:none}
+  .cell-btn svg{height:46px}
+  .actionbar{padding-top:8px}
+  .actionbar-inner{grid-template-columns:1fr 1fr 56px 1fr;gap:6px}
+  .actionbar .btn{flex-direction:column;gap:2px;font-size:13px;padding:6px 4px;min-height:56px}
+  .kbd{display:none}
+  .board td:nth-child(5),.board th:nth-child(5){display:none}
+  .big-score{font-size:48px}
+  #fname{width:100%} .form-row label:first-child{flex:1}
+  .challenge-bar{gap:6px 12px;font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.5" cy="18.5" rx="3.3" ry="2.4" transform="rotate(-20 6.5 18.5)"/><ellipse cx="17" cy="16.5" rx="3.3" ry="2.4" transform="rotate(-20 17 16.5)"/><rect x="8.9" y="5.2" width="1.7" height="13"/><rect x="19.4" y="3.2" width="1.7" height="13"/><path d="M8.9 5.2 21.1 3.2v3.2L8.9 8.4z"/></svg></div>
+      <h1>Rhythm Dictation Trainer<small>AP Music Theory · listen, then rebuild the rhythm</small></h1>
+    </div>
+    <button class="btn btn-challenge" id="challengeBtn" type="button">🏆 Challenge<span class="only-wide">&nbsp;Mode</span></button>
+  </header>
+
+  <div id="dataError" class="banner-error" hidden></div>
+
+  <!-- ===== Play view (practice + challenge) ===== -->
+  <div id="playView">
+    <div class="controls" id="controls">
+      <button class="btn btn-sm settings-toggle" id="settingsToggle" type="button" aria-expanded="false" aria-controls="controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span id="settingsSummary">Settings</span><span aria-hidden="true" id="settingsCaret">▾</span></button>
+      <div class="settings" id="practiceSettings">
+        <div class="seg" id="typeSeg" role="group" aria-label="Meter type">
+          <button type="button" data-v="simple">Simple</button><button type="button" data-v="compound">Compound</button>
+        </div>
+        <div class="seg" id="lenSeg" role="group" aria-label="Length">
+          <button type="button" data-v="2">2 measures</button><button type="button" data-v="4">4 measures</button>
+        </div>
+        <label class="field"><span>Time signature</span><select id="tsSelect" aria-label="Time signature"></select></label>
+      </div>
+
+      <div class="challenge-bar" id="challengeBar" hidden>
+        <span class="cb-badge">🏆 Challenge</span>
+        <span class="cb-progress"><span class="pips" id="cbPips"></span><span id="cbText">Rhythm 1 of 5</span></span>
+        <span class="cb-plays" id="cbPlays">Plays left: 4</span>
+        <span class="cb-timer" id="cbTimer">⏱ 0:00</span>
+        <button class="btn btn-sm" id="quitBtn" type="button">Quit</button>
+      </div>
+
+      <div class="audio">
+        <div class="audio-settings" id="audioSettings">
+          <label class="tempo"><span>Tempo</span><input type="range" id="tempo" min="50" max="120" step="1" aria-label="Tempo in beats per minute"><output id="tempoOut">72 BPM</output></label>
+          <label class="switch"><input type="checkbox" id="metro"><span class="track"></span><span>Metronome</span></label>
+          <span class="muted small" id="tempoNote" hidden>Tempo is fixed in Challenge Mode</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="card" id="questionCard" aria-label="Question">
+      <div class="card-head">
+        <div class="qmeta"><span class="ts-badge" id="tsBadge">4/4</span><span class="muted" id="qInfo">2 measures</span></div>
+        <div class="status" id="status" aria-live="polite"></div>
+        <div class="edit-tools">
+          <button class="btn btn-sm" id="deleteBtn" type="button" title="Delete selected slot (Delete key)" aria-label="Delete selected slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 5h11v14H9l-6-7z"/><path d="m12 9 5 6m0-6-5 6" stroke-linecap="round"/></svg><span class="only-wide">Delete</span></button>
+          <button class="btn btn-sm" id="clearBtn" type="button">Clear All</button>
+        </div>
+      </div>
+      <div class="staff-wrap" id="staffWrap"><div class="staff" id="staff"></div></div>
+      <p class="hint" id="hint">Tap a rhythm below to fill the outlined slot. Tap a filled slot to change or delete it.</p>
+
+      <div class="feedback" id="feedback" hidden>
+        <div class="fb-msg" id="fbMsg"></div>
+        <p class="fb-next muted">Take your time. Replay the question or your answer, then press <b>Next Rhythm</b> when you're ready.</p>
+        <div class="fb-label">Correct rhythm</div>
+        <div class="staff" id="correctStaff"></div>
+      </div>
+
+      <div class="bank-wrap" id="bankWrap">
+        <p class="bank-label" id="bankLabel">Answer bank</p>
+        <div class="bank" id="bank"></div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div id="statsLine"></div>
+      <div><span class="small" id="modeNote"></span> <button class="linkbtn" id="teacherBtn" type="button">Teacher</button></div>
+    </footer>
+  </div>
+
+  <!-- ===== Challenge end screen ===== -->
+  <div id="endScreen" hidden>
+    <section class="card end-hero">
+      <div class="trophy">🏆</div>
+      <h2>Challenge complete!</h2>
+      <div class="big-score" id="endScore">0%</div>
+      <div class="muted" id="endDetail"></div>
+    </section>
+
+    <section class="card" id="lbCard">
+      <h3>Leaderboard</h3>
+      <p class="testmode" id="testModeNote" hidden>Test mode: scores are saved only in this browser. Connect Supabase (see README) to share with your class.</p>
+      <form id="submitForm" autocomplete="off">
+        <p class="muted" style="margin:0 0 10px">Add your score to the class leaderboard. This is optional.</p>
+        <div class="form-row">
+          <label>First name<input id="fname" maxlength="15" autocapitalize="words" spellcheck="false" enterkeyhint="next"></label>
+          <label>Last initial<input id="linit" maxlength="1" autocapitalize="characters" spellcheck="false" enterkeyhint="done"></label>
+          <button class="btn btn-primary" type="submit" id="submitBtn">Submit to Leaderboard</button>
+        </div>
+        <div class="form-error" id="formError"></div>
+        <button type="button" class="linkbtn" id="viewBoardBtn">Just show the leaderboard</button>
+      </form>
+      <div id="boardArea" hidden></div>
+    </section>
+
+    <section class="card">
+      <h3>Review</h3>
+      <div id="review"></div>
+    </section>
+
+    <div class="end-actions">
+      <button class="btn btn-challenge" id="againBtn" type="button">🏆 Try another challenge</button>
+      <button class="btn" id="backBtn" type="button">Back to practice</button>
+    </div>
+  </div>
+</div>
+
+<nav class="actionbar" id="actionbar" aria-label="Playback">
+  <div class="actionbar-inner">
+    <button class="btn btn-q" id="playQBtn" type="button" title="Play the question (Space)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg><span>Question <span class="badge" id="playsBadge" hidden>4</span></span><span class="kbd">Space</span></button>
+    <button class="btn btn-a" id="playABtn" type="button" title="Play my answer (A)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg><span>My Answer</span><span class="kbd">A</span></button>
+    <button class="btn" id="stopBtn" type="button" title="Stop (Esc)" aria-label="Stop"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span class="only-mobile-label">Stop</span></button>
+    <button class="btn btn-primary" id="checkBtn" type="button" title="Check (Enter)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="checkLabel">Check</span><span class="kbd">Enter</span></button>
+  </div>
+</nav>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true"><div class="modal-box" id="modalBox"></div></div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   1. CONFIG, METERS & ANSWER BANK DATA
+   Durations are in sixteenth-note units:
+     1 = sixteenth, 2 = eighth, 3 = dotted eighth, 4 = quarter,
+     6 = dotted quarter, 8 = half, 12 = dotted half
+   To add or remove answer-bank cells, edit BANKS below. Every cell's
+   durations must add up to its bank's slotUnits (checked at startup).
+   ===================================================================== */
+const CONFIG = {
+  defaultTempo: 72,
+  challengeTempo: 72,        // fixed tempo so leaderboard scores are fair
+  challengeRhythms: 5,
+  challengeMeasures: 4,
+  challengePlays: 4,         // max plays of the question per challenge rhythm
+  localTeacherPin: '2468',   // only used in test mode; the real PIN is set in supabase-setup.sql
+};
+
+// Class leaderboard: paste your Supabase Project URL and publishable (anon) key here.
+// Leave them blank and the leaderboard runs in test mode (this browser only).
+const SUPABASE = {
+  url: '',
+  key: '',
+};
+
+const BEAT_UNITS = { simple: 4, compound: 6 };  // quarter beat vs dotted-quarter beat
+
+const TIME_SIGS = {
+  '2/4':  { id: '2/4',  type: 'simple',   top: 2,  bottom: 4, measureUnits: 8,  bank: 'simple1' },
+  '3/4':  { id: '3/4',  type: 'simple',   top: 3,  bottom: 4, measureUnits: 12, bank: 'simple1' },
+  '4/4':  { id: '4/4',  type: 'simple',   top: 4,  bottom: 4, measureUnits: 16, bank: 'simple2' },
+  '6/8':  { id: '6/8',  type: 'compound', top: 6,  bottom: 8, measureUnits: 12, bank: 'compound1' },
+  '9/8':  { id: '9/8',  type: 'compound', top: 9,  bottom: 8, measureUnits: 18, bank: 'compound1' },
+  '12/8': { id: '12/8', type: 'compound', top: 12, bottom: 8, measureUnits: 24, bank: 'compound2' },
+};
+const SIMPLE_TS = ['2/4', '3/4', '4/4'];
+const COMPOUND_TS = ['6/8', '9/8', '12/8'];
+
+// weight = how often the generator uses a cell (bigger = more often).
+// ending = allowed as the very last slot (ends on a longer note).
+const BANKS = {
+  simple1: { slotUnits: 4, cells: [
+    { id: 'q',    name: 'Quarter note',                 notes: [4],          weight: 6, ending: true },
+    { id: 'ee',   name: 'Two eighth notes',             notes: [2, 2],       weight: 6 },
+    { id: 'ssss', name: 'Four sixteenth notes',         notes: [1, 1, 1, 1], weight: 2 },
+    { id: 'ess',  name: 'Eighth + two sixteenths',      notes: [2, 1, 1],    weight: 2 },
+    { id: 'sse',  name: 'Two sixteenths + eighth',      notes: [1, 1, 2],    weight: 2 },
+    { id: 'des',  name: 'Dotted eighth + sixteenth',    notes: [3, 1],       weight: 2 },
+  ]},
+  simple2: { slotUnits: 8, cells: [
+    { id: 'h',    name: 'Half note',                    notes: [8],          weight: 4, ending: true },
+    { id: 'qq',   name: 'Two quarter notes',            notes: [4, 4],       weight: 6, ending: true },
+    { id: 'qee',  name: 'Quarter + two eighths',        notes: [4, 2, 2],    weight: 4 },
+    { id: 'eeq',  name: 'Two eighths + quarter',        notes: [2, 2, 4],    weight: 4, ending: true },
+    { id: 'eeee', name: 'Four eighth notes',            notes: [2, 2, 2, 2], weight: 3 },
+    { id: 'dqe',  name: 'Dotted quarter + eighth',      notes: [6, 2],       weight: 3 },
+    { id: 'eqe',  name: 'Eighth, quarter, eighth',      notes: [2, 4, 2],    weight: 2 },
+  ]},
+  compound1: { slotUnits: 6, cells: [
+    { id: 'dq',   name: 'Dotted quarter',               notes: [6],          weight: 6, ending: true },
+    { id: 'eee',  name: 'Three eighth notes',           notes: [2, 2, 2],    weight: 6 },
+    { id: 'qe',   name: 'Quarter + eighth',             notes: [4, 2],       weight: 5 },
+    { id: 'eq',   name: 'Eighth + quarter',             notes: [2, 4],       weight: 2, ending: true },
+    { id: 'dese', name: 'Dotted eighth, sixteenth, eighth', notes: [3, 1, 2], weight: 2 },
+    { id: 'ssee', name: 'Two sixteenths + two eighths', notes: [1, 1, 2, 2], weight: 2 },
+  ]},
+  compound2: { slotUnits: 12, cells: [
+    { id: 'dh',    name: 'Dotted half',                     notes: [12],               weight: 3, ending: true },
+    { id: 'dqdq',  name: 'Two dotted quarters',             notes: [6, 6],             weight: 6, ending: true },
+    { id: 'dqeee', name: 'Dotted quarter + three eighths',  notes: [6, 2, 2, 2],       weight: 4 },
+    { id: 'eeedq', name: 'Three eighths + dotted quarter',  notes: [2, 2, 2, 6],       weight: 4, ending: true },
+    { id: 'e6',    name: 'Six eighth notes',                notes: [2, 2, 2, 2, 2, 2], weight: 3 },
+    { id: 'qedq',  name: 'Quarter, eighth + dotted quarter', notes: [4, 2, 6],         weight: 4, ending: true },
+  ]},
+};
+
+const SLOT_DESCRIPTION = {
+  '2/4': 'half a measure (1 beat)', '3/4': 'one beat', '4/4': 'half a measure (2 beats)',
+  '6/8': 'half a measure (1 dotted-quarter beat)', '9/8': 'one dotted-quarter beat', '12/8': 'half a measure (2 dotted-quarter beats)',
+};
+
+const CELLS = {};
+for (const [bankId, bank] of Object.entries(BANKS)) {
+  for (const c of bank.cells) { c.bank = bankId; CELLS[c.id] = c; }
+}
+const sum = a => a.reduce((s, x) => s + x, 0);
+const slotUnitsOf = ts => BANKS[ts.bank].slotUnits;
+const slotsPerMeasure = ts => ts.measureUnits / slotUnitsOf(ts);
+const bankBeatUnits = bankId => bankId.startsWith('compound') ? BEAT_UNITS.compound : BEAT_UNITS.simple;
+
+function validateData() {
+  const errors = [];
+  const seen = new Set();
+  for (const [bankId, bank] of Object.entries(BANKS)) {
+    if (!bank.cells.some(c => c.ending)) errors.push(`${bankId}: needs at least one "ending" cell`);
+    for (const c of bank.cells) {
+      if (seen.has(c.id)) errors.push(`Duplicate cell id "${c.id}"`);
+      seen.add(c.id);
+      if (sum(c.notes) !== bank.slotUnits) errors.push(`${bankId} → "${c.name}" adds up to ${sum(c.notes)}, should be ${bank.slotUnits}`);
+    }
+  }
+  for (const ts of Object.values(TIME_SIGS)) {
+    const su = slotUnitsOf(ts), beat = BEAT_UNITS[ts.type];
+    if (ts.measureUnits !== ts.top * (16 / ts.bottom)) errors.push(`${ts.id}: measureUnits is wrong`);
+    if (ts.measureUnits % su) errors.push(`${ts.id}: slots don't divide the measure evenly`);
+    if (su % beat) errors.push(`${ts.id}: slot size isn't a whole number of beats`);
+  }
+  return errors;
+}
+
+/* =====================================================================
+   2. RHYTHM GENERATOR
+   ===================================================================== */
+const rand = n => Math.floor(Math.random() * n);
+
+function pickWeighted(pool) {
+  let r = Math.random() * sum(pool.map(c => c.weight));
+  for (const c of pool) { r -= c.weight; if (r < 0) return c; }
+  return pool[pool.length - 1];
+}
+
+function generateRhythm(tsId, measures, avoidCells) {
+  const ts = TIME_SIGS[tsId];
+  const bank = BANKS[ts.bank];
+  const n = measures * slotsPerMeasure(ts);
+  for (let attempt = 0; attempt < 500; attempt++) {
+    const cells = [];
+    let ok = true;
+    for (let i = 0; i < n; i++) {
+      let pool = bank.cells;
+      if (i === n - 1) pool = pool.filter(c => c.ending);                       // finish on a longer note
+      if (i >= 2 && cells[i - 1] === cells[i - 2]) pool = pool.filter(c => c.id !== cells[i - 1]); // max 2 in a row
+      if (!pool.length) { ok = false; break; }
+      cells.push(pickWeighted(pool).id);
+    }
+    if (!ok) continue;
+    const distinct = new Set(cells).size;
+    if (distinct < 2 || (n >= 8 && distinct < 3)) continue;                      // not all one cell
+    if (avoidCells && avoidCells.join() === cells.join()) continue;              // don't repeat last question
+    return { ts: tsId, measures, cells };
+  }
+  throw new Error('Could not generate a rhythm for ' + tsId);
+}
+
+function pickChallengeMeters() {
+  const all = [...SIMPLE_TS, ...COMPOUND_TS];
+  for (;;) {
+    const picks = Array.from({ length: CONFIG.challengeRhythms }, () => all[rand(all.length)]);
+    const simple = picks.filter(t => TIME_SIGS[t].type === 'simple').length;
+    const compound = picks.length - simple;
+    const maxSame = Math.max(...all.map(t => picks.filter(p => p === t).length));
+    if (simple >= 2 && compound >= 2 && maxSame <= 2) return picks;
+  }
+}
+
+/* =====================================================================
+   3. AUDIO ENGINE  (Web Audio, synthesized, scheduled on the audio clock)
+   ===================================================================== */
+const VOICES = {
+  // question: bright, wood-like tone
+  question: { freq: 659.25, type: 'triangle', peak: 0.42, sustain: 0.5, partial: 2.76, partialGain: 0.3, filter: 0 },
+  // answer: lower, reedy tone so it never sounds like the question
+  answer:   { freq: 392.0,  type: 'sawtooth', peak: 0.2,  sustain: 0.65, partial: 4.0, partialGain: 0.32, filter: 1500 },
+};
+
+function buildSchedule(rhythm, cells, voice, bpm, metronome) {
+  const ts = TIME_SIGS[rhythm.ts];
+  const beatU = BEAT_UNITS[ts.type];
+  const u = 60 / bpm / beatU;                 // seconds per sixteenth
+  const slotU = slotUnitsOf(ts);
+  const beatSec = beatU * u;
+  const beatsPerMeasure = ts.measureUnits / beatU;
+  const countIn = ts.measureUnits * u;
+  const events = [], slots = [], notes = [];
+
+  for (let b = 0; b < beatsPerMeasure; b++) events.push({ kind: 'click', t: b * beatSec, accent: b === 0 });
+
+  cells.forEach((id, i) => {
+    const s0 = countIn + i * slotU * u;
+    slots.push({ start: s0, end: s0 + slotU * u });
+    if (!id) return;
+    let pos = 0;
+    CELLS[id].notes.forEach((d, j) => {
+      const t = s0 + pos * u;
+      events.push({ kind: 'tone', voice, t, dur: d * u });
+      notes.push({ slot: i, n: j, start: t, end: t + d * u });
+      pos += d;
+    });
+  });
+
+  const totalU = cells.length * slotU;
+  const beatsPerSlot = slotU / beatU;
+  for (let b = 0; b < totalU / beatU; b++) {
+    const slotIdx = Math.floor(b / beatsPerSlot);
+    // metronome when on; always keep the beat going through empty slots
+    if (metronome || !cells[slotIdx]) events.push({ kind: 'click', t: countIn + b * beatSec, accent: (b * beatU) % ts.measureUnits === 0 });
+  }
+  return { events, slots, notes, countIn, beatSec, beatsPerMeasure, total: countIn + totalU * u + 0.3 };
+}
+
+const Engine = {
+  ctx: null, master: null, current: null, unlocked: false,
+
+  // Must be called synchronously inside a tap/click/keypress (iOS requirement).
+  ensure() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) { toast('Sorry, this browser does not support audio playback.'); return Promise.reject(new Error('no audio')); }
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* ignore */ }
+      this.ctx = new AC();
+      const comp = this.ctx.createDynamicsCompressor();
+      comp.threshold.value = -12; comp.knee.value = 8; comp.ratio.value = 4;
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.9;
+      this.master.connect(comp); comp.connect(this.ctx.destination);
+    }
+    if (!this.unlocked) {
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.ctx.createBuffer(1, 1, 22050);
+      src.connect(this.ctx.destination); src.start(0);
+      this.unlocked = true;
+    }
+    return this.ctx.state === 'running' ? Promise.resolve() : this.ctx.resume().catch(() => {});
+  },
+
+  resumeIfNeeded() {
+    if (this.ctx && this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
+  },
+
+  tone(bus, t, dur, voiceName, nodes) {
+    const ctx = this.ctx, v = VOICES[voiceName];
+    const len = Math.max(0.05, dur - Math.min(0.06, dur * 0.2));   // small gap so repeated notes articulate
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v.peak, t + 0.005);
+    g.gain.setTargetAtTime(v.peak * v.sustain, t + 0.005, 0.04);
+    g.gain.setTargetAtTime(0.0001, t + len, 0.015);
+    const osc = ctx.createOscillator();
+    osc.type = v.type;
+    osc.frequency.setValueAtTime(v.freq, t);
+    let src = osc;
+    if (v.filter) {
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass'; f.frequency.value = v.filter; f.Q.value = 0.7;
+      osc.connect(f); src = f;
+    }
+    src.connect(g); g.connect(bus);
+    osc.start(t); osc.stop(t + len + 0.15);
+    // short attack partial gives each note a clear onset
+    const p = ctx.createOscillator(), pg = ctx.createGain();
+    p.type = 'sine'; p.frequency.value = v.freq * v.partial;
+    pg.gain.setValueAtTime(0.0001, t);
+    pg.gain.linearRampToValueAtTime(v.partialGain, t + 0.003);
+    pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    p.connect(pg); pg.connect(bus);
+    p.start(t); p.stop(t + 0.08);
+    nodes.push(osc, p);
+  },
+
+  click(bus, t, accent, nodes) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = accent ? 1900 : 1300;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(accent ? 0.5 : 0.32, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    o.connect(g); g.connect(bus);
+    o.start(t); o.stop(t + 0.07);
+    nodes.push(o);
+  },
+
+  play(sched, { onFrame, onEnd }) {
+    this.stop();
+    const ready = this.ensure();
+    const token = { stopped: false, onEnd, nodes: [], raf: 0, bus: null };
+    this.current = token;
+    ready.then(() => {
+      if (token.stopped) return;
+      const ctx = this.ctx;
+      const bus = ctx.createGain();
+      bus.connect(this.master);
+      token.bus = bus;
+      const t0 = ctx.currentTime + 0.12;
+      for (const ev of sched.events) {
+        if (ev.kind === 'click') this.click(bus, t0 + ev.t, ev.accent, token.nodes);
+        else this.tone(bus, t0 + ev.t, ev.dur, ev.voice, token.nodes);
+      }
+      const end = t0 + sched.total;
+      const loop = () => {
+        if (token.stopped) return;
+        const now = ctx.currentTime;
+        onFrame(now - t0 - (ctx.outputLatency || 0));
+        if (now >= end) { this.current = null; token.stopped = true; onEnd(false); return; }
+        token.raf = requestAnimationFrame(loop);
+      };
+      token.raf = requestAnimationFrame(loop);
+    }).catch(() => { if (!token.stopped) { this.current = null; token.stopped = true; onEnd(true); } });
+  },
+
+  stop() {
+    const c = this.current;
+    if (!c) return;
+    this.current = null;
+    c.stopped = true;
+    cancelAnimationFrame(c.raf);
+    if (c.bus) {
+      const now = this.ctx.currentTime;
+      c.bus.gain.setTargetAtTime(0, now, 0.01);
+      c.nodes.forEach(n => { try { n.stop(now + 0.08); } catch (e) { /* already stopped */ } });
+      setTimeout(() => { try { c.bus.disconnect(); } catch (e) { /* ignore */ } }, 200);
+    }
+    c.onEnd(true);
+  },
+
+  get isPlaying() { return !!this.current; },
+};
+
+/* =====================================================================
+   4. NOTATION RENDERING  (hand-drawn SVG on a one-line rhythm staff)
+   ===================================================================== */
+const G = { lineH: 104, lineY: 70, stemTop: 37, rx: 6.3, ry: 4.5, header: 62, endPad: 14, slotTop: 12, slotH: 80, padL: 10, padR: 14 };
+const SLOT_MIN = { simple1: 100, simple2: 124, compound1: 106, compound2: 164 };
+const r1 = n => Math.round(n * 10) / 10;
+
+function beamGroups(durs, beatU) {
+  const groups = [];
+  let cur = null, pos = 0;
+  durs.forEach((d, i) => {
+    const beat = Math.floor(pos / beatU);
+    if (d < 4) {                                   // sixteenths, eighths, dotted eighths can be beamed
+      if (cur && cur.beat === beat) cur.idx.push(i);
+      else { cur = { beat, idx: [i] }; groups.push(cur); }
+    } else cur = null;
+    pos += d;
+  });
+  return groups;
+}
+
+function flagPath(sx, y) {
+  return `<path class="flag" d="M${r1(sx)} ${r1(y)}C${r1(sx + 0.6)} ${r1(y + 6)} ${r1(sx + 9.5)} ${r1(y + 8.5)} ${r1(sx + 8)} ${r1(y + 19)}C${r1(sx + 9.2)} ${r1(y + 11.5)} ${r1(sx + 3)} ${r1(y + 9.8)} ${r1(sx - 0.7)} ${r1(y + 8.6)}Z"/>`;
+}
+const rect = (x, y, w, h, cls) => `<rect class="${cls}" x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}"/>`;
+
+// Draw one cell's notes. Returns per-note SVG strings plus the beams.
+function notesSVG(durs, x0, innerW, cy, stemTop, beatU) {
+  const weights = durs.map(d => 1 + 0.55 * d);
+  const total = sum(weights);
+  let acc = 0;
+  const xs = durs.map((d, i) => { const x = x0 + (acc / total) * innerW; acc += weights[i]; return x; });
+  const groups = beamGroups(durs, beatU);
+  const beamed = new Array(durs.length).fill(false);
+  groups.forEach(g => { if (g.idx.length > 1) g.idx.forEach(i => { beamed[i] = true; }); });
+  const stemX = [];
+  const parts = durs.map((d, i) => {
+    const cx = xs[i] + G.rx + 1, sx = cx + G.rx - 0.9;
+    stemX[i] = sx;
+    const hollow = d >= 8;
+    let s = `<ellipse class="nh${hollow ? ' hollow' : ''}" cx="${r1(cx)}" cy="${cy}" rx="${hollow ? G.rx - 0.6 : G.rx}" ry="${hollow ? G.ry - 0.6 : G.ry}" transform="rotate(-20 ${r1(cx)} ${cy})"/>`;
+    s += `<line class="stem" x1="${r1(sx)}" y1="${cy - 1}" x2="${r1(sx)}" y2="${stemTop}"/>`;
+    if (d === 3 || d === 6 || d === 12) s += `<circle class="dot" cx="${r1(cx + G.rx + 4.8)}" cy="${cy - 4}" r="2.1"/>`;
+    if (d < 4 && !beamed[i]) { const n = d === 1 ? 2 : 1; for (let k = 0; k < n; k++) s += flagPath(sx, stemTop + k * 7); }
+    return s;
+  });
+  let beams = '';
+  for (const g of groups) {
+    if (g.idx.length < 2) continue;
+    const a = stemX[g.idx[0]], b = stemX[g.idx[g.idx.length - 1]];
+    beams += rect(a - 0.75, stemTop, b - a + 1.5, 5, 'beam');
+    const idx = g.idx;
+    let k = 0;
+    while (k < idx.length) {
+      if (durs[idx[k]] !== 1) { k++; continue; }
+      let e = k;
+      while (e + 1 < idx.length && durs[idx[e + 1]] === 1) e++;
+      if (e > k) beams += rect(stemX[idx[k]] - 0.75, stemTop + 8, stemX[idx[e]] - stemX[idx[k]] + 1.5, 5, 'beam');
+      else { const sx = stemX[idx[k]]; beams += k > 0 ? rect(sx - 8, stemTop + 8, 8.75, 5, 'beam') : rect(sx - 0.75, stemTop + 8, 8.75, 5, 'beam'); }
+      k = e + 1;
+    }
+  }
+  return { parts, beams };
+}
+
+function layoutFor(ts, measures, cw) {
+  const spm = slotsPerMeasure(ts);
+  const measureW = spm * SLOT_MIN[ts.bank];
+  const natFor = m => G.header + m * measureW + G.endPad;
+  const options = [4, 2, 1].filter(m => m <= measures && measures % m === 0);
+  let m = 1, s = 0;
+  for (const c of options) { const sc = cw / natFor(c); if (sc >= 0.8) { m = c; s = sc; break; } }
+  if (!s) { m = 1; s = cw / natFor(1); }
+  s = Math.min(s, cw < 520 ? 1.05 : 1.22);
+  const natW = cw / s;
+  const slotW = (natW - G.header - G.endPad) / (m * spm);
+  const lines = Math.ceil(measures / m);
+  return { m, s, spm, slotW, lines, natW, natH: lines * G.lineH + 4 };
+}
+
+function renderRhythm({ ts: tsId, measures, cells, states = [], interactive = false, cw, label = '' }) {
+  const ts = TIME_SIGS[tsId];
+  const L = layoutFor(ts, measures, cw);
+  const beatU = BEAT_UNITS[ts.type];
+  let out = `<svg class="rhythm${interactive ? ' interactive' : ''}" viewBox="0 0 ${r1(L.natW)} ${L.natH}" width="${Math.floor(cw)}" height="${Math.round(L.natH * L.s)}" role="img" aria-label="${label}">`;
+  for (let line = 0; line < L.lines; line++) {
+    const y0 = line * G.lineH, cy = y0 + G.lineY;
+    const firstM = line * L.m, mCount = Math.min(L.m, measures - firstM);
+    const endX = G.header + mCount * L.spm * L.slotW;
+    out += `<line class="staffline" x1="4" y1="${cy}" x2="${r1(endX)}" y2="${cy}"/>`;
+    out += rect(10, cy - 11, 3.2, 22, 'clef') + rect(16.5, cy - 11, 3.2, 22, 'clef');
+    if (line === 0) out += `<text class="tsig" x="42" y="${cy - 2}">${ts.top}</text><text class="tsig" x="42" y="${cy + 20}">${ts.bottom}</text>`;
+    else out += `<text class="mnum" x="6" y="${y0 + G.slotTop + 10}">${firstM + 1}</text>`;
+    for (let mi = 0; mi < mCount; mi++) {
+      const mIdx = firstM + mi;
+      const mx = G.header + mi * L.spm * L.slotW;
+      for (let j = 0; j < L.spm; j++) {
+        const si = mIdx * L.spm + j, sx = mx + j * L.slotW, id = cells[si];
+        out += `<g class="slot ${id ? 'filled' : 'empty'} ${states[si] || ''}" data-slot="${si}">`;
+        out += `<rect class="slot-bg" x="${r1(sx + 3)}" y="${y0 + G.slotTop}" width="${r1(L.slotW - 6)}" height="${G.slotH}" rx="9"/>`;
+        if (id) {
+          const r = notesSVG(CELLS[id].notes, sx + G.padL, L.slotW - G.padL - G.padR, cy, y0 + G.stemTop, beatU);
+          r.parts.forEach((p, n) => { out += `<g class="note" data-n="${n}">${p}</g>`; });
+          out += r.beams;
+        }
+        out += '</g>';
+      }
+      const bx = mx + L.spm * L.slotW;
+      out += `<line class="bar" x1="${r1(bx)}" y1="${cy - 14}" x2="${r1(bx)}" y2="${cy + 14}"/>`;
+      if (mIdx === measures - 1) out += rect(bx + 3, cy - 14, 4, 28, 'bar-thick');
+    }
+  }
+  return out + '</svg>';
+}
+
+function cellSVG(cell) {
+  const w = SLOT_MIN[cell.bank], cy = G.lineY;
+  const r = notesSVG(cell.notes, 10, w - 24, cy, G.stemTop, bankBeatUnits(cell.bank));
+  return `<svg viewBox="0 28 ${w} 52" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><line class="staffline" x1="2" y1="${cy}" x2="${w - 2}" y2="${cy}"/>${r.parts.join('')}${r.beams}</svg>`;
+}
+
+// "Mounts" re-render a staff whenever its container width changes (resize / rotate).
+const resizeObs = new ResizeObserver(entries => {
+  for (const e of entries) {
+    const m = e.target._mount;
+    if (m && Math.abs(e.contentRect.width - m.lastW) > 1) renderMount(m);
+  }
+});
+function createMount(el, getProps) {
+  const m = { el, getProps, lastW: 0 };
+  el._mount = m;
+  resizeObs.observe(el);
+  return m;
+}
+function destroyMount(m) { resizeObs.unobserve(m.el); m.el._mount = null; }
+function renderMount(m) {
+  const w = m.el.clientWidth;
+  if (!w) return;
+  const props = m.getProps();
+  if (!props) { m.el.innerHTML = ''; return; }
+  m.lastW = w;
+  m.el.innerHTML = renderRhythm({ ...props, cw: w });
+}
+
+/* =====================================================================
+   5. UI STATE & CONTROLLER
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const els = {
+  staff: $('#staff'), staffWrap: $('#staffWrap'), correctStaff: $('#correctStaff'), bank: $('#bank'), bankWrap: $('#bankWrap'), bankLabel: $('#bankLabel'),
+  tsBadge: $('#tsBadge'), qInfo: $('#qInfo'), status: $('#status'), hint: $('#hint'), feedback: $('#feedback'), fbMsg: $('#fbMsg'),
+  typeSeg: $('#typeSeg'), lenSeg: $('#lenSeg'), tsSelect: $('#tsSelect'), practiceSettings: $('#practiceSettings'),
+  tempo: $('#tempo'), tempoOut: $('#tempoOut'), metro: $('#metro'), tempoNote: $('#tempoNote'), settingsSummary: $('#settingsSummary'), settingsCaret: $('#settingsCaret'), settingsToggle: $('#settingsToggle'), controls: $('#controls'), audioSettings: $('#audioSettings'),
+  challengeBar: $('#challengeBar'), cbPips: $('#cbPips'), cbText: $('#cbText'), cbPlays: $('#cbPlays'), cbTimer: $('#cbTimer'),
+  playQBtn: $('#playQBtn'), playABtn: $('#playABtn'), stopBtn: $('#stopBtn'), checkBtn: $('#checkBtn'), checkLabel: $('#checkLabel'), playsBadge: $('#playsBadge'),
+  deleteBtn: $('#deleteBtn'), clearBtn: $('#clearBtn'), statsLine: $('#statsLine'), modeNote: $('#modeNote'),
+  playView: $('#playView'), endScreen: $('#endScreen'), actionbar: $('#actionbar'),
+  endScore: $('#endScore'), endDetail: $('#endDetail'), submitForm: $('#submitForm'), fname: $('#fname'), linit: $('#linit'), formError: $('#formError'),
+  submitBtn: $('#submitBtn'), boardArea: $('#boardArea'), review: $('#review'), testModeNote: $('#testModeNote'),
+  modal: $('#modal'), modalBox: $('#modalBox'), toast: $('#toast'),
+};
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } },
+};
+
+const S = {
+  mode: 'practice',                // 'practice' | 'challenge' | 'end'
+  settings: { type: 'simple', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false },
+  q: null, answer: [], selected: null, checked: false, nextLockUntil: 0,
+  stats: { rhythms: 0, correct: 0, total: 0, streak: 0 },
+  ch: null, playing: null,
+};
+
+const mainMount = createMount(els.staff, () => S.q && ({
+  ts: S.q.ts, measures: S.q.measures, cells: S.answer, states: slotStates(), interactive: !S.checked, label: 'Your answer',
+}));
+const correctMount = createMount(els.correctStaff, () => S.q && S.checked && ({
+  ts: S.q.ts, measures: S.q.measures, cells: S.q.cells, label: 'Correct rhythm',
+}));
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(store.get('rdt_settings') || '{}');
+    if (saved.type === 'simple' || saved.type === 'compound') S.settings.type = saved.type;
+    if (saved.measures === 2 || saved.measures === 4) S.settings.measures = saved.measures;
+    if (saved.lock && (saved.lock === 'random' || TIME_SIGS[saved.lock])) S.settings.lock = saved.lock;
+    if (saved.tempo >= 50 && saved.tempo <= 120) S.settings.tempo = saved.tempo;
+    S.settings.metronome = !!saved.metronome;
+  } catch (e) { /* ignore bad saved settings */ }
+}
+const saveSettings = () => store.set('rdt_settings', JSON.stringify(S.settings));
+
+const tsListFor = type => type === 'simple' ? SIMPLE_TS : COMPOUND_TS;
+const currentTempo = () => S.mode === 'practice' ? S.settings.tempo : CONFIG.challengeTempo;
+const fmtTime = sec => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function targetSlot() {
+  if (S.selected != null) return S.selected;
+  const i = S.answer.indexOf(null);
+  return i < 0 ? null : i;
+}
+
+function slotStates() {
+  const t = targetSlot();
+  return S.answer.map((id, i) => {
+    if (S.checked) return id === S.q.cells[i] ? 'correct' : 'wrong';
+    if (S.selected === i) return 'selected';
+    return t === i ? 'active' : '';
+  });
+}
+
+// ---------- practice ----------
+function newPracticeRhythm() {
+  Engine.stop();
+  const { type, measures, lock } = S.settings;
+  const list = tsListFor(type);
+  const tsId = list.includes(lock) ? lock : list[rand(list.length)];
+  const avoid = S.q && S.q.ts === tsId && S.q.measures === measures ? S.q.cells : null;
+  loadQuestion(generateRhythm(tsId, measures, avoid));
+}
+
+function loadQuestion(rhythm) {
+  S.q = rhythm;
+  S.answer = new Array(rhythm.cells.length).fill(null);
+  S.selected = null;
+  S.checked = false;
+  els.feedback.hidden = true;
+  els.bankWrap.hidden = false;
+  els.hint.hidden = false;
+  renderBank();
+  renderMount(mainMount);
+  els.staffWrap.scrollTop = 0;
+  updateUI();
+}
+
+let bankFor = null;
+function renderBank() {
+  const ts = TIME_SIGS[S.q.ts];
+  els.bankLabel.textContent = `Answer bank: each rhythm fills one slot, ${SLOT_DESCRIPTION[ts.id]}`;
+  if (bankFor === ts.bank) return;
+  bankFor = ts.bank;
+  const bank = BANKS[ts.bank];
+  els.bank.classList.toggle('wide', ts.bank === 'compound2');
+  els.bank.style.setProperty('--cell-min', ts.bank === 'compound2' ? '150px' : '108px');
+  els.bank.innerHTML = bank.cells.map((c, i) =>
+    `<button type="button" class="cell-btn" data-id="${c.id}" aria-label="${esc(c.name)}" title="${esc(c.name)}${i < 9 ? ` (key ${i + 1})` : ''}">${i < 9 ? `<span class="key">${i + 1}</span>` : ''}${cellSVG(c)}</button>`
+  ).join('');
+}
+
+function pickCell(id) {
+  if (!S.q || S.checked || S.mode === 'end') return;
+  const t = targetSlot();
+  if (t == null) { toast('All slots are full. Tap a slot to change it.'); return; }
+  S.answer[t] = id;
+  S.selected = null;
+  renderMount(mainMount);
+  updateUI();
+  scrollSlotIntoView(targetSlot());
+}
+
+function selectSlot(i) {
+  if (S.checked || !S.q) return;
+  S.selected = S.selected === i ? null : i;
+  renderMount(mainMount);
+  updateUI();
+}
+
+function deleteSlot() {
+  if (S.checked || !S.q) return;
+  let i = S.selected;
+  if (i != null) {
+    if (!S.answer[i]) return;
+    S.answer[i] = null;               // keep it selected so the next bank tap refills it
+  } else {
+    for (let k = S.answer.length - 1; k >= 0; k--) if (S.answer[k]) { i = k; break; }
+    if (i == null) return;
+    S.answer[i] = null;
+  }
+  renderMount(mainMount);
+  updateUI();
+  scrollSlotIntoView(targetSlot());
+}
+
+function clearAll() {
+  if (S.checked || !S.q) return;
+  S.answer.fill(null);
+  S.selected = null;
+  renderMount(mainMount);
+  els.staffWrap.scrollTop = 0;
+  updateUI();
+}
+
+function moveSelection(dir) {
+  if (S.checked || !S.q) return;
+  const n = S.answer.length;
+  const from = S.selected != null ? S.selected : (targetSlot() ?? (dir > 0 ? -1 : n));
+  S.selected = Math.max(0, Math.min(n - 1, from + dir));
+  renderMount(mainMount);
+  updateUI();
+  scrollSlotIntoView(S.selected);
+}
+
+function scrollSlotIntoView(i) {
+  if (i == null) return;
+  const el = els.staff.querySelector(`.slot[data-slot="${i}"]`);
+  const wrap = els.staffWrap;
+  if (!el || wrap.scrollHeight <= wrap.clientHeight) return;
+  const wr = wrap.getBoundingClientRect(), r = el.getBoundingClientRect();
+  if (r.top < wr.top) wrap.scrollTop -= (wr.top - r.top) + 4;
+  else if (r.bottom > wr.bottom) wrap.scrollTop += (r.bottom - wr.bottom) + 4;
+}
+
+function onCheck() {
+  if (!S.q) return;
+  if (S.mode === 'practice') {
+    if (S.checked) { if (Date.now() < S.nextLockUntil) return; newPracticeRhythm(); return; }
+    if (S.answer.includes(null)) return;
+    Engine.stop();
+    S.checked = true;
+    // Brief lock so a double-click on Check can't skip past the answer.
+    S.nextLockUntil = Date.now() + 1500;
+    setTimeout(updateUI, 1550);
+    S.selected = null;
+    const n = S.answer.length;
+    const c = S.answer.filter((id, i) => id === S.q.cells[i]).length;
+    S.stats.rhythms++; S.stats.correct += c; S.stats.total += n;
+    S.stats.streak = c === n ? S.stats.streak + 1 : 0;
+    els.fbMsg.textContent = c === n
+      ? (S.stats.streak > 1 ? `Perfect! ${S.stats.streak} in a row 🔥` : 'Perfect! Every slot is correct 🎉')
+      : `${c} of ${n} slots correct. Compare with the correct rhythm below.`;
+    els.fbMsg.classList.toggle('perfect', c === n);
+    els.feedback.hidden = false;
+    els.bankWrap.hidden = true;
+    els.hint.hidden = true;
+    renderMount(mainMount);
+    renderMount(correctMount);
+    updateUI();
+  } else if (S.mode === 'challenge') {
+    if (S.answer.includes(null)) return;
+    Engine.stop();
+    const ch = S.ch;
+    ch.answers[ch.idx] = S.answer.slice();
+    ch.idx++;
+    if (ch.idx >= ch.rhythms.length) finishChallenge();
+    else loadQuestion(ch.rhythms[ch.idx]);
+  }
+}
+
+// ---------- playback ----------
+let iosTipShown = false;
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function maybeShowIosTip() {
+  if (!IS_IOS || iosTipShown || store.get('rdt_ios_tip')) return;
+  iosTipShown = true;
+  store.set('rdt_ios_tip', '1');
+  toast("No sound? Check that your ringer switch isn't on silent.", 6000);
+}
+
+function playQuestion() {
+  if (!S.q || S.mode === 'end') return;
+  if (S.mode === 'challenge') {
+    const ch = S.ch;
+    if (ch.plays[ch.idx] <= 0) { toast('No plays left for this rhythm.'); return; }
+    ch.plays[ch.idx]--;
+  }
+  startPlayback(S.q, S.q.cells, 'question', S.checked ? correctMount : mainMount, S.checked, true);
+}
+
+function playAnswer() {
+  if (!S.q || S.mode === 'end' || !S.answer.some(Boolean)) return;
+  startPlayback(S.q, S.answer.slice(), 'answer', mainMount, true, true);
+}
+
+function startPlayback(rhythm, cells, voice, mount, showNotes, useStatus) {
+  Engine.stop();
+  maybeShowIosTip();
+  const sched = buildSchedule(rhythm, cells, voice, currentTempo(), S.settings.metronome);
+  S.playing = voice;
+  let lastBeat = -1, playingShown = false;
+  const clear = () => {
+    mount.el.querySelectorAll('.playing').forEach(e => e.classList.remove('playing'));
+    mount.el.querySelectorAll('.sounding').forEach(e => e.classList.remove('sounding'));
+  };
+  clear();
+  updateUI();
+  Engine.play(sched, {
+    onFrame(t) {
+      if (t < sched.countIn) {
+        const b = Math.max(0, Math.floor(t / sched.beatSec));
+        if (useStatus && b !== lastBeat) { lastBeat = b; showCountIn(sched.beatsPerMeasure, b); }
+        return;
+      }
+      if (useStatus && !playingShown) { playingShown = true; showPlaying(voice); }
+      const si = sched.slots.findIndex(s => t >= s.start && t < s.end);
+      const slotEl = si >= 0 ? mount.el.querySelector(`.slot[data-slot="${si}"]`) : null;
+      if (slotEl && !slotEl.classList.contains('playing')) {
+        mount.el.querySelectorAll('.playing').forEach(e => e.classList.remove('playing'));
+        slotEl.classList.add('playing');
+        if (mount === mainMount) scrollSlotIntoView(si);
+      }
+      if (showNotes) {
+        const n = sched.notes.find(x => t >= x.start && t < x.end);
+        const noteEl = n ? mount.el.querySelector(`.slot[data-slot="${n.slot}"] .note[data-n="${n.n}"]`) : null;
+        if (!noteEl || !noteEl.classList.contains('sounding')) {
+          mount.el.querySelectorAll('.sounding').forEach(e => e.classList.remove('sounding'));
+          if (noteEl) noteEl.classList.add('sounding');
+        }
+      }
+    },
+    onEnd() {
+      clear();
+      S.playing = null;
+      if (useStatus) els.status.innerHTML = '';
+      updateUI();
+    },
+  });
+}
+
+function showCountIn(total, beat) {
+  let dots = '';
+  for (let i = 0; i < total; i++) dots += `<i class="${i <= beat ? 'on' : ''}"></i>`;
+  els.status.innerHTML = `<span>Count-in</span><span class="countin">${dots}</span>`;
+}
+function showPlaying(voice) {
+  els.status.innerHTML = voice === 'question'
+    ? '<span class="pill question">♪ Playing question</span>'
+    : '<span class="pill answer">♪ Playing your answer</span>';
+}
+
+// ---------- UI refresh ----------
+function updateUI() {
+  const inChallenge = S.mode === 'challenge';
+  const s = S.settings;
+
+  els.practiceSettings.hidden = inChallenge;
+  els.challengeBar.hidden = !inChallenge;
+  els.tempo.disabled = inChallenge;
+  els.tempoNote.hidden = !inChallenge;
+  const tempo = currentTempo();
+  els.tempo.value = tempo;
+  els.tempoOut.textContent = `${tempo} BPM`;
+  els.metro.checked = s.metronome;
+  els.settingsSummary.textContent = inChallenge
+    ? `${tempo} BPM · Metronome ${s.metronome ? 'on' : 'off'}`
+    : `${s.type === 'simple' ? 'Simple' : 'Compound'} · ${s.measures} measures · ${s.lock === 'random' ? 'Random' : s.lock} · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`;
+  els.settingsCaret.textContent = els.controls.classList.contains('open') ? '▴' : '▾';
+
+  for (const b of els.typeSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.type));
+  for (const b of els.lenSeg.children) b.setAttribute('aria-pressed', String(+b.dataset.v === s.measures));
+
+  if (!S.q) return;
+  const ts = TIME_SIGS[S.q.ts];
+  els.tsBadge.textContent = ts.id;
+  els.qInfo.textContent = `${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${S.q.measures} measures`;
+
+  const filled = S.answer.filter(Boolean).length;
+  const full = filled === S.answer.length;
+  els.deleteBtn.disabled = S.checked || !filled || (S.selected != null && !S.answer[S.selected]);
+  els.clearBtn.disabled = S.checked || !filled;
+  els.playABtn.disabled = !filled;
+  els.stopBtn.disabled = !S.playing;
+
+  if (inChallenge) {
+    const ch = S.ch;
+    const left = ch.plays[ch.idx];
+    els.playQBtn.disabled = left <= 0;
+    els.playsBadge.hidden = false;
+    els.playsBadge.textContent = left;
+    els.cbPlays.textContent = left > 0 ? `Plays left: ${left}` : 'No plays left';
+    els.cbPlays.classList.toggle('out', left <= 0);
+    els.cbText.textContent = `Rhythm ${ch.idx + 1} of ${ch.rhythms.length}`;
+    els.cbPips.innerHTML = ch.rhythms.map((_, i) => `<i class="${i < ch.idx ? 'done' : i === ch.idx ? 'now' : ''}"></i>`).join('');
+    els.checkLabel.textContent = ch.idx === ch.rhythms.length - 1 ? 'Finish' : 'Submit';
+    els.checkBtn.disabled = !full;
+  } else {
+    els.playQBtn.disabled = false;
+    els.playsBadge.hidden = true;
+    els.checkLabel.textContent = S.checked ? 'Next Rhythm' : 'Check';
+    els.checkBtn.disabled = S.checked ? Date.now() < S.nextLockUntil : !full;
+  }
+
+  const st = S.stats;
+  els.statsLine.innerHTML = inChallenge ? ''
+    : st.rhythms ? `This session: <b>${st.rhythms}</b> rhythm${st.rhythms > 1 ? 's' : ''} · <b>${Math.round(st.correct / st.total * 100)}%</b> accuracy · streak <b>${st.streak}</b>${st.streak >= 2 ? ' 🔥' : ''}`
+    : 'Press <b>Question</b> to hear the rhythm, then rebuild it from the answer bank.';
+}
+
+function populateTsSelect() {
+  const list = tsListFor(S.settings.type);
+  if (S.settings.lock !== 'random' && !list.includes(S.settings.lock)) S.settings.lock = 'random';
+  els.tsSelect.innerHTML = `<option value="random">Random</option>` + list.map(t => `<option value="${t}">${t} only</option>`).join('');
+  els.tsSelect.value = S.settings.lock;
+}
+
+// ---------- challenge ----------
+function startChallenge() {
+  Engine.stop();
+  closeModal();
+  const meters = pickChallengeMeters();
+  S.mode = 'challenge';
+  S.ch = {
+    rhythms: meters.map(t => generateRhythm(t, CONFIG.challengeMeasures)),
+    answers: [], idx: 0,
+    plays: meters.map(() => CONFIG.challengePlays),
+    start: Date.now(), end: null, submitted: false, timer: 0,
+  };
+  S.ch.timer = setInterval(updateTimer, 500);
+  updateTimer();
+  showView('play');
+  loadQuestion(S.ch.rhythms[0]);
+  window.scrollTo({ top: 0 });
+}
+
+function updateTimer() {
+  if (!S.ch) return;
+  els.cbTimer.textContent = `⏱ ${fmtTime(((S.ch.end || Date.now()) - S.ch.start) / 1000)}`;
+}
+
+function quitChallenge() {
+  openModal(`<h3>Quit the challenge?</h3><p>Your progress won't be scored or saved.</p>
+    <div class="modal-actions"><button class="btn" data-close type="button">Keep going</button><button class="btn btn-danger" id="confirmQuit" type="button">Quit challenge</button></div>`);
+  $('#confirmQuit').onclick = () => { closeModal(); endChallengeTimer(); S.ch = null; S.mode = 'practice'; newPracticeRhythm(); };
+}
+
+function endChallengeTimer() { if (S.ch) clearInterval(S.ch.timer); }
+
+function finishChallenge() {
+  const ch = S.ch;
+  ch.end = Date.now();
+  endChallengeTimer();
+  let correct = 0, total = 0;
+  ch.results = ch.rhythms.map((r, i) => {
+    const a = ch.answers[i];
+    const c = a.filter((id, k) => id === r.cells[k]).length;
+    correct += c; total += a.length;
+    return { c, n: a.length };
+  });
+  ch.correct = correct;
+  ch.total = total;
+  ch.score = Math.round(correct / total * 1000) / 10;
+  ch.timeSec = Math.max(1, Math.round((ch.end - ch.start) / 1000));
+  S.mode = 'end';
+  S.q = null;
+  showEndScreen();
+}
+
+let reviewMounts = [];
+function showEndScreen() {
+  const ch = S.ch;
+  showView('end');
+  els.endScore.textContent = `${ch.score}%`;
+  els.endDetail.textContent = `${ch.correct} of ${ch.total} slots correct · ${fmtTime(ch.timeSec)}`;
+  els.submitForm.hidden = false;
+  els.boardArea.hidden = true;
+  els.boardArea.innerHTML = '';
+  els.formError.textContent = '';
+  els.submitBtn.disabled = false;
+  els.testModeNote.hidden = Board.remote;
+
+  reviewMounts.forEach(destroyMount);
+  reviewMounts = [];
+  els.review.innerHTML = ch.rhythms.map((r, i) => {
+    const res = ch.results[i];
+    return `<div class="review-item">
+      <div class="ri-head"><b>Rhythm ${i + 1}</b><span class="ts-badge">${r.ts}</span>
+        <span class="ri-score ${res.c === res.n ? 'perfect' : ''}">${res.c}/${res.n} correct${res.c === res.n ? ' ✓' : ''}</span>
+        <button class="btn btn-sm btn-q" type="button" data-play="q" data-i="${i}">▶ Question</button>
+        <button class="btn btn-sm btn-a" type="button" data-play="a" data-i="${i}">▶ Your answer</button></div>
+      <div class="ri-label">Your answer</div><div class="staff" data-staff="a${i}"></div>
+      <div class="ri-label">Correct rhythm</div><div class="staff" data-staff="q${i}"></div>
+    </div>`;
+  }).join('');
+  ch.rhythms.forEach((r, i) => {
+    const a = ch.answers[i];
+    const mA = createMount(els.review.querySelector(`[data-staff="a${i}"]`), () => ({ ts: r.ts, measures: r.measures, cells: a, states: a.map((id, k) => id === r.cells[k] ? 'correct' : 'wrong'), label: 'Your answer' }));
+    const mQ = createMount(els.review.querySelector(`[data-staff="q${i}"]`), () => ({ ts: r.ts, measures: r.measures, cells: r.cells, label: 'Correct rhythm' }));
+    reviewMounts.push(mA, mQ);
+    renderMount(mA); renderMount(mQ);
+  });
+  window.scrollTo({ top: 0 });
+}
+
+function showView(which) {
+  els.playView.hidden = which !== 'play';
+  els.endScreen.hidden = which !== 'end';
+  els.actionbar.hidden = which !== 'play';
+  if (which !== 'end') { reviewMounts.forEach(destroyMount); reviewMounts = []; }
+}
+
+/* =====================================================================
+   6. LEADERBOARD STORAGE
+   Supabase (shared class leaderboard) or localStorage (testing).
+   ===================================================================== */
+const rankSort = (a, b) => (b.score - a.score) || (a.timeSec - b.timeSec) || String(a.date).localeCompare(String(b.date));
+const publicEntry = e => ({ id: e.id, name: e.name, score: e.score, correct: e.correct, total: e.total, timeSec: e.timeSec, date: e.date });
+function summarize(all, id) {
+  const sorted = [...all].sort(rankSort);
+  return { top: sorted.slice(0, 10).map(publicEntry), rank: id ? sorted.findIndex(e => e.id === id) + 1 : null, count: sorted.length, id };
+}
+
+// Supabase REST API (no library needed). The publishable/anon key is meant to be public;
+// the database rules in supabase-setup.sql decide what visitors can do.
+const supabaseOn = /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(SUPABASE.url) && !!SUPABASE.key;
+async function sb(path, { method = 'GET', body, prefer } = {}) {
+  const headers = { apikey: SUPABASE.key, 'Content-Type': 'application/json' };
+  if (SUPABASE.key.startsWith('eyJ')) headers.Authorization = `Bearer ${SUPABASE.key}`; // legacy anon key
+  if (prefer) headers.Prefer = prefer;
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(SUPABASE.url.replace(/\/$/, '') + '/rest/v1/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: ctrl.signal });
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.hint)) || `Server error ${res.status}`);
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('The leaderboard took too long to answer.');
+    throw err;
+  } finally { clearTimeout(timer); }
+}
+const fromRow = r => ({ id: r.id, name: r.name, score: Number(r.score), correct: r.correct, total: r.total, timeSec: r.time_sec, date: r.created_at, email: '' });
+const COLS = 'id,name,score,correct,total,time_sec,created_at';
+
+const SupabaseBoard = {
+  remote: true,
+  async all() { return (await sb(`rhythm_scores?select=${COLS}&order=score.desc,time_sec.asc,created_at.asc&limit=2000`)).map(fromRow); },
+  async submit(entry) {
+    const rows = await sb(`rhythm_scores?select=${COLS}`, { method: 'POST', prefer: 'return=representation', body: { name: entry.name, correct: entry.correct, total: entry.total, time_sec: entry.timeSec } });
+    return summarize(await this.all(), rows[0].id);
+  },
+  async get() { return summarize(await this.all(), null); },
+  async teacherList(pin) { return (await sb('rpc/teacher_list', { method: 'POST', body: { pin: String(pin) } })).map(fromRow); },
+  async teacherDelete(pin, id) { await sb('rpc/teacher_delete', { method: 'POST', body: { pin: String(pin), score_id: id } }); return this.teacherList(pin); },
+  async teacherReset(pin) { await sb('rpc/teacher_reset', { method: 'POST', body: { pin: String(pin) } }); return []; },
+};
+
+const LocalBoard = {
+  remote: false,
+  key: 'rdt_leaderboard_v1',
+  read() { try { return JSON.parse(store.get(this.key) || '[]'); } catch (e) { return []; } },
+  write(all) { store.set(this.key, JSON.stringify(all)); },
+  checkPin(pin) { if (String(pin) !== CONFIG.localTeacherPin) throw new Error('Wrong PIN.'); },
+  async submit(entry) {
+    const all = this.read();
+    const e = { ...entry, score: Math.round(entry.correct / entry.total * 1000) / 10, id: Math.random().toString(36).slice(2, 10), date: new Date().toISOString(), email: '' };
+    all.push(e);
+    this.write(all);
+    return summarize(all, e.id);
+  },
+  async get() { return summarize(this.read(), null); },
+  async teacherList(pin) { this.checkPin(pin); return this.read().sort(rankSort); },
+  async teacherDelete(pin, id) { this.checkPin(pin); this.write(this.read().filter(e => e.id !== id)); return this.teacherList(pin); },
+  async teacherReset(pin) { this.checkPin(pin); this.write([]); return []; },
+};
+
+const Board = supabaseOn ? SupabaseBoard : LocalBoard;
+const errMsg = err => (err && err.message ? err.message : String(err || 'Something went wrong.')).replace(/^Error:\s*/, '').replace(/^Exception:\s*/, '');
+const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
+
+function renderBoard(res) {
+  const me = res.id;
+  let note = '';
+  if (me && res.rank) {
+    note = res.rank <= 10
+      ? `<p class="rank-note">You're <b>#${res.rank}</b> on the leaderboard! 🎉</p>`
+      : `<p class="rank-note">You placed <b>#${res.rank}</b> of ${res.count}. Keep practicing to crack the top 10!</p>`;
+  }
+  const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
+  els.boardArea.innerHTML = note + (res.top.length
+    ? `<table class="board"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Time</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`
+    : '<p class="muted">No scores yet. Be the first!</p>');
+  els.boardArea.hidden = false;
+}
+
+async function submitScore(e) {
+  e.preventDefault();
+  const ch = S.ch;
+  if (!ch || ch.submitted) return;
+  const first = els.fname.value.trim().replace(/\s+/g, ' ');
+  const initial = els.linit.value.trim().toUpperCase();
+  if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{0,14}$/.test(first)) { els.formError.textContent = 'Enter your first name (letters only).'; els.fname.focus(); return; }
+  if (!/^[A-Z]$/.test(initial)) { els.formError.textContent = 'Enter the first letter of your last name.'; els.linit.focus(); return; }
+  const name = `${first.charAt(0).toUpperCase()}${first.slice(1)} ${initial}.`;
+  els.formError.textContent = '';
+  els.submitBtn.disabled = true;
+  els.submitBtn.textContent = 'Submitting…';
+  try {
+    const res = await Board.submit({ name, correct: ch.correct, total: ch.total, timeSec: ch.timeSec });
+    ch.submitted = true;
+    els.submitForm.hidden = true;
+    renderBoard(res);
+  } catch (err) {
+    els.formError.textContent = `Couldn't reach the leaderboard: ${errMsg(err)} Try again.`;
+    els.submitBtn.disabled = false;
+  } finally {
+    els.submitBtn.textContent = 'Submit to Leaderboard';
+  }
+}
+
+async function viewBoardOnly() {
+  els.formError.textContent = '';
+  try { renderBoard(await Board.get()); }
+  catch (err) { els.formError.textContent = `Couldn't load the leaderboard: ${errMsg(err)}`; }
+}
+
+// ---------- teacher panel ----------
+function teacherLogin() {
+  openModal(`<h3>Teacher</h3><p class="muted">Enter your PIN to view or reset the leaderboard.</p>
+    <form id="pinForm"><label>PIN<input type="password" inputmode="numeric" id="pinInput" autocomplete="off"></label>
+    <div class="form-error" id="pinErr"></div>
+    <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-primary" type="submit">Open</button></div></form>`);
+  $('#pinForm').onsubmit = async e => {
+    e.preventDefault();
+    const pin = $('#pinInput').value;
+    try { teacherPanel(pin, await Board.teacherList(pin)); }
+    catch (err) { $('#pinErr').textContent = errMsg(err); }
+  };
+}
+
+function teacherPanel(pin, list) {
+  const hasEmail = list.some(e => e.email);
+  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>${hasEmail ? `<td class="muted">${esc(e.email)}</td>` : ''}<td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
+    <td><button class="btn btn-sm" type="button" data-del="${esc(e.id)}">Delete</button></td></tr>`).join('');
+  openModal(`<h3>Leaderboard: all scores (${list.length})</h3>
+    ${Board.remote ? '' : '<p class="testmode">Test mode: these scores are only in this browser.</p>'}
+    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th>${hasEmail ? '<th>Account</th>' : ''}<th>Score</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No scores yet.</p>'}
+    <div class="form-error" id="tErr"></div>
+    <div class="modal-actions" id="tActions"><button class="btn btn-danger" type="button" id="resetBtn" ${list.length ? '' : 'disabled'}>Reset leaderboard</button><button class="btn" type="button" data-close>Close</button></div>`, true);
+  els.modalBox.querySelectorAll('[data-del]').forEach(b => {
+    b.onclick = async () => {
+      b.disabled = true;
+      try { teacherPanel(pin, await Board.teacherDelete(pin, b.dataset.del)); }
+      catch (err) { $('#tErr').textContent = errMsg(err); b.disabled = false; }
+    };
+  });
+  const reset = $('#resetBtn');
+  if (reset) reset.onclick = () => {
+    $('#tActions').innerHTML = `<span style="margin-right:auto;font-weight:650">Delete all ${list.length} scores? This can't be undone.</span>
+      <button class="btn" type="button" id="resetNo">Cancel</button><button class="btn btn-danger" type="button" id="resetYes">Yes, reset</button>`;
+    $('#resetNo').onclick = () => teacherPanel(pin, list);
+    $('#resetYes').onclick = async () => {
+      try { teacherPanel(pin, await Board.teacherReset(pin)); toast('Leaderboard reset.'); }
+      catch (err) { $('#tErr').textContent = errMsg(err); }
+    };
+  };
+}
+
+// ---------- modal & toast ----------
+let lastFocus = null;
+function openModal(html, wide) {
+  lastFocus = document.activeElement;
+  els.modalBox.className = 'modal-box' + (wide ? ' wide' : '');
+  els.modalBox.innerHTML = html;
+  els.modal.hidden = false;
+  setTimeout(() => { const f = els.modalBox.querySelector('input,button:not([data-close])') || els.modalBox.querySelector('button'); if (f) f.focus(); }, 30);
+}
+function closeModal() {
+  if (els.modal.hidden) return;
+  els.modal.hidden = true;
+  els.modalBox.innerHTML = '';
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+els.modal.addEventListener('click', e => { if (e.target === els.modal || e.target.closest('[data-close]')) closeModal(); });
+
+let toastTimer = 0;
+function toast(msg, ms = 2600) {
+  els.toast.textContent = msg;
+  els.toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { els.toast.hidden = true; }, ms);
+}
+
+// ---------- events ----------
+els.staff.addEventListener('click', e => {
+  const g = e.target.closest('.slot');
+  if (g) selectSlot(+g.dataset.slot);
+});
+els.bank.addEventListener('click', e => {
+  const b = e.target.closest('.cell-btn');
+  if (!b) return;
+  pickCell(b.dataset.id);
+  b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
+});
+els.playQBtn.onclick = playQuestion;
+els.playABtn.onclick = playAnswer;
+els.stopBtn.onclick = () => Engine.stop();
+els.checkBtn.onclick = onCheck;
+els.deleteBtn.onclick = deleteSlot;
+els.clearBtn.onclick = clearAll;
+$('#challengeBtn').onclick = () => {
+  if (S.mode === 'challenge') { toast('You are already in a challenge.'); return; }
+  startChallenge();
+};
+$('#quitBtn').onclick = quitChallenge;
+$('#againBtn').onclick = startChallenge;
+$('#backBtn').onclick = () => { Engine.stop(); S.ch = null; S.mode = 'practice'; showView('play'); newPracticeRhythm(); };
+$('#teacherBtn').onclick = teacherLogin;
+els.submitForm.addEventListener('submit', submitScore);
+$('#viewBoardBtn').onclick = viewBoardOnly;
+els.linit.addEventListener('input', () => { els.linit.value = els.linit.value.replace(/[^A-Za-z]/g, '').toUpperCase(); });
+els.fname.addEventListener('keydown', e => { if (e.key === 'Enter' && !els.linit.value) { e.preventDefault(); els.linit.focus(); } });
+
+els.review.addEventListener('click', e => {
+  const b = e.target.closest('[data-play]');
+  if (!b) return;
+  const i = +b.dataset.i, ch = S.ch, r = ch.rhythms[i];
+  const mount = reviewMounts[i * 2 + (b.dataset.play === 'q' ? 1 : 0)];
+  startPlayback(r, b.dataset.play === 'q' ? r.cells : ch.answers[i], b.dataset.play === 'q' ? 'question' : 'answer', mount, true, false);
+});
+
+els.typeSeg.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.dataset.v === S.settings.type) return;
+  S.settings.type = b.dataset.v;
+  S.settings.lock = 'random';
+  populateTsSelect(); saveSettings(); newPracticeRhythm();
+});
+els.lenSeg.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || +b.dataset.v === S.settings.measures) return;
+  S.settings.measures = +b.dataset.v;
+  saveSettings(); newPracticeRhythm();
+});
+els.tsSelect.addEventListener('change', () => { S.settings.lock = els.tsSelect.value; saveSettings(); newPracticeRhythm(); });
+els.tempo.addEventListener('input', () => { S.settings.tempo = +els.tempo.value; saveSettings(); updateUI(); });
+els.metro.addEventListener('change', () => { S.settings.metronome = els.metro.checked; saveSettings(); updateUI(); });
+els.settingsToggle.addEventListener('click', () => {
+  const open = els.controls.classList.toggle('open');
+  els.settingsToggle.setAttribute('aria-expanded', String(open));
+  updateUI();
+});
+
+let spaceHandled = false;
+document.addEventListener('keydown', e => {
+  if (!els.modal.hidden) { if (e.key === 'Escape') closeModal(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if (S.mode === 'end') { if (e.key === 'Escape') Engine.stop(); return; }
+  const k = e.key;
+  if (k === ' ') { e.preventDefault(); spaceHandled = true; if (!e.repeat) playQuestion(); }
+  else if (k === 'a' || k === 'A') { e.preventDefault(); if (!e.repeat) playAnswer(); }
+  else if (k === 'Escape') { if (Engine.isPlaying) Engine.stop(); else if (S.selected != null) selectSlot(S.selected); }
+  else if (k === 'Enter') { e.preventDefault(); if (!e.repeat && !els.checkBtn.disabled) onCheck(); }
+  else if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); deleteSlot(); }
+  else if (k === 'ArrowRight') { e.preventDefault(); moveSelection(1); }
+  else if (k === 'ArrowLeft') { e.preventDefault(); moveSelection(-1); }
+  else if (/^[1-9]$/.test(k) && S.q) {
+    const cell = BANKS[TIME_SIGS[S.q.ts].bank].cells[+k - 1];
+    if (cell) { e.preventDefault(); const b = els.bank.querySelector(`[data-id="${cell.id}"]`); pickCell(cell.id); if (b) { b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); } }
+  }
+});
+document.addEventListener('keyup', e => { if (e.key === ' ' && spaceHandled) { e.preventDefault(); spaceHandled = false; } });
+document.addEventListener('visibilitychange', () => { if (document.hidden) Engine.stop(); else Engine.resumeIfNeeded(); });
+
+/* ---------- self-test (open with ?selftest to expose it) ---------- */
+function selfTest() {
+  const out = { dataErrors: validateData(), generatorProblems: {}, challengeProblems: 0, sameTiming: null, partialAnswerClicks: null };
+  for (const tsId of Object.keys(TIME_SIGS)) for (const m of [2, 4]) {
+    const ts = TIME_SIGS[tsId], n = m * slotsPerMeasure(ts);
+    let bad = 0;
+    for (let k = 0; k < 400; k++) {
+      const r = generateRhythm(tsId, m);
+      if (r.cells.length !== n) bad++;
+      if (sum(r.cells.map(id => sum(CELLS[id].notes))) !== m * ts.measureUnits) bad++;
+      if (r.cells.some(id => CELLS[id].bank !== ts.bank)) bad++;
+      if (!CELLS[r.cells[n - 1]].ending) bad++;
+      for (let i = 2; i < n; i++) if (r.cells[i] === r.cells[i - 1] && r.cells[i] === r.cells[i - 2]) bad++;
+      if (new Set(r.cells).size < 2) bad++;
+    }
+    out.generatorProblems[`${tsId} x${m}`] = bad;
+  }
+  for (let k = 0; k < 400; k++) {
+    const p = pickChallengeMeters();
+    const simple = p.filter(t => TIME_SIGS[t].type === 'simple').length;
+    if (p.length !== 5 || simple < 2 || 5 - simple < 2 || Object.keys(TIME_SIGS).some(t => p.filter(x => x === t).length > 2)) out.challengeProblems++;
+  }
+  const r = generateRhythm('12/8', 4);
+  const qs = buildSchedule(r, r.cells, 'question', 72, false), as = buildSchedule(r, r.cells, 'answer', 72, false);
+  out.sameTiming = JSON.stringify(qs.notes) === JSON.stringify(as.notes) && qs.total === as.total && qs.countIn === as.countIn;
+  const partial = r.cells.map((c, i) => (i % 2 ? null : c));
+  const ps = buildSchedule(r, partial, 'answer', 72, false);
+  out.partialAnswerClicks = ps.events.filter(e => e.kind === 'click').length; // count-in (4) + 2 beats per empty slot (4 slots x 2)
+  out.partialNotesOnlyInFilledSlots = ps.notes.every(n => partial[n.slot]);
+  return out;
+}
+
+/* ---------- start ---------- */
+const dataErrors = validateData();
+if (dataErrors.length) {
+  const box = $('#dataError');
+  box.hidden = false;
+  box.textContent = 'Answer bank problem: ' + dataErrors.join('; ');
+  console.error(dataErrors);
+}
+loadSettings();
+populateTsSelect();
+els.modeNote.textContent = Board.remote ? '' : 'Test mode (scores saved in this browser only) ·';
+showView('play');
+newPracticeRhythm();
+if (/[?&]selftest/.test(location.search)) window.RDT = { selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+})();
+</script>
+</body>
+</html>
