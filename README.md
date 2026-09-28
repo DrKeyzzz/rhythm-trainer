@@ -1,6 +1,6 @@
 # Rhythm Dictation Trainer
 
-A rhythmic dictation trainer for AP Music Theory. Students listen to a rhythm, then rebuild it from an answer bank of half-measure (or one-beat) rhythms. It works on Chromebooks and on iPhones in Safari.
+A rhythmic dictation trainer for music students. Students listen to a rhythm, then rebuild it from an answer bank of half-measure (or one-beat) rhythms. It works on Chromebooks and on iPhones in Safari.
 
 **Play:** https://drkeyzzz.github.io/rhythm-trainer/
 
