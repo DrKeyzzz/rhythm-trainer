@@ -11,7 +11,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - **Hard:** everything in Easy, plus syncopations (eighth-quarter-eighth, rest-quarter-eighth), dotted eighth-sixteenth and sixteenth-eighth-sixteenth figures, off-beat eighths, and eighth rests before sixteenths. Every Hard rhythm includes several of these harder pieces.
 
 **Practice mode**
-- Choose Easy or Hard, Simple meter (2/4, 3/4, 4/4) or Compound meter (6/8, 9/8, 12/8), and 2 or 4 measures. You can also lock one time signature.
+- Choose Easy or Hard, Simple meter (2/4, 3/4, 4/4) or Compound meter (6/8, 9/8, 12/8), and 2 measures (the default) or 4 measures for extra challenge. You can also lock one time signature.
 - **Question** plays the rhythm after a one-measure count-in.
 - **My Answer** plays what the student has built so far, including a partial answer, in a different sound.
 - Tap a rhythm in the answer bank to fill the outlined slot. Tap a filled slot to select it; the next bank tap replaces it, or **Delete** empties it.
@@ -23,7 +23,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 
 **Challenge Mode**
 - Students pick an **Easy** or **Hard** challenge.
-- 5 rhythms, each 4 measures long, mixing simple and compound meters.
+- 5 rhythms, each 2 measures long, mixing simple and compound meters.
 - Up to 4 plays of each question; **My Answer** is unlimited.
 - Tempo is fixed at 72 so scores compare fairly.
 - The leaderboard only appears after all 5 rhythms are finished. Easy and Hard have separate leaderboards.

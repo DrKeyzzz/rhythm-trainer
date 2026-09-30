@@ -409,7 +409,7 @@ const CONFIG = {
   defaultTempo: 72,
   challengeTempo: 72,        // fixed tempo so leaderboard scores are fair
   challengeRhythms: 5,
-  challengeMeasures: 4,
+  challengeMeasures: 2,
   challengePlays: 4,         // max plays of the question per challenge rhythm
   localTeacherPin: '2468',   // only used in test mode; the real PIN is set in supabase-setup.sql
 };
@@ -1271,7 +1271,7 @@ function populateTsSelect() {
 // ---------- challenge ----------
 function chooseChallenge() {
   openModal(`<h3>🏆 Challenge Mode</h3>
-    <p class="muted">5 rhythms, 4 measures each, mixing simple and compound meters. You get ${CONFIG.challengePlays} plays of each question. Pick your level:</p>
+    <p class="muted">${CONFIG.challengeRhythms} rhythms, ${CONFIG.challengeMeasures} measures each, mixing simple and compound meters. You get ${CONFIG.challengePlays} plays of each question. Pick your level:</p>
     <div class="level-pick">
       <button class="btn level-btn" type="button" data-level="easy"><b>Easy</b><span>Quarters, eighths, basic sixteenths, eighth rests</span></button>
       <button class="btn level-btn" type="button" data-level="hard"><b>Hard</b><span>Adds syncopation, dotted-sixteenth figures, off-beat rests</span></button>
