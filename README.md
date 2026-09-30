@@ -79,3 +79,12 @@ All rhythms live in `const BANKS` near the top of the script in `index.html`. Ea
 | 12 | dotted half |
 
 Each rhythm's durations must add up to that bank's slot size. If one doesn't, the app shows a warning at the top of the page.
+
+## Radio Delay (bonus tool)
+
+`radio-delay/` is a separate page that delays a live radio broadcast so it lines up with a game on streaming TV: https://drkeyzzz.github.io/rhythm-trainer/radio-delay/
+
+- **Sources:** another browser tab (Chrome/Edge, with "Also share tab audio"), a direct stream link, or the microphone / a line-in cable (works on iPhone).
+- **Delay:** 0 to 5 minutes, with ±0.2 / 1 / 5 second nudges and a slider. The delay is saved between visits.
+- **Sync helper:** tap "Heard it" at a moment on the radio, then "Saw it" at the same moment on TV, and it adds the gap.
+- **Pause radio:** holds the radio while you pause the TV and picks up where it left off.
