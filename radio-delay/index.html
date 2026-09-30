@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radio Delay</title>
+<meta name="description" content="Delay a live radio broadcast so it lines up with the game on TV.">
+<style>
+[hidden]{display:none!important}
+:root{
+  --bg:#f3f4f8; --surface:#fff; --surface-2:#eceef4; --text:#141824; --muted:#5d6477; --border:#d8dce6;
+  --accent:#1d66d6; --accent-soft:#e2ecfd; --ok:#17864a; --ok-soft:#dcf2e5; --warn:#b36b00; --warn-soft:#fff1d6;
+  --bad:#cc3434; --radio:#c2530f; --radio-soft:#fcebdf; --tv:#5a48d8; --tv-soft:#ebe8fc;
+  --shadow:0 1px 2px rgba(16,20,36,.05),0 6px 20px rgba(16,20,36,.06);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1016; --surface:#171a23; --surface-2:#232735; --text:#eceef4; --muted:#9ba2b4; --border:#2e3344;
+    --accent:#6ea6ff; --accent-soft:#162642; --ok:#46d18a; --ok-soft:#12301f; --warn:#f5b74a; --warn-soft:#3a2c12;
+    --bad:#ff7a7a; --radio:#ff9a5a; --radio-soft:#3a2415; --tv:#9a8fff; --tv-soft:#29244d;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1016; --surface:#171a23; --surface-2:#232735; --text:#eceef4; --muted:#9ba2b4; --border:#2e3344;
+  --accent:#6ea6ff; --accent-soft:#162642; --ok:#46d18a; --ok-soft:#12301f; --warn:#f5b74a; --warn-soft:#3a2c12;
+  --bad:#ff7a7a; --radio:#ff9a5a; --radio-soft:#3a2415; --tv:#9a8fff; --tv-soft:#29244d;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{max-width:560px;margin:0 auto;padding:14px 16px 32px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+h2{font-size:15px;margin:0 0 10px}
+.sub{color:var(--muted);margin:2px 0 14px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.btn{appearance:none;-webkit-appearance:none;border:1px solid var(--border);background:var(--surface);font-weight:650;border-radius:12px;padding:9px 14px;min-height:46px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;user-select:none;-webkit-user-select:none;transition:transform .06s}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.stop{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.wide{width:100%}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface-2);padding:4px;border-radius:12px;margin-bottom:12px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:8px 4px;font-weight:600;font-size:14px;cursor:pointer;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:var(--shadow);color:var(--accent)}
+.help{font-size:14px;color:var(--muted);margin:0 0 12px}
+.help ol{margin:6px 0 0;padding-left:20px}
+input[type=url]{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);margin-bottom:12px}
+.status{font-size:14px;margin-top:10px;min-height:20px}
+.status.err{color:var(--bad)} .status.ok{color:var(--ok)}
+.big{text-align:center;padding:4px 0 8px}
+.big .num{font-size:64px;font-weight:750;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.big .unit{font-size:22px;font-weight:600;color:var(--muted);margin-left:4px}
+.pill{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;margin-top:8px;background:var(--surface-2);color:var(--muted)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
+.nudges{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0}
+.nudges .btn{padding:6px 2px;font-size:14px;min-height:44px}
+input[type=range]{width:100%;accent-color:var(--accent);margin:6px 0}
+.row{display:flex;gap:8px;align-items:center}
+.row > *{flex:1}
+.sync{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sync .btn{min-height:84px;flex-direction:column;gap:2px;font-size:16px}
+.sync .btn small{font-weight:500;font-size:12px;opacity:.85}
+.sync .radio{background:var(--radio-soft);border-color:var(--radio);color:var(--radio)}
+.sync .tv{background:var(--tv-soft);border-color:var(--tv);color:var(--tv)}
+.sync .btn.armed{outline:3px solid currentColor;outline-offset:2px}
+label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-top:6px}
+ul.tips{margin:0;padding-left:18px;font-size:14px;color:var(--muted)}
+ul.tips li{margin:4px 0}
+.back{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Radio Delay</h1>
+  <p class="sub">Hold back the radio call so it lines up with the game on TV.</p>
+
+  <!-- 1. Source -->
+  <section class="card" id="sourceCard">
+    <h2>1. Where's the radio coming from?</h2>
+    <div class="seg" role="group" aria-label="Radio source">
+      <button type="button" data-src="tab" id="srcTab">Browser tab</button>
+      <button type="button" data-src="url">Stream link</button>
+      <button type="button" data-src="mic">Mic / cable</button>
+    </div>
+
+    <div class="help" data-help="tab">
+      Best option on a computer or Chromebook (Chrome or Edge).
+      <ol>
+        <li>Open the radio broadcast in another tab and start it playing.</li>
+        <li>Press <b>Start</b>, choose that tab, and make sure <b>“Also share tab audio”</b> is on.</li>
+        <li>The original tab goes quiet and you'll hear it here, delayed.</li>
+      </ol>
+    </div>
+    <div class="help" data-help="url">
+      Paste a station's direct stream link (usually ends in .mp3, .aac or /stream). Some stations block this; if so, use Browser tab or Mic / cable.
+    </div>
+    <input type="url" id="streamUrl" data-help="url" placeholder="https://…/stream.mp3" autocomplete="off" spellcheck="false">
+    <div class="help" data-help="mic">
+      Works on any device, including iPhone. Best: run a headphone cable from the phone playing the radio app into this device's mic/line-in jack. Or set the radio phone right next to this device's mic and play the delayed audio through headphones or a Bluetooth speaker so it doesn't echo back in.
+    </div>
+
+    <button type="button" class="btn primary wide" id="startBtn">Start</button>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- 2. Delay -->
+  <section class="card">
+    <h2>2. Set the delay</h2>
+    <div class="big">
+      <div><span class="num" id="delayNum">0.0</span><span class="unit">sec</span></div>
+      <span class="pill" id="bufPill">Not running</span>
+    </div>
+    <div class="nudges">
+      <button type="button" class="btn" data-nudge="-5">−5</button>
+      <button type="button" class="btn" data-nudge="-1">−1</button>
+      <button type="button" class="btn" data-nudge="-0.2">−.2</button>
+      <button type="button" class="btn" data-nudge="0.2">+.2</button>
+      <button type="button" class="btn" data-nudge="1">+1</button>
+      <button type="button" class="btn" data-nudge="5">+5</button>
+    </div>
+    <input type="range" id="delaySlider" min="0" max="300" step="0.1" value="0" aria-label="Delay in seconds">
+    <div class="row" style="margin-top:6px">
+      <button type="button" class="btn" id="pauseBtn">Pause radio</button>
+    </div>
+    <p class="small muted" style="margin:8px 0 0">Radio still ahead? Add seconds. Radio now behind the TV? Take some away. Pausing the TV? Pause the radio too and it picks up right where it stopped.</p>
+  </section>
+
+  <!-- 3. Sync helper -->
+  <section class="card">
+    <h2>3. Or let it measure for you</h2>
+    <p class="help">Pick a clear moment, like a pitch or the crack of the bat. Tap the orange button the instant you <b>hear</b> it on the radio, then the purple button the instant you <b>see</b> it on TV. Either order works. Repeat a few times to fine-tune.</p>
+    <div class="sync">
+      <button type="button" class="btn radio" id="tapRadio">Heard it<small>on the radio</small></button>
+      <button type="button" class="btn tv" id="tapTv">Saw it<small>on TV</small></button>
+    </div>
+    <div class="status" id="syncStatus" aria-live="polite"></div>
+  </section>
+
+  <!-- Volume -->
+  <section class="card">
+    <label class="lbl" for="vol">Volume</label>
+    <input type="range" id="vol" min="0" max="1.5" step="0.01" value="1">
+  </section>
+
+  <section class="card">
+    <h2>Tips</h2>
+    <ul class="tips">
+      <li>Keep this page open and in front. The screen stays on while it's running.</li>
+      <li>Your delay is saved, so next game it starts where you left it.</li>
+      <li>It holds up to 5 minutes of audio. After you raise the delay, the radio goes quiet until enough has built up. The badge shows how long that will take.</li>
+      <li>Streaming TV often drifts a little over a game. Tap ±0.2 when the call and the picture drift apart.</li>
+    </ul>
+  </section>
+  <p class="back"><a href="../">← Rhythm Dictation Trainer</a></p>
+</div>
+
+<audio id="streamEl" crossorigin="anonymous" preload="none" hidden></audio>
+
+<script>
+(() => {
+  const MAX_DELAY = 300;
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('radioDelay.' + k); return v === null ? d : v; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('radioDelay.' + k, v); } catch {} }
+  };
+
+  let ctx = null, node = null, gain = null, srcNode = null, stream = null, wakeLock = null;
+  let running = false;
+  let delay = Math.min(MAX_DELAY, Math.max(0, parseFloat(store.get('delay', '0')) || 0));
+  let buffered = 0;
+  let volume = parseFloat(store.get('volume', '1')) || 1;
+  let source = store.get('source', navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia ? 'tab' : 'mic');
+  let pausedAt = null;
+  let tapRadioAt = null, tapTvAt = null;
+
+  const streamEl = $('streamEl');
+  $('streamUrl').value = store.get('url', '');
+  $('vol').value = volume;
+
+  // Hide the tab option where screen/tab capture isn't available (phones, Safari).
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)) {
+    $('srcTab').hidden = true;
+    document.querySelector('.seg').style.gridTemplateColumns = 'repeat(2,1fr)';
+    if (source === 'tab') source = 'mic';
+  }
+
+  function setStatus(msg, kind) {
+    const el = $('status');
+    el.textContent = msg || '';
+    el.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function renderSource() {
+    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.src === source)));
+    document.querySelectorAll('[data-help]').forEach(el => { el.hidden = el.dataset.help !== source; });
+    document.querySelectorAll('.seg button').forEach(b => { b.disabled = running; });
+    $('streamUrl').disabled = running;
+  }
+
+  function render() {
+    $('delayNum').textContent = delay.toFixed(1);
+    $('delaySlider').value = delay;
+    const pill = $('bufPill');
+    if (!running) { pill.textContent = 'Not running'; pill.className = 'pill'; }
+    else if (pausedAt !== null) {
+      pill.textContent = 'Paused ' + Math.floor((performance.now() - pausedAt) / 1000) + 's';
+      pill.className = 'pill warn';
+    } else if (buffered + 0.05 < delay) {
+      pill.textContent = 'Building up… radio starts in ' + Math.ceil(delay - buffered) + 's';
+      pill.className = 'pill warn';
+    } else { pill.textContent = 'Playing delayed'; pill.className = 'pill ok'; }
+    $('startBtn').textContent = running ? 'Stop' : 'Start';
+    $('startBtn').className = 'btn wide ' + (running ? 'stop' : 'primary');
+    $('pauseBtn').textContent = pausedAt !== null ? 'Resume radio' : 'Pause radio';
+    $('pauseBtn').disabled = !running;
+    $('tapRadio').classList.toggle('armed', tapRadioAt !== null);
+    $('tapTv').classList.toggle('armed', tapTvAt !== null);
+  }
+
+  function setDelay(v) {
+    delay = Math.round(Math.min(MAX_DELAY, Math.max(0, v)) * 10) / 10;
+    store.set('delay', String(delay));
+    if (node) node.port.postMessage({ delay });
+    render();
+  }
+
+  async function ensureContext() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      ctx = new AC({ latencyHint: 'playback' });
+      await ctx.audioWorklet.addModule('delay-worklet.js');
+    }
+    if (ctx.state !== 'running') await ctx.resume();
+  }
+
+  async function openSource() {
+    if (source === 'tab') {
+      const s = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: { suppressLocalAudioPlayback: true, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        selfBrowserSurface: 'exclude',
+        preferCurrentTab: false,
+        systemAudio: 'include'
+      });
+      if (!s.getAudioTracks().length) {
+        s.getTracks().forEach(t => t.stop());
+        throw new Error('No sound was shared. Try again and turn on “Also share tab audio”.');
+      }
+      s.getVideoTracks().forEach(t => t.stop()); // only the sound is needed
+      stream = s;
+      s.getAudioTracks()[0].addEventListener('ended', () => { stop(); setStatus('Tab sharing ended.'); });
+      return ctx.createMediaStreamSource(s);
+    }
+    if (source === 'mic') {
+      const s = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      });
+      stream = s;
+      return ctx.createMediaStreamSource(s);
+    }
+    // Stream link
+    const url = $('streamUrl').value.trim();
+    if (!/^https?:\/\//i.test(url)) throw new Error('Paste a stream link that starts with https://');
+    if (location.protocol === 'https:' && /^http:/i.test(url)) throw new Error('This page can only play https:// streams. Try the https version of the link, or use Browser tab.');
+    store.set('url', url);
+    // Route the element into the graph before it plays so nothing leaks out undelayed.
+    if (!srcNode) srcNode = ctx.createMediaElementSource(streamEl);
+    streamEl.src = url;
+    await new Promise((resolve, reject) => {
+      const ok = () => { cleanup(); resolve(); };
+      const bad = () => { cleanup(); reject(new Error('That station won’t let other sites play its stream. Use Browser tab or Mic / cable instead.')); };
+      const cleanup = () => { streamEl.removeEventListener('playing', ok); streamEl.removeEventListener('error', bad); };
+      streamEl.addEventListener('playing', ok);
+      streamEl.addEventListener('error', bad);
+      streamEl.play().catch(bad);
+    });
+    return srcNode;
+  }
+
+  async function start() {
+    setStatus('Starting…');
+    try {
+      await ensureContext();
+      const input = await openSource();
+      node = new AudioWorkletNode(ctx, 'radio-delay', {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
+        processorOptions: { maxSeconds: MAX_DELAY + 1 }
+      });
+      node.port.onmessage = (e) => { if (typeof e.data.buffered === 'number') { buffered = e.data.buffered; render(); } };
+      node.port.postMessage({ delay });
+      gain = ctx.createGain();
+      gain.gain.value = volume;
+      input.connect(node).connect(gain).connect(ctx.destination);
+      running = true;
+      buffered = 0;
+      pausedAt = null;
+      setStatus(delay > 0 ? 'Running. The radio will start once ' + delay.toFixed(1) + 's has built up.' : 'Running. Now raise the delay until the radio matches the TV.', 'ok');
+      requestWakeLock();
+    } catch (err) {
+      teardown();
+      const msg = err && err.name === 'NotAllowedError' ? 'Permission was blocked. Allow access and try again.' : (err && err.message) || String(err);
+      setStatus(msg, 'err');
+    }
+    renderSource(); render();
+  }
+
+  function teardown() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    if (!streamEl.paused || streamEl.src) { streamEl.pause(); streamEl.removeAttribute('src'); streamEl.load(); }
+    if (srcNode) { try { srcNode.disconnect(); } catch {} }
+    if (node) { try { node.disconnect(); } catch {} node.port.onmessage = null; node = null; }
+    if (gain) { try { gain.disconnect(); } catch {} gain = null; }
+    running = false;
+    pausedAt = null;
+    buffered = 0;
+    releaseWakeLock();
+  }
+
+  function stop() { teardown(); setStatus('Stopped.'); renderSource(); render(); }
+
+  function togglePause() {
+    if (!running || !gain) return;
+    const now = ctx.currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    if (pausedAt === null) {
+      pausedAt = performance.now();
+      gain.gain.linearRampToValueAtTime(0, now + 0.05);
+    } else {
+      // Recording kept going while paused, so push the playback point back by the pause length.
+      const elapsed = (performance.now() - pausedAt) / 1000;
+      pausedAt = null;
+      setDelay(delay + elapsed);
+      gain.gain.linearRampToValueAtTime(volume, now + 0.05);
+      if (delay >= MAX_DELAY) setStatus('Reached the 5 minute limit, so the radio skipped ahead a little.', 'err');
+    }
+    render();
+  }
+
+  function tap(which) {
+    const t = performance.now();
+    if (which === 'radio') tapRadioAt = t; else tapTvAt = t;
+    const s = $('syncStatus');
+    if (tapRadioAt !== null && tapTvAt !== null) {
+      const diff = (tapTvAt - tapRadioAt) / 1000; // positive: radio was ahead
+      tapRadioAt = tapTvAt = null;
+      if (Math.abs(diff) > 120) { s.textContent = 'Those taps were over 2 minutes apart. Try again.'; render(); return; }
+      setDelay(delay + diff);
+      s.textContent = (diff >= 0 ? 'Radio was ' + diff.toFixed(1) + 's ahead. Added it.' : 'Radio was ' + (-diff).toFixed(1) + 's behind. Took it off.') + ' New delay: ' + delay.toFixed(1) + 's.';
+    } else {
+      s.textContent = which === 'radio' ? 'Got it. Now tap “Saw it” when it happens on TV.' : 'Got it. Now tap “Heard it” when you hear it on the radio.';
+    }
+    render();
+  }
+
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+      }
+    } catch {}
+  }
+  function releaseWakeLock() { if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; } }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && running) {
+      requestWakeLock();
+      if (ctx && ctx.state !== 'running') ctx.resume();
+    }
+  });
+
+  // Wire up controls
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+    source = b.dataset.src; store.set('source', source); setStatus(''); renderSource();
+  }));
+  $('startBtn').addEventListener('click', () => running ? stop() : start());
+  document.querySelectorAll('[data-nudge]').forEach(b => b.addEventListener('click', () => setDelay(delay + parseFloat(b.dataset.nudge))));
+  $('delaySlider').addEventListener('input', (e) => setDelay(parseFloat(e.target.value)));
+  $('pauseBtn').addEventListener('click', togglePause);
+  $('tapRadio').addEventListener('click', () => tap('radio'));
+  $('tapTv').addEventListener('click', () => tap('tv'));
+  $('vol').addEventListener('input', (e) => {
+    volume = parseFloat(e.target.value);
+    store.set('volume', String(volume));
+    if (gain && pausedAt === null) gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.02);
+  });
+  setInterval(() => { if (pausedAt !== null) render(); }, 500);
+
+  renderSource();
+  render();
+})();
+</script>
+</body>
+</html>
