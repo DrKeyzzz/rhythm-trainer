@@ -6,7 +6,8 @@ class RadioDelayProcessor extends AudioWorkletProcessor {
     super();
     const maxSeconds = options.processorOptions.maxSeconds;
     this.size = Math.ceil(maxSeconds * sampleRate) + 256;
-    this.buf = new Float32Array(this.size); // mono is plenty for play-by-play
+    // Mono 16-bit keeps 10 minutes at 48 kHz under 60 MB, and is plenty for play-by-play.
+    this.buf = new Int16Array(this.size);
     this.w = 0;
     this.written = 0;
     this.delay = 0;
@@ -33,7 +34,7 @@ class RadioDelayProcessor extends AudioWorkletProcessor {
     if (d > this.written) return 0; // not recorded that far back yet
     let i = this.w - d;
     if (i < 0) i += this.size;
-    return this.buf[i];
+    return this.buf[i] / 32767;
   }
 
   process(inputs, outputs) {
@@ -44,7 +45,8 @@ class RadioDelayProcessor extends AudioWorkletProcessor {
     for (let s = 0; s < n; s++) {
       let v = 0;
       for (let c = 0; c < chans; c++) v += input[c][s];
-      this.buf[this.w] = chans ? v / chans : 0;
+      const m = chans ? v / chans : 0;
+      this.buf[this.w] = Math.max(-1, Math.min(1, m)) * 32767;
       this.written++;
 
       let out;

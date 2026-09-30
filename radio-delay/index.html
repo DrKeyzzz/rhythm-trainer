@@ -60,7 +60,7 @@ input[type=url]{width:100%;padding:11px 12px;border:1px solid var(--border);bord
 .big .unit{font-size:22px;font-weight:600;color:var(--muted);margin-left:4px}
 .pill{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;margin-top:8px;background:var(--surface-2);color:var(--muted)}
 .pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
-.nudges{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0}
+.nudges{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
 .nudges .btn{padding:6px 2px;font-size:14px;min-height:44px}
 input[type=range]{width:100%;accent-color:var(--accent);margin:6px 0}
 .row{display:flex;gap:8px;align-items:center}
@@ -116,17 +116,20 @@ ul.tips li{margin:4px 0}
     <h2>2. Set the delay</h2>
     <div class="big">
       <div><span class="num" id="delayNum">0.0</span><span class="unit">sec</span></div>
+      <div class="muted small" id="delayMin"></div>
       <span class="pill" id="bufPill">Not running</span>
     </div>
     <div class="nudges">
+      <button type="button" class="btn" data-nudge="-30">−30</button>
       <button type="button" class="btn" data-nudge="-5">−5</button>
       <button type="button" class="btn" data-nudge="-1">−1</button>
       <button type="button" class="btn" data-nudge="-0.2">−.2</button>
-      <button type="button" class="btn" data-nudge="0.2">+.2</button>
-      <button type="button" class="btn" data-nudge="1">+1</button>
+      <button type="button" class="btn" data-nudge="30">+30</button>
       <button type="button" class="btn" data-nudge="5">+5</button>
+      <button type="button" class="btn" data-nudge="1">+1</button>
+      <button type="button" class="btn" data-nudge="0.2">+.2</button>
     </div>
-    <input type="range" id="delaySlider" min="0" max="300" step="0.1" value="0" aria-label="Delay in seconds">
+    <input type="range" id="delaySlider" min="0" max="600" step="0.1" value="0" aria-label="Delay in seconds">
     <div class="row" style="margin-top:6px">
       <button type="button" class="btn" id="pauseBtn">Pause radio</button>
     </div>
@@ -155,7 +158,7 @@ ul.tips li{margin:4px 0}
     <ul class="tips">
       <li>Keep this page open and in front. The screen stays on while it's running.</li>
       <li>Your delay is saved, so next game it starts where you left it.</li>
-      <li>It holds up to 5 minutes of audio. After you raise the delay, the radio goes quiet until enough has built up. The badge shows how long that will take.</li>
+      <li>It holds up to 10 minutes of audio. After you raise the delay, the radio goes quiet until enough has built up. The badge shows how long that will take, so start it a few minutes before first pitch.</li>
       <li>Streaming TV often drifts a little over a game. Tap ±0.2 when the call and the picture drift apart.</li>
     </ul>
   </section>
@@ -166,7 +169,7 @@ ul.tips li{margin:4px 0}
 
 <script>
 (() => {
-  const MAX_DELAY = 300;
+  const MAX_DELAY = 600;
   const $ = (id) => document.getElementById(id);
   const store = {
     get(k, d) { try { const v = localStorage.getItem('radioDelay.' + k); return v === null ? d : v; } catch { return d; } },
@@ -208,6 +211,7 @@ ul.tips li{margin:4px 0}
 
   function render() {
     $('delayNum').textContent = delay.toFixed(1);
+    $('delayMin').textContent = delay >= 60 ? Math.floor(delay / 60) + ' min ' + (delay % 60).toFixed(1) + ' sec' : '';
     $('delaySlider').value = delay;
     const pill = $('bufPill');
     if (!running) { pill.textContent = 'Not running'; pill.className = 'pill'; }
@@ -341,7 +345,7 @@ ul.tips li{margin:4px 0}
       pausedAt = null;
       setDelay(delay + elapsed);
       gain.gain.linearRampToValueAtTime(volume, now + 0.05);
-      if (delay >= MAX_DELAY) setStatus('Reached the 5 minute limit, so the radio skipped ahead a little.', 'err');
+      if (delay >= MAX_DELAY) setStatus('Reached the 10 minute limit, so the radio skipped ahead a little.', 'err');
     }
     render();
   }
@@ -353,7 +357,7 @@ ul.tips li{margin:4px 0}
     if (tapRadioAt !== null && tapTvAt !== null) {
       const diff = (tapTvAt - tapRadioAt) / 1000; // positive: radio was ahead
       tapRadioAt = tapTvAt = null;
-      if (Math.abs(diff) > 120) { s.textContent = 'Those taps were over 2 minutes apart. Try again.'; render(); return; }
+      if (Math.abs(diff) > MAX_DELAY) { s.textContent = 'Those taps were over 10 minutes apart. Try again.'; render(); return; }
       setDelay(delay + diff);
       s.textContent = (diff >= 0 ? 'Radio was ' + diff.toFixed(1) + 's ahead. Added it.' : 'Radio was ' + (-diff).toFixed(1) + 's behind. Took it off.') + ' New delay: ' + delay.toFixed(1) + 's.';
     } else {
