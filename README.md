@@ -6,6 +6,12 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 
 ## How it works
 
+**Welcome screen**
+- The first time a student opens the app on a device, they enter their **first name, last initial and class code** (or check "I'm not in a class"). The app remembers them, so names fill in automatically on leaderboards and session reports.
+- **👤 Name · Class** at the bottom of the page lets them change class or **switch student** on a shared computer. Each student's session report is kept separately.
+
+**Leaderboards:** **Class** (only students with that class code) and **🌎 World** (everyone), each with Easy / Hard / Extreme tabs. After a challenge, students see their rank on both, like "#2 in Period 3 · #47 in the world."
+
 **Levels**
 - **Easy:** quarters, eighths, basic sixteenth patterns (four sixteenths, eighth-two sixteenths, two sixteenths-eighth), dotted quarter-eighth, and eighth rests on the beat or right after a note.
 - **Hard:** everything in Easy, plus syncopations (eighth-quarter-eighth, rest-quarter-eighth), dotted eighth-sixteenth and sixteenth-eighth-sixteenth figures, off-beat eighths, and eighth rests before sixteenths. Every Hard rhythm includes several of these harder pieces.
@@ -68,7 +74,9 @@ Use a Google account that's allowed to create Firebase projects. Many school acc
 
 These values are meant to be public. The rules only let visitors read the board and add a properly formed score. Only your Google account can delete scores.
 
-**Managing scores:** at the bottom of the practice screen, click **Teacher → Sign in with Google**. From there you can delete one entry (for example, an inappropriate name) or reset the whole leaderboard for a new marking period. You can also see every score in the Firebase console under **Firestore Database → rhythm_scores**.
+**Classes:** click **Teacher → Sign in with Google → My classes**, type a class name and click **Create class**. Each class gets a 5-character code (like `K7QMA`) to give students. Any teacher can sign in and make their own classes; they can only manage their own.
+
+**Managing scores:** **Teacher → Scores** shows each of your classes. You can delete one entry (for example, an inappropriate name) or reset a class for a new marking period. The admin email in `firestore.rules` (and `CONFIG.adminEmails` in `index.html`) can also manage the **World** board. You can see everything in the Firebase console under **Firestore Database**.
 
 **Free limits:** the free plan allows 50,000 reads and 20,000 new scores per day, far more than a school needs. It never pauses for inactivity.
 

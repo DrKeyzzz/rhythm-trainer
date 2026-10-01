@@ -264,6 +264,31 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .miss-info{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted)}
 .miss-info b{color:var(--bad);font-size:14px}
 @media (max-width:600px){.rp-cols{grid-template-columns:1fr}.bar-row{grid-template-columns:110px 1fr 44px}.bar-row small{display:none}}
+.welcome{position:fixed;inset:0;z-index:45;background:var(--bg);display:grid;place-items:center;padding:16px;overflow:auto}
+.welcome-card{width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:24px}
+.welcome-card h2{margin:12px 0 4px;font-size:22px}
+.welcome-card p{margin:0 0 14px}
+.welcome-card label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:650;color:var(--muted)}
+.welcome-card input:not([type=checkbox]){min-height:46px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;font-size:17px}
+.welcome-card .grow{flex:1}
+.welcome-card .initial{width:80px;text-align:center;text-transform:uppercase}
+.welcome-card #wCode{text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.welcome-card #wCode::placeholder{text-transform:none;letter-spacing:0;font-weight:400}
+.w-code{margin-top:12px}
+.w-solo{flex-direction:row!important;align-items:center;gap:8px!important;margin-top:10px;font-weight:600!important;min-height:44px}
+.w-solo input{width:20px;height:20px;accent-color:var(--accent-btn)}
+.w-go{width:100%;margin-top:6px;min-height:50px;font-size:16px}
+.welcome-logo{width:52px;height:52px;border-radius:14px}
+.welcome-logo svg{width:30px;height:30px}
+.who{color:var(--text);text-decoration:none;font-weight:650}
+.rp-who{margin:10px 0 0;font-size:18px;font-weight:700}
+.rp-who span{font-weight:500;color:var(--muted);font-size:15px}
+.board-scope{margin-bottom:8px}
+.code-pill{font:800 18px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:3px 10px}
+.t-tabs{margin:6px 0 12px}
+.t-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.t-row input,.t-row select{min-height:42px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:6px 10px;font-size:15px}
+.t-row input{flex:1;min-width:160px}
 .testmode{background:var(--play-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin:0 0 10px}
 
 /* ---------- modal & toast ---------- */
@@ -404,7 +429,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 
     <footer class="foot">
       <div id="statsLine"></div>
-      <div><span class="size-ctl" role="group" aria-label="Screen size"><span>Size</span><button type="button" id="zoomOut" title="Smaller" aria-label="Smaller">A−</button><button type="button" id="zoomReset" title="Back to automatic size">Auto</button><button type="button" id="zoomIn" title="Bigger" aria-label="Bigger">A+</button></span><span class="small" id="modeNote"></span> <button class="btn btn-sm" id="reportBtn" type="button">📋 Report Session</button> <button class="linkbtn" id="teacherBtn" type="button">Teacher</button></div>
+      <div><span class="size-ctl" role="group" aria-label="Screen size"><span>Size</span><button type="button" id="zoomOut" title="Smaller" aria-label="Smaller">A−</button><button type="button" id="zoomReset" title="Back to automatic size">Auto</button><button type="button" id="zoomIn" title="Bigger" aria-label="Bigger">A+</button></span><span class="small" id="modeNote"></span> <button class="linkbtn who" id="whoBtn" type="button" title="Switch student or class"></button> <button class="btn btn-sm" id="reportBtn" type="button">📋 Report Session</button> <button class="linkbtn" id="teacherBtn" type="button">Teacher</button></div>
     </footer>
   </div>
 
@@ -420,16 +445,14 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
     <section class="card" id="lbCard">
       <h3>Leaderboard</h3>
       <p class="testmode" id="testModeNote" hidden>Test mode: scores are saved only in this browser. Connect Firebase (see README) to share with your class.</p>
-      <form id="submitForm" autocomplete="off">
-        <p class="muted" style="margin:0 0 10px">Add your score to the class leaderboard. This is optional.</p>
+      <div id="postArea">
+        <p class="muted" style="margin:0 0 10px" id="postMsg"></p>
         <div class="form-row">
-          <label>First name<input id="fname" maxlength="15" autocapitalize="words" spellcheck="false" enterkeyhint="next"></label>
-          <label>Last initial<input id="linit" maxlength="1" autocapitalize="characters" spellcheck="false" enterkeyhint="done"></label>
-          <button class="btn btn-primary" type="submit" id="submitBtn">Submit to Leaderboard</button>
+          <button class="btn btn-primary" type="button" id="submitBtn">Post my score</button>
+          <button type="button" class="linkbtn" id="viewBoardBtn">Just show the leaderboards</button>
         </div>
         <div class="form-error" id="formError"></div>
-        <button type="button" class="linkbtn" id="viewBoardBtn">Just show the leaderboard</button>
-      </form>
+      </div>
       <div id="boardArea" hidden></div>
     </section>
 
@@ -452,10 +475,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
         <div><h2>Today's Session Report</h2><div class="muted" id="rpDate"></div></div>
         <div class="rp-score"><div class="rp-num" id="rpScore">0</div><div class="small muted">Session score</div></div>
       </div>
-      <div class="form-row rp-name">
-        <label>First name<input id="rpFirst" maxlength="15" autocapitalize="words" spellcheck="false" autocomplete="off"></label>
-        <label>Last initial<input id="rpInit" maxlength="1" autocapitalize="characters" spellcheck="false" autocomplete="off"></label>
-      </div>
+      <div class="rp-who" id="rpWho"></div>
       <div class="form-error" id="rpError"></div>
       <div id="rpBody"></div>
       <div class="end-actions">
@@ -466,6 +486,22 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
       <p class="muted small rp-note">Your progress is saved on this device for today. Save the image and turn it in on Google Classroom.</p>
     </section>
   </div>
+</div>
+
+<div class="welcome" id="welcome" hidden role="dialog" aria-modal="true" aria-labelledby="wTitle">
+  <form class="welcome-card" id="welcomeForm" autocomplete="off">
+    <div class="logo welcome-logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.5" cy="18.5" rx="3.3" ry="2.4" transform="rotate(-20 6.5 18.5)"/><ellipse cx="17" cy="16.5" rx="3.3" ry="2.4" transform="rotate(-20 17 16.5)"/><rect x="8.9" y="5.2" width="1.7" height="13"/><rect x="19.4" y="3.2" width="1.7" height="13"/><path d="M8.9 5.2 21.1 3.2v3.2L8.9 8.4z"/></svg></div>
+    <h2 id="wTitle">Welcome to Rhythm Dictation Trainer</h2>
+    <p class="muted">Tell us who you are. Your name goes on the leaderboards and your session report.</p>
+    <div class="form-row">
+      <label class="grow">First name<input id="wFirst" maxlength="15" autocapitalize="words" spellcheck="false" enterkeyhint="next"></label>
+      <label>Last initial<input id="wInit" class="initial" maxlength="1" autocapitalize="characters" spellcheck="false" enterkeyhint="next"></label>
+    </div>
+    <label class="w-code">Class code<input id="wCode" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="e.g. K7QMA" enterkeyhint="go"></label>
+    <label class="w-solo"><input type="checkbox" id="wSolo"> I'm not in a class (World leaderboard only)</label>
+    <div class="form-error" id="wError"></div>
+    <button class="btn btn-primary w-go" type="submit" id="wGo">Let's go</button>
+  </form>
 </div>
 
 <nav class="actionbar" id="actionbar" aria-label="Playback">
@@ -503,6 +539,7 @@ const CONFIG = {
   dailyGoal: 20,             // rhythms per day for full effort credit on the session report
   levelBonus: { easy: 1.0, hard: 1.1, extreme: 1.2 },  // report accuracy multiplier per level
   localTeacherPin: '2468',   // test mode only; with Firebase the teacher signs in with Google
+  adminEmails: ['milnesda@eht.k12.nj.us'],  // can manage the World board (must match firestore.rules)
 };
 
 // Class leaderboard: paste the firebaseConfig values from your Firebase project here
@@ -1103,7 +1140,8 @@ const els = {
   playQBtn: $('#playQBtn'), playABtn: $('#playABtn'), stopBtn: $('#stopBtn'), checkBtn: $('#checkBtn'), checkLabel: $('#checkLabel'), playsBadge: $('#playsBadge'),
   deleteBtn: $('#deleteBtn'), clearBtn: $('#clearBtn'), statsLine: $('#statsLine'), modeNote: $('#modeNote'),
   playView: $('#playView'), endScreen: $('#endScreen'), actionbar: $('#actionbar'),
-  endScore: $('#endScore'), endDetail: $('#endDetail'), submitForm: $('#submitForm'), fname: $('#fname'), linit: $('#linit'), formError: $('#formError'),
+  endScore: $('#endScore'), endDetail: $('#endDetail'), postArea: $('#postArea'), postMsg: $('#postMsg'), formError: $('#formError'),
+  welcome: $('#welcome'), whoBtn: $('#whoBtn'),
   submitBtn: $('#submitBtn'), boardArea: $('#boardArea'), review: $('#review'), testModeNote: $('#testModeNote'),
   modal: $('#modal'), modalBox: $('#modalBox'), toast: $('#toast'), reportView: $('#reportView'),
   poolRow: $('#poolRow'), poolSlider: $('#poolSlider'), poolCount: $('#poolCount'), poolEdit: $('#poolEdit'),
@@ -1576,10 +1614,12 @@ function showEndScreen() {
   els.endScore.textContent = `${ch.score}%`;
   $('#endTitle').textContent = `${LEVEL_NAME[ch.level]} Challenge complete!`;
   els.endDetail.textContent = `${ch.correct} of ${ch.total} slots correct · ${ch.extra ? `${ch.extra} extra listen${ch.extra > 1 ? 's' : ''} used (−${Math.round(CONFIG.extraPenalty * 100)}% each)` : 'no extra listens'} · ${fmtTime(ch.timeSec)}`;
-  els.submitForm.hidden = false;
+  els.postArea.hidden = false;
+  const prof = getProfile();
+  els.postMsg.innerHTML = prof ? `Post your score as <b>${esc(displayName(prof))}</b>${prof.classCode ? ` to <b>${esc(prof.className)}</b> and the World leaderboard` : ' to the World leaderboard'}. This is optional.` : '';
   els.boardArea.hidden = true;
   els.boardArea.innerHTML = '';
-  lastBoardId = null;
+  BS.myId = null; BS.ranks = null; BS.level = ch.level; BS.scope = prof && prof.classCode ? 'class' : 'world';
   els.formError.textContent = '';
   els.submitBtn.disabled = false;
   els.testModeNote.hidden = Board.remote;
@@ -1646,7 +1686,7 @@ function withTimeout(promise, ms = 12000) {
 }
 const fbRow = d => {
   const r = d.data();
-  return { id: d.id, name: r.name, level: r.level || 'easy', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
+  return { id: d.id, name: r.name, level: r.level || 'easy', classCode: r.class_code || '', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
 };
 const fbError = err => {
   const code = err && err.code;
@@ -1659,24 +1699,82 @@ const fbError = err => {
 const FirebaseBoard = {
   remote: true,
   teacherAuth: 'google',
-  async all(level) {
+  async all(level, classCode) {
     const { fs, db } = await fb();
-    const q = level ? fs.query(fs.collection(db, 'rhythm_scores'), fs.where('level', '==', level)) : fs.collection(db, 'rhythm_scores');
+    const filters = [];
+    if (level) filters.push(fs.where('level', '==', level));
+    if (classCode) filters.push(fs.where('class_code', '==', classCode));
+    const q = filters.length ? fs.query(fs.collection(db, 'rhythm_scores'), ...filters) : fs.collection(db, 'rhythm_scores');
     const snap = await withTimeout(fs.getDocs(q));
     return snap.docs.map(fbRow);
+  },
+  async getClass(code) {
+    try { const { fs, db } = await fb(); const d = await withTimeout(fs.getDoc(fs.doc(db, 'classes', code))); return d.exists() ? { code, ...d.data() } : null; }
+    catch (err) { throw fbError(err); }
+  },
+  async me() { const { auth } = await fb(); return auth.currentUser ? auth.currentUser.email : null; },
+  async myClasses() {
+    try {
+      const { fs, db } = await fb(); const email = await this.me();
+      const snap = await withTimeout(fs.getDocs(fs.query(fs.collection(db, 'classes'), fs.where('ownerEmail', '==', email))));
+      return snap.docs.map(d => ({ code: d.id, ...d.data() })).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    } catch (err) { throw fbError(err); }
+  },
+  async createClass(name) {
+    try {
+      const { fs, db } = await fb(); const email = await this.me();
+      for (let i = 0; i < 6; i++) {
+        const code = newClassCode();
+        const ref = fs.doc(db, 'classes', code);
+        if ((await withTimeout(fs.getDoc(ref))).exists()) continue;
+        await withTimeout(fs.setDoc(ref, { name, ownerEmail: email, created_at: fs.serverTimestamp() }));
+        return code;
+      }
+      throw new Error('Could not make a new code. Try again.');
+    } catch (err) { throw fbError(err); }
+  },
+  async renameClass(code, name) {
+    try { const { fs, db } = await fb(); await withTimeout(fs.updateDoc(fs.doc(db, 'classes', code), { name })); }
+    catch (err) { throw fbError(err); }
+  },
+  async deleteClass(code) {
+    try { await this.resetScores(code); const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, 'classes', code))); }
+    catch (err) { throw fbError(err); }
+  },
+  async scores(classCode) {
+    try { return (await this.all(null, classCode || null)).sort((a, b) => String(a.level).localeCompare(String(b.level)) || rankSort(a, b)); }
+    catch (err) { throw fbError(err); }
+  },
+  async deleteScore(id) {
+    try { const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, 'rhythm_scores', id))); }
+    catch (err) { throw fbError(err); }
+  },
+  async resetScores(classCode) {
+    try {
+      const { fs, db } = await fb();
+      const q = classCode ? fs.query(fs.collection(db, 'rhythm_scores'), fs.where('class_code', '==', classCode)) : fs.collection(db, 'rhythm_scores');
+      const snap = await withTimeout(fs.getDocs(q));
+      for (let i = 0; i < snap.docs.length; i += 400) {
+        const batch = fs.writeBatch(db);
+        snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+        await withTimeout(batch.commit());
+      }
+    } catch (err) { throw fbError(err); }
   },
   async submit(entry) {
     try {
       const { fs, db } = await fb();
-      const ref = await withTimeout(fs.addDoc(fs.collection(db, 'rhythm_scores'), {
+      const data = {
         name: entry.name, level: entry.level, score: Math.round(entry.score * 10) / 10,
         correct: entry.correct, total: entry.total, extra_listens: entry.extra || 0, time_sec: entry.timeSec,
         created_at: fs.serverTimestamp(),
-      }));
-      return summarize(await this.all(entry.level), ref.id, entry.level);
+      };
+      if (entry.classCode) data.class_code = entry.classCode;     // left out for students not in a class
+      const ref = await withTimeout(fs.addDoc(fs.collection(db, 'rhythm_scores'), data));
+      return ref.id;
     } catch (err) { throw fbError(err); }
   },
-  async get(level) { try { return summarize(await this.all(level), null, level); } catch (err) { throw fbError(err); } },
+  async get(level, classCode, id) { try { return summarize(await this.all(level, classCode), id || null, level); } catch (err) { throw fbError(err); } },
   async signIn() {
     try {
       const { authMod, auth } = await fb();
@@ -1685,155 +1783,283 @@ const FirebaseBoard = {
     } catch (err) { throw fbError(err); }
   },
   async signOut() { const { authMod, auth } = await fb(); await authMod.signOut(auth); },
-  async teacherList() {
-    try { return (await this.all(null)).sort((a, b) => String(a.level).localeCompare(String(b.level)) || rankSort(a, b)); }
-    catch (err) { throw fbError(err); }
-  },
-  async teacherDelete(_pin, id) {
-    try { const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, 'rhythm_scores', id))); return this.teacherList(); }
-    catch (err) { throw fbError(err); }
-  },
-  async teacherReset() {
-    try {
-      const { fs, db } = await fb();
-      const snap = await withTimeout(fs.getDocs(fs.collection(db, 'rhythm_scores')));
-      for (let i = 0; i < snap.docs.length; i += 400) {
-        const batch = fs.writeBatch(db);
-        snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-        await withTimeout(batch.commit());
-      }
-      return [];
-    } catch (err) { throw fbError(err); }
-  },
 };
 
 const LocalBoard = {
   remote: false,
+  teacherAuth: 'pin',
   key: 'rdt_leaderboard_v1',
   read() { try { return JSON.parse(store.get(this.key) || '[]'); } catch (e) { return []; } },
   write(all) { store.set(this.key, JSON.stringify(all)); },
+  readClasses() { try { return JSON.parse(store.get('rdt_classes_local') || '{}'); } catch (e) { return {}; } },
+  writeClasses(c) { store.set('rdt_classes_local', JSON.stringify(c)); },
   checkPin(pin) { if (String(pin) !== CONFIG.localTeacherPin) throw new Error('Wrong PIN.'); },
+  async all(level, classCode) { return this.read().filter(e => (!level || (e.level || 'easy') === level) && (!classCode || e.classCode === classCode)); },
   async submit(entry) {
     const all = this.read();
-    const e = { ...entry, id: Math.random().toString(36).slice(2, 10), date: new Date().toISOString(), email: '' };
-    all.push(e);
-    this.write(all);
-    return summarize(all, e.id, e.level);
+    const e = { ...entry, classCode: entry.classCode || '', id: Math.random().toString(36).slice(2, 10), date: new Date().toISOString(), email: '' };
+    all.push(e); this.write(all);
+    return e.id;
   },
-  async get(level) { return summarize(this.read(), null, level); },
-  async teacherList(pin) { this.checkPin(pin); return this.read().sort((a, b) => String(a.level || 'easy').localeCompare(String(b.level || 'easy')) || rankSort(a, b)); },
-  async teacherDelete(pin, id) { this.checkPin(pin); this.write(this.read().filter(e => e.id !== id)); return this.teacherList(pin); },
-  async teacherReset(pin) { this.checkPin(pin); this.write([]); return []; },
+  async get(level, classCode, id) { return summarize(await this.all(level, classCode), id || null, level); },
+  async getClass(code) { const c = this.readClasses()[code]; return c ? { code, ...c } : null; },
+  async me() { return 'test-mode'; },
+  async myClasses() { return Object.entries(this.readClasses()).map(([code, c]) => ({ code, ...c })); },
+  async createClass(name) { const c = this.readClasses(); let code; do code = newClassCode(); while (c[code]); c[code] = { name, ownerEmail: 'test-mode' }; this.writeClasses(c); return code; },
+  async renameClass(code, name) { const c = this.readClasses(); if (c[code]) c[code].name = name; this.writeClasses(c); },
+  async deleteClass(code) { await this.resetScores(code); const c = this.readClasses(); delete c[code]; this.writeClasses(c); },
+  async scores(classCode) { return (await this.all(null, classCode || null)).sort((a, b) => String(a.level || 'easy').localeCompare(String(b.level || 'easy')) || rankSort(a, b)); },
+  async deleteScore(id) { this.write(this.read().filter(e => e.id !== id)); },
+  async resetScores(classCode) { this.write(classCode ? this.read().filter(e => e.classCode !== classCode) : []); },
 };
+
+const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // no 0/O or 1/I/L mix-ups
+const newClassCode = () => Array.from({ length: 5 }, () => CODE_CHARS[rand(CODE_CHARS.length)]).join('');
+const cleanCode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 const Board = firebaseOn ? FirebaseBoard : LocalBoard;
 const errMsg = err => (err && err.message ? err.message : String(err || 'Something went wrong.')).replace(/^Error:\s*/, '').replace(/^Exception:\s*/, '');
 const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
 
-let lastBoardId = null;
+// ---------- student profile (welcome screen) ----------
+const PROFILE_KEY = 'rdt_profile_v1';
+function getProfile() { try { const p = JSON.parse(store.get(PROFILE_KEY) || 'null'); return p && p.first && p.init ? p : null; } catch (e) { return null; } }
+function setProfile(p) { store.set(PROFILE_KEY, JSON.stringify(p)); }
+const displayName = p => `${p.first.charAt(0).toUpperCase()}${p.first.slice(1)} ${p.init}.`;
+const studentKey = p => `${(p.first + p.init).toLowerCase().replace(/[^a-z]/g, '')}:${p.classCode || ''}`;
+
+function updateWho() {
+  const p = getProfile();
+  els.whoBtn.textContent = p ? `👤 ${displayName(p)}${p.classCode ? ` · ${p.className}` : ''}` : '';
+}
+
+function showWelcome(keep) {
+  Engine.stop();
+  closeModal();
+  const p = keep ? getProfile() : null;
+  $('#wFirst').value = p ? p.first : '';
+  $('#wInit').value = p ? p.init : '';
+  $('#wCode').value = p ? p.classCode || '' : '';
+  $('#wSolo').checked = !!(p && !p.classCode);
+  $('#wCode').disabled = $('#wSolo').checked;
+  $('#wError').textContent = '';
+  els.welcome.hidden = false;
+  setTimeout(() => (keep ? $('#wCode') : $('#wFirst')).focus(), 50);
+}
+
+async function submitWelcome(e) {
+  e.preventDefault();
+  const first = $('#wFirst').value.trim().replace(/\s+/g, ' ');
+  const init = $('#wInit').value.trim().toUpperCase();
+  const solo = $('#wSolo').checked;
+  const code = cleanCode($('#wCode').value);
+  const err = $('#wError');
+  if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{0,14}$/.test(first)) { err.textContent = 'Enter your first name (letters only).'; $('#wFirst').focus(); return; }
+  if (!/^[A-Z]$/.test(init)) { err.textContent = 'Enter the first letter of your last name.'; $('#wInit').focus(); return; }
+  let className = '';
+  if (!solo) {
+    if (!code) { err.textContent = 'Enter the class code from your teacher, or check "I\'m not in a class."'; $('#wCode').focus(); return; }
+    $('#wGo').disabled = true; $('#wGo').textContent = 'Checking code…';
+    try {
+      const cls = await Board.getClass(code);
+      if (!cls) { err.textContent = "We couldn't find that class code. Check it with your teacher."; $('#wCode').focus(); return; }
+      className = cls.name;
+    } catch (ex) { err.textContent = `Couldn't check the code: ${errMsg(ex)}`; return; }
+    finally { $('#wGo').disabled = false; $('#wGo').textContent = "Let's go"; }
+  }
+  const before = getProfile();
+  setProfile({ first, init, classCode: solo ? '' : code, className });
+  if (!before || studentKey(before) !== studentKey(getProfile())) S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
+  els.welcome.hidden = true;
+  updateWho();
+  updateUI();
+  toast(`Hi ${first.charAt(0).toUpperCase() + first.slice(1)}!${className ? ` You're in ${className}.` : ''}`);
+}
+
+function whoMenu() {
+  const p = getProfile();
+  if (!p) { showWelcome(false); return; }
+  openModal(`<h3>${esc(displayName(p))}</h3><p class="muted">${p.classCode ? `Class: <b>${esc(p.className)}</b> (code ${esc(p.classCode)})` : 'Not in a class: posting to the World leaderboard only.'}</p>
+    <div class="modal-actions"><button class="btn" type="button" data-close>Close</button><button class="btn" type="button" id="whoClass">Change class</button><button class="btn btn-primary" type="button" id="whoSwitch">Switch student</button></div>`);
+  $('#whoClass').onclick = () => showWelcome(true);
+  $('#whoSwitch').onclick = () => showWelcome(false);
+}
+
+// ---------- leaderboards: Class and World, each with Easy / Hard / Extreme ----------
+const BS = { scope: 'world', level: 'easy', myId: null, ranks: null };
+async function loadBoard() {
+  const p = getProfile();
+  if (BS.scope === 'class' && !(p && p.classCode)) BS.scope = 'world';
+  const code = BS.scope === 'class' ? p.classCode : null;
+  els.formError.textContent = '';
+  try { renderBoard(await Board.get(BS.level, code, BS.myId)); }
+  catch (err) { els.formError.textContent = `Couldn't load the leaderboard: ${errMsg(err)}`; }
+}
+
 function renderBoard(res) {
-  if (res.id) lastBoardId = res.id;
-  const me = lastBoardId;
+  const me = BS.myId, p = getProfile();
   let note = '';
-  if (me && res.rank) {
-    note = res.rank <= 10
-      ? `<p class="rank-note">You're <b>#${res.rank}</b> on the leaderboard! 🎉</p>`
-      : `<p class="rank-note">You placed <b>#${res.rank}</b> of ${res.count}. Keep practicing to crack the top 10!</p>`;
+  if (BS.ranks && res.level === BS.ranks.level) {
+    const parts = [];
+    if (BS.ranks.cls) parts.push(`<b>#${BS.ranks.cls}</b> in ${esc(p.className)}`);
+    if (BS.ranks.world) parts.push(`<b>#${BS.ranks.world}</b> in the world`);
+    note = `<p class="rank-note">You're ${parts.join(' · ')}! ${(BS.ranks.cls || BS.ranks.world) <= 10 ? '🎉' : 'Keep practicing to crack the top 10!'}</p>`;
   }
   const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
+  const scopes = (p && p.classCode ? [['class', p.className]] : []).concat([['world', '🌎 World']]);
+  const scopeTabs = `<div class="seg board-scope" role="group" aria-label="Which leaderboard">${scopes.map(([k, label]) => `<button type="button" data-scope="${k}" aria-pressed="${k === BS.scope}">${esc(label)}</button>`).join('')}</div> `;
   const tabs = `<div class="seg board-tabs" role="group" aria-label="Leaderboard level">${LEVELS.map(lv => `<button type="button" data-board="${lv}" aria-pressed="${lv === res.level}">${LEVEL_NAME[lv]}</button>`).join('')}</div>`;
-  els.boardArea.innerHTML = tabs + (res.level === (S.ch && S.ch.level) ? note : '') + (res.top.length
+  els.boardArea.innerHTML = scopeTabs + tabs + note + (res.top.length
     ? `<table class="board"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Time</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`
     : '<p class="muted">No scores yet. Be the first!</p>');
   els.boardArea.hidden = false;
 }
 
-async function submitScore(e) {
-  e.preventDefault();
-  const ch = S.ch;
+async function submitScore() {
+  const ch = S.ch, p = getProfile();
   if (!ch || ch.submitted) return;
-  const first = els.fname.value.trim().replace(/\s+/g, ' ');
-  const initial = els.linit.value.trim().toUpperCase();
-  if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{0,14}$/.test(first)) { els.formError.textContent = 'Enter your first name (letters only).'; els.fname.focus(); return; }
-  if (!/^[A-Z]$/.test(initial)) { els.formError.textContent = 'Enter the first letter of your last name.'; els.linit.focus(); return; }
-  const name = `${first.charAt(0).toUpperCase()}${first.slice(1)} ${initial}.`;
+  if (!p) { showWelcome(false); return; }
   els.formError.textContent = '';
   els.submitBtn.disabled = true;
-  els.submitBtn.textContent = 'Submitting…';
+  els.submitBtn.textContent = 'Posting…';
   try {
-    const res = await Board.submit({ name, level: ch.level, score: ch.score, correct: ch.correct, total: ch.total, extra: ch.extra, timeSec: ch.timeSec });
+    const id = await Board.submit({ name: displayName(p), classCode: p.classCode || '', level: ch.level, score: ch.score, correct: ch.correct, total: ch.total, extra: ch.extra, timeSec: ch.timeSec });
     ch.submitted = true;
-    els.submitForm.hidden = true;
-    renderBoard(res);
+    BS.myId = id; BS.level = ch.level;
+    const world = await Board.get(ch.level, null, id);
+    const cls = p.classCode ? await Board.get(ch.level, p.classCode, id) : null;
+    BS.ranks = { level: ch.level, world: world.rank, cls: cls ? cls.rank : null };
+    els.postArea.hidden = true;
+    if (cls) { BS.scope = 'class'; renderBoard(cls); } else { BS.scope = 'world'; renderBoard(world); }
   } catch (err) {
     els.formError.textContent = `Couldn't reach the leaderboard: ${errMsg(err)} Try again.`;
     els.submitBtn.disabled = false;
   } finally {
-    els.submitBtn.textContent = 'Submit to Leaderboard';
+    els.submitBtn.textContent = 'Post my score';
   }
 }
 
-async function viewBoardOnly() {
-  els.formError.textContent = '';
-  try { renderBoard(await Board.get(S.ch ? S.ch.level : 'easy')); }
-  catch (err) { els.formError.textContent = `Couldn't load the leaderboard: ${errMsg(err)}`; }
-}
+async function viewBoardOnly() { BS.level = S.ch ? S.ch.level : 'easy'; await loadBoard(); }
 els.boardArea.addEventListener('click', async e => {
-  const b = e.target.closest('[data-board]');
-  if (!b) return;
-  try { renderBoard(await Board.get(b.dataset.board)); }
-  catch (err) { toast(`Couldn't load the leaderboard: ${errMsg(err)}`); }
+  const lv = e.target.closest('[data-board]'), sc = e.target.closest('[data-scope]');
+  if (lv) BS.level = lv.dataset.board;
+  else if (sc) BS.scope = sc.dataset.scope;
+  else return;
+  await loadBoard();
 });
 
 // ---------- teacher panel ----------
+const T = { pin: null, email: null, view: 'classes', scope: null, classes: [] };
+const isAdmin = () => !Board.remote || CONFIG.adminEmails.includes(T.email);
+
 function teacherLogin() {
   if (Board.teacherAuth === 'google') {
-    openModal(`<h3>Teacher</h3><p class="muted">Sign in with the Google account you put in your Firestore rules to view, delete or reset leaderboard scores.</p>
+    openModal(`<h3>Teacher</h3><p class="muted">Sign in with Google to make class codes and manage your students' scores.</p>
       <div class="form-error" id="pinErr"></div>
       <div class="modal-actions"><button class="btn" type="button" id="checkReportBtn" style="margin-right:auto">Check a report code</button><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-primary" type="button" id="googleBtn">Sign in with Google</button></div>`);
     $('#checkReportBtn').onclick = checkReportCode;
     $('#googleBtn').onclick = async () => {
-      try { await Board.signIn(); teacherPanel(null, await Board.teacherList()); }
+      try { T.email = await Board.signIn(); T.view = 'classes'; await teacherHome(); }
       catch (err) { $('#pinErr').textContent = errMsg(err); }
     };
     return;
   }
-  openModal(`<h3>Teacher</h3><p class="muted">Enter your PIN to view or reset the leaderboard.</p>
+  openModal(`<h3>Teacher</h3><p class="muted">Test mode: enter the PIN to manage test classes and scores.</p>
     <form id="pinForm"><label>PIN<input type="password" inputmode="numeric" id="pinInput" autocomplete="off"></label>
     <div class="form-error" id="pinErr"></div>
     <div class="modal-actions"><button class="btn" type="button" id="checkReportBtn" style="margin-right:auto">Check a report code</button><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-primary" type="submit">Open</button></div></form>`);
   $('#checkReportBtn').onclick = checkReportCode;
   $('#pinForm').onsubmit = async e => {
     e.preventDefault();
-    const pin = $('#pinInput').value;
-    try { teacherPanel(pin, await Board.teacherList(pin)); }
+    try { Board.checkPin($('#pinInput').value); T.pin = $('#pinInput').value; T.email = 'test-mode'; T.view = 'classes'; await teacherHome(); }
     catch (err) { $('#pinErr').textContent = errMsg(err); }
   };
 }
 
-function teacherPanel(pin, list) {
-  const hasEmail = list.some(e => e.email);
-  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>${hasEmail ? `<td class="muted">${esc(e.email)}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
+async function teacherHome(msg) {
+  try { T.classes = await Board.myClasses(); } catch (err) { T.classes = []; msg = errMsg(err); }
+  if (T.view === 'scores') return teacherScores(msg);
+  const rows = T.classes.map(c => `<tr><td><b>${esc(c.name)}</b></td><td><span class="code-pill">${esc(c.code)}</span></td>
+    <td><button class="btn btn-sm" type="button" data-rename="${esc(c.code)}">Rename</button> <button class="btn btn-sm" type="button" data-delclass="${esc(c.code)}">Delete</button></td></tr>`).join('');
+  openModal(`<h3>Teacher</h3><p class="muted small">${Board.remote ? `Signed in as ${esc(T.email || '')}` : 'Test mode'}</p>
+    ${teacherTabs()}
+    <p class="muted" style="margin:0 0 6px">Give students a class code. They type it on the welcome screen, and their scores go on that class's leaderboard (and the World board).</p>
+    ${T.classes.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>Class</th><th>Code</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p><b>No classes yet.</b> Make your first one below.</p>'}
+    <form class="t-row" id="newClassForm"><input id="newClassName" maxlength="40" placeholder="New class name, e.g. Period 3 – AP Theory"><button class="btn btn-primary" type="submit">Create class</button></form>
+    <div class="form-error" id="tErr">${msg ? esc(msg) : ''}</div>
+    <div class="modal-actions">${Board.remote ? '<button class="btn" type="button" id="tSignOut" style="margin-right:auto">Sign out</button>' : ''}<button class="btn" type="button" data-close>Close</button></div>`, true);
+  wireTeacherTabs();
+  $('#newClassForm').onsubmit = async e => {
+    e.preventDefault();
+    const name = $('#newClassName').value.trim().replace(/\s+/g, ' ');
+    if (!name) { $('#tErr').textContent = 'Type a class name first.'; return; }
+    try { const code = await Board.createClass(name); await teacherHome(); toast(`Created ${name}: code ${code}`, 4000); }
+    catch (err) { $('#tErr').textContent = errMsg(err); }
+  };
+  els.modalBox.querySelectorAll('[data-rename]').forEach(b => {
+    b.onclick = async () => {
+      const c = T.classes.find(x => x.code === b.dataset.rename);
+      const name = (window.prompt('New name for this class:', c.name) || '').trim();
+      if (!name || name === c.name) return;
+      try { await Board.renameClass(c.code, name.slice(0, 40)); await teacherHome(); }
+      catch (err) { $('#tErr').textContent = errMsg(err); }
+    };
+  });
+  els.modalBox.querySelectorAll('[data-delclass]').forEach(b => {
+    b.onclick = () => {
+      const c = T.classes.find(x => x.code === b.dataset.delclass);
+      openModal(`<h3>Delete ${esc(c.name)}?</h3><p>This deletes the class code <b>${esc(c.code)}</b> and all of its scores. Students who used this code will need a new one.</p>
+        <div class="form-error" id="dErr"></div>
+        <div class="modal-actions"><button class="btn" type="button" id="dNo">Cancel</button><button class="btn btn-danger" type="button" id="dYes">Delete class</button></div>`);
+      $('#dNo').onclick = () => teacherHome();
+      $('#dYes').onclick = async () => {
+        try { await Board.deleteClass(c.code); await teacherHome(); toast(`${c.name} deleted.`); }
+        catch (err) { $('#dErr').textContent = errMsg(err); }
+      };
+    };
+  });
+  const so = $('#tSignOut');
+  if (so) so.onclick = async () => { await Board.signOut(); T.email = null; closeModal(); toast('Signed out.'); };
+}
+
+function teacherTabs() {
+  return `<div class="seg t-tabs" role="group" aria-label="Teacher view"><button type="button" data-tview="classes" aria-pressed="${T.view === 'classes'}">My classes</button><button type="button" data-tview="scores" aria-pressed="${T.view === 'scores'}">Scores</button></div>`;
+}
+function wireTeacherTabs() {
+  els.modalBox.querySelectorAll('[data-tview]').forEach(b => { b.onclick = () => { T.view = b.dataset.tview; teacherHome(); }; });
+}
+
+async function teacherScores(msg) {
+  const options = T.classes.map(c => [c.code, c.name]).concat(isAdmin() ? [['__world', '🌎 World (every score)']] : []);
+  if (!options.length) { T.view = 'classes'; return teacherHome('Make a class first. Then its scores show up here.'); }
+  if (!options.some(([k]) => k === T.scope)) T.scope = options[0][0];
+  const world = T.scope === '__world';
+  let list = [];
+  try { list = await Board.scores(world ? null : T.scope); } catch (err) { msg = errMsg(err); }
+  const label = options.find(([k]) => k === T.scope)[1];
+  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>${world ? `<td class="muted">${esc(e.classCode || '—')}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
     <td><button class="btn btn-sm" type="button" data-del="${esc(e.id)}">Delete</button></td></tr>`).join('');
-  openModal(`<h3>Leaderboard: all scores (${list.length})</h3>
-    ${Board.remote ? '' : '<p class="testmode">Test mode: these scores are only in this browser.</p>'}
-    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th>${hasEmail ? '<th>Account</th>' : ''}<th>Level</th><th>Score</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No scores yet.</p>'}
-    <div class="form-error" id="tErr"></div>
-    <div class="modal-actions" id="tActions"><button class="btn btn-danger" type="button" id="resetBtn" ${list.length ? '' : 'disabled'}>Reset leaderboard</button><button class="btn" type="button" data-close>Close</button></div>`, true);
+  openModal(`<h3>Teacher</h3><p class="muted small">${Board.remote ? `Signed in as ${esc(T.email || '')}` : 'Test mode'}</p>
+    ${teacherTabs()}
+    <div class="t-row"><label class="small muted" for="tScope">Leaderboard</label><select id="tScope">${options.map(([k, n]) => `<option value="${esc(k)}" ${k === T.scope ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th>${world ? '<th>Class</th>' : ''}<th>Level</th><th>Score</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No scores yet.</p>'}
+    <div class="form-error" id="tErr">${msg ? esc(msg) : ''}</div>
+    <div class="modal-actions" id="tActions"><button class="btn btn-danger" type="button" id="resetBtn" ${list.length ? '' : 'disabled'}>Reset ${esc(label)}</button><button class="btn" type="button" data-close>Close</button></div>`, true);
+  wireTeacherTabs();
+  $('#tScope').onchange = () => { T.scope = $('#tScope').value; teacherScores(); };
   els.modalBox.querySelectorAll('[data-del]').forEach(b => {
     b.onclick = async () => {
       b.disabled = true;
-      try { teacherPanel(pin, await Board.teacherDelete(pin, b.dataset.del)); }
+      try { await Board.deleteScore(b.dataset.del); await teacherScores(); }
       catch (err) { $('#tErr').textContent = errMsg(err); b.disabled = false; }
     };
   });
-  const reset = $('#resetBtn');
-  if (reset) reset.onclick = () => {
-    $('#tActions').innerHTML = `<span style="margin-right:auto;font-weight:650">Delete all ${list.length} scores? This can't be undone.</span>
+  $('#resetBtn').onclick = () => {
+    $('#tActions').innerHTML = `<span style="margin-right:auto;font-weight:650">Delete all ${list.length} scores on ${esc(label)}? This can't be undone.</span>
       <button class="btn" type="button" id="resetNo">Cancel</button><button class="btn btn-danger" type="button" id="resetYes">Yes, reset</button>`;
-    $('#resetNo').onclick = () => teacherPanel(pin, list);
+    $('#resetNo').onclick = () => teacherScores();
     $('#resetYes').onclick = async () => {
-      try { teacherPanel(pin, await Board.teacherReset(pin)); toast('Leaderboard reset.'); }
+      try { await Board.resetScores(world ? null : T.scope); await teacherScores(); toast('Scores reset.'); }
       catch (err) { $('#tErr').textContent = errMsg(err); }
     };
   };
@@ -1902,10 +2128,13 @@ $('#quitBtn').onclick = quitChallenge;
 $('#againBtn').onclick = chooseChallenge;
 $('#backBtn').onclick = () => { Engine.stop(); S.ch = null; S.mode = 'practice'; showView('play'); newPracticeRhythm(); };
 $('#teacherBtn').onclick = teacherLogin;
-els.submitForm.addEventListener('submit', submitScore);
+els.submitBtn.onclick = submitScore;
 $('#viewBoardBtn').onclick = viewBoardOnly;
-els.linit.addEventListener('input', () => { els.linit.value = els.linit.value.replace(/[^A-Za-z]/g, '').toUpperCase(); });
-els.fname.addEventListener('keydown', e => { if (e.key === 'Enter' && !els.linit.value) { e.preventDefault(); els.linit.focus(); } });
+$('#welcomeForm').addEventListener('submit', submitWelcome);
+$('#wInit').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase(); });
+$('#wCode').addEventListener('input', e => { e.target.value = cleanCode(e.target.value); });
+$('#wSolo').addEventListener('change', e => { $('#wCode').disabled = e.target.checked; if (e.target.checked) $('#wCode').value = ''; });
+els.whoBtn.onclick = whoMenu;
 
 els.review.addEventListener('click', e => {
   const b = e.target.closest('[data-play]');
@@ -1963,6 +2192,7 @@ function typeBankNumber(digit) {
 
 let spaceHandled = false;
 document.addEventListener('keydown', e => {
+  if (!els.welcome.hidden) return;
   if (!els.modal.hidden) { if (e.key === 'Escape') closeModal(); return; }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const tag = e.target.tagName;
@@ -2130,13 +2360,13 @@ function skillsOf(cell) {
   return [...out];
 }
 
-const LOG_KEY = 'rdt_log_v1';
+const logKey = () => { const p = getProfile(); return p ? `rdt_log_v1:${studentKey(p)}` : 'rdt_log_v1'; };
 const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-function readLog() { try { return JSON.parse(store.get(LOG_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function readLog() { try { return JSON.parse(store.get(logKey()) || '{}') || {}; } catch (e) { return {}; } }
 function writeLog(log) {
   const keys = Object.keys(log).sort();
   while (keys.length > 7) delete log[keys.shift()];          // keep one week
-  store.set(LOG_KEY, JSON.stringify(log));
+  store.set(logKey(), JSON.stringify(log));
 }
 function todayOf(log) { const k = dayKey(); return log[k] || (log[k] = { rhythms: [], runs: [] }); }
 function logRhythm(e) {
@@ -2233,20 +2463,15 @@ const fmtLongDate = key => { const [y, m, d] = key.split('-').map(Number); retur
 const poolNote = rep => (rep.avgPool < 0.995 ? `Practiced with ${pct(rep.avgPool)} of the rhythms on average (smaller sets count a little less). ` : '');
 const bestText = rep => LEVELS.filter(lv => rep.best[lv] != null).map(lv => `${LEVEL_NAME[lv]} ${rep.best[lv]}%`).join(' · ') || 'none yet';
 
-function studentName() {
-  const first = $('#rpFirst').value.trim().replace(/\s+/g, ' ');
-  const init = $('#rpInit').value.trim().toUpperCase();
-  if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{0,14}$/.test(first) || !/^[A-Z]$/.test(init)) return null;
-  return `${first.charAt(0).toUpperCase()}${first.slice(1)} ${init}.`;
-}
+function studentName() { const p = getProfile(); return p ? displayName(p) : null; }
+const studentClass = () => { const p = getProfile(); return p && p.classCode ? p.className : ''; };
 
 let reportBackTo = 'play';
 function openReport() {
   Engine.stop();
   reportBackTo = S.mode === 'end' ? 'end' : 'play';
-  try { const saved = JSON.parse(store.get('rdt_student') || '{}'); if (saved.first) $('#rpFirst').value = saved.first; if (saved.init) $('#rpInit').value = saved.init; } catch (e) { /* ignore */ }
-  if (!$('#rpFirst').value && els.fname.value) $('#rpFirst').value = els.fname.value;
-  if (!$('#rpInit').value && els.linit.value) $('#rpInit').value = els.linit.value;
+  const p = getProfile();
+  $('#rpWho').innerHTML = p ? `${esc(displayName(p))} <span>${p.classCode ? `· ${esc(p.className)}` : '· no class'}</span>` : '';
   $('#rpError').textContent = '';
   renderReport();
   showView('report');
@@ -2290,9 +2515,7 @@ function renderReport() {
     <div class="rp-section"><h3>By meter</h3>${bars(meterRows)}</div>`;
 }
 
-function rememberStudent() {
-  store.set('rdt_student', JSON.stringify({ first: $('#rpFirst').value.trim(), init: $('#rpInit').value.trim().toUpperCase() }));
-}
+
 
 // ---------- JPEG export (drawn on a canvas, no libraries) ----------
 function wrapLines(ctx, text, maxW) {
@@ -2331,7 +2554,7 @@ async function drawReport(rep, name, noPictures = false) {
   text('Session Report', P, 118, 30, 'rgba(255,255,255,.9)', 600);
 
   let y = 220;
-  text(name, P, y, 46, '#141824', 800);
+  text(name + (studentClass() ? `  ·  ${studentClass()}` : ''), P, y, 46, '#141824', 800);
   text(fmtLongDate(rep.date), P, y + 48, 26, '#5d6477', 500);
   if (rep.first) text(`${fmtClock(rep.first)} – ${fmtClock(rep.last)} · ${rep.minutes} min of practice`, P, y + 86, 26, '#5d6477', 500);
   ctx.beginPath(); ctx.arc(W - P - 95, 260, 95, 0, Math.PI * 2); ctx.fillStyle = '#ebe8fc'; ctx.fill();
@@ -2415,11 +2638,10 @@ async function drawReport(rep, name, noPictures = false) {
 
 async function exportReport() {
   const name = studentName();
-  if (!name) { $('#rpError').textContent = 'Enter your first name and last initial first.'; $('#rpFirst').focus(); return; }
+  if (!name) { showWelcome(false); return; }
   const rep = buildReport();
   if (!rep.rhythms) { $('#rpError').textContent = 'There is nothing to save yet. Do a few rhythms first.'; return; }
   $('#rpError').textContent = '';
-  rememberStudent();
   const toJpeg = c => new Promise((res, rej) => { try { c.toBlob(res, 'image/jpeg', 0.92); } catch (err) { rej(err); } });
   let blob;
   try { blob = await toJpeg(await drawReport(rep, name)); }
@@ -2441,11 +2663,10 @@ async function exportReport() {
 }
 
 function startFresh() {
-  openModal(`<h3>Start fresh?</h3><p>This clears today's saved progress on this device. Use it when a new student starts on a shared computer. Save your report image first if you need it.</p>
+  openModal(`<h3>Start fresh?</h3><p>This clears your saved progress for today on this device. Save your report image first if you need it. (A different student should use <b>Switch student</b> at the bottom of the page instead.)</p>
     <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-danger" type="button" id="freshYes">Clear today</button></div>`);
   $('#freshYes').onclick = () => {
     const log = readLog(); delete log[dayKey()]; writeLog(log);
-    $('#rpFirst').value = ''; $('#rpInit').value = ''; store.set('rdt_student', '{}');
     S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
     closeModal(); renderReport(); updateUI(); toast("Today's progress cleared.");
   };
@@ -2475,7 +2696,7 @@ $('#endReportBtn').onclick = openReport;
 $('#rpBack').onclick = () => { showView(reportBackTo); if (reportBackTo === 'play') fitScreen(true); };
 $('#rpExport').onclick = exportReport;
 $('#rpFresh').onclick = startFresh;
-$('#rpInit').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase(); });
+
 
 /* ---------- start ---------- */
 const dataErrors = validateData();
@@ -2490,6 +2711,8 @@ populateTsSelect();
 els.modeNote.textContent = Board.remote ? '' : 'Test mode (scores saved in this browser only) ·';
 showView('play');
 newPracticeRhythm();
+updateWho();
+if (!getProfile()) showWelcome(false);
 if (/[?&]selftest/.test(location.search)) window.RDT = { buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
