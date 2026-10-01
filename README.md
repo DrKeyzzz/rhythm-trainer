@@ -74,6 +74,14 @@ Use a Google account that's allowed to create Firebase projects. Many school acc
 
 These values are meant to be public. The rules only let visitors read the board and add a properly formed score. Only your Google account can delete scores.
 
+**Teacher Dashboard** (Teacher → Sign in with Google)
+- **Progress:** for the selected class and day (Today, Yesterday, Last 7 days or any date): time spent, rhythms done (against the assignment goal), accuracy, session score, average listens, what each student is struggling with, and when they were last active. It updates live every 30 seconds during class. Click a student for their skill and time-signature breakdown and the rhythms they miss most, with what they picked instead. The top of the page shows where the whole class is struggling and its most-missed rhythms. **Export CSV** downloads it for your gradebook.
+- **Assignment:** set a level, meter, time signature, length, a rhythm goal, a minutes goal and a note. Students in that class see a banner with their progress and a one-tap **Use these settings** button. The rhythm goal also becomes the effort goal on their session report.
+- **Classes:** create, rename or delete classes and see their codes.
+- **Leaderboard:** delete single challenge scores or reset a board.
+
+Practice progress syncs automatically for students who entered a class code: one summary per student per day (first name and last initial only). Only that class's teacher can read it.
+
 **Classes:** click **Teacher → Sign in with Google → My classes**, type a class name and click **Create class**. Each class gets a 5-character code (like `K7QMA`) to give students. Any teacher can sign in and make their own classes; they can only manage their own.
 
 **Managing scores:** **Teacher → Scores** shows each of your classes. You can delete one entry (for example, an inappropriate name) or reset a class for a new marking period. The admin email in `firestore.rules` (and `CONFIG.adminEmails` in `index.html`) can also manage the **World** board. You can see everything in the Firebase console under **Firestore Database**.

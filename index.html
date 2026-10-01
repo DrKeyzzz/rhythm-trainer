@@ -289,6 +289,41 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .t-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
 .t-row input,.t-row select{min-height:42px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:6px 10px;font-size:15px}
 .t-row input{flex:1;min-width:160px}
+.assign-banner{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:14px;padding:8px 12px;margin-bottom:10px;font-size:14px}
+.assign-banner b{color:var(--text)}
+.assign-banner .ab-title{font-weight:800;color:var(--accent)}
+.assign-banner .ab-prog{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:650}
+.assign-banner .ab-prog.done{color:var(--ok)}
+.assign-banner .ab-note{flex-basis:100%;color:var(--muted);font-style:italic}
+.assign-banner .btn{margin-left:auto}
+.td h2{margin:0;font-size:22px}
+.td-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.td-head-actions{display:flex;gap:8px}
+.td-bar{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+.td-bar select{min-width:220px}
+.td-sub{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 10px}
+.td-sub select,.td-sub input[type=date]{min-height:40px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:6px 10px}
+.td-live{font-size:13px;color:var(--muted)}
+.td-live i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:5px;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.td-table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.td-table th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:8px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+.td-table th.sorted::after{content:" ▾"} .td-table th.sorted.asc::after{content:" ▴"}
+.td-table td{padding:9px 8px;border-bottom:1px solid var(--border)}
+.td-table tbody tr{cursor:pointer}
+.td-table tbody tr.open td{background:var(--accent-soft)}
+@media (hover:hover){.td-table tbody tr:hover td{background:var(--surface-2)}}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--border)}
+.dot.on{background:var(--ok)}
+.chip{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700}
+.chip.lo{background:var(--bad-soft);color:var(--bad)} .chip.mid{background:var(--play-soft);color:var(--play)} .chip.hi{background:var(--ok-soft);color:var(--ok)}
+.td-detail{border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin:6px 0 4px;background:var(--surface)}
+.td-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:800px){.td-grid{grid-template-columns:1fr}}
+.td-form{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:8px 0}
+.td-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:650;color:var(--muted)}
+.td-form select,.td-form input,.td-form textarea{min-height:42px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:6px 10px;font:inherit}
+.td-form .wide{grid-column:1/-1}
 .testmode{background:var(--play-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin:0 0 10px}
 
 /* ---------- modal & toast ---------- */
@@ -365,6 +400,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 
   <!-- ===== Play view (practice + challenge) ===== -->
   <div id="playView">
+    <div class="assign-banner" id="assignBanner" hidden></div>
     <div class="controls" id="controls">
       <button class="btn btn-sm settings-toggle" id="settingsToggle" type="button" aria-expanded="false" aria-controls="controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span id="settingsSummary">Settings</span><span aria-hidden="true" id="settingsCaret">▾</span></button>
       <div class="settings" id="practiceSettings">
@@ -466,6 +502,24 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
       <button class="btn" id="backBtn" type="button">Back to practice</button>
       <button class="btn" id="endReportBtn" type="button">📋 Report Session</button>
     </div>
+  </div>
+
+  <!-- ===== Teacher dashboard ===== -->
+  <div id="teacherView" hidden>
+    <section class="card td">
+      <div class="td-head">
+        <div><h2>Teacher Dashboard</h2><div class="muted small" id="tdWho"></div></div>
+        <div class="td-head-actions"><button class="btn btn-sm" type="button" id="tdSignOut">Sign out</button><button class="btn btn-sm btn-primary" type="button" id="tdBack">Back to app</button></div>
+      </div>
+      <div class="td-bar">
+        <label class="field"><span>Class</span><select id="tdClass"></select></label>
+        <div class="seg" id="tdTabs" role="group" aria-label="Dashboard section">
+          <button type="button" data-tab="progress">Progress</button><button type="button" data-tab="assign">Assignment</button><button type="button" data-tab="classes">Classes</button><button type="button" data-tab="scores">Leaderboard</button>
+        </div>
+      </div>
+      <div class="form-error" id="tdErr"></div>
+      <div id="tdBody"></div>
+    </section>
   </div>
 
   <!-- ===== Session report ===== -->
@@ -1141,7 +1195,7 @@ const els = {
   deleteBtn: $('#deleteBtn'), clearBtn: $('#clearBtn'), statsLine: $('#statsLine'), modeNote: $('#modeNote'),
   playView: $('#playView'), endScreen: $('#endScreen'), actionbar: $('#actionbar'),
   endScore: $('#endScore'), endDetail: $('#endDetail'), postArea: $('#postArea'), postMsg: $('#postMsg'), formError: $('#formError'),
-  welcome: $('#welcome'), whoBtn: $('#whoBtn'),
+  welcome: $('#welcome'), whoBtn: $('#whoBtn'), teacherView: $('#teacherView'), assignBanner: $('#assignBanner'),
   submitBtn: $('#submitBtn'), boardArea: $('#boardArea'), review: $('#review'), testModeNote: $('#testModeNote'),
   modal: $('#modal'), modalBox: $('#modalBox'), toast: $('#toast'), reportView: $('#reportView'),
   poolRow: $('#poolRow'), poolSlider: $('#poolSlider'), poolCount: $('#poolCount'), poolEdit: $('#poolEdit'),
@@ -1212,6 +1266,7 @@ function newPracticeRhythm() {
 }
 
 function loadQuestion(rhythm) {
+  if (typeof renderAssignment === 'function' && els.assignBanner) setTimeout(renderAssignment, 0);
   S.q = rhythm;
   S.answer = new Array(rhythm.cells.length).fill(null);
   S.selected = null;
@@ -1652,6 +1707,8 @@ function showView(which) {
   els.playView.hidden = which !== 'play';
   els.endScreen.hidden = which !== 'end';
   els.reportView.hidden = which !== 'report';
+  els.teacherView.hidden = which !== 'teacher';
+  if (which !== 'teacher') clearInterval(TD.timer);
   els.actionbar.hidden = which !== 'play';
   if (which === 'play') { reviewMounts.forEach(destroyMount); reviewMounts = []; }
 }
@@ -1737,9 +1794,37 @@ const FirebaseBoard = {
     try { const { fs, db } = await fb(); await withTimeout(fs.updateDoc(fs.doc(db, 'classes', code), { name })); }
     catch (err) { throw fbError(err); }
   },
-  async deleteClass(code) {
-    try { await this.resetScores(code); const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, 'classes', code))); }
+  async saveAssignment(code, assignment) {
+    try { const { fs, db } = await fb(); await withTimeout(fs.updateDoc(fs.doc(db, 'classes', code), { assignment: assignment || null })); }
     catch (err) { throw fbError(err); }
+  },
+  async deleteClass(code) {
+    try {
+      await this.resetScores(code);
+      const { fs, db } = await fb(); const email = await this.me();
+      const snap = await withTimeout(fs.getDocs(fs.query(fs.collection(db, 'progress'), fs.where('owner', '==', email), fs.where('class_code', '==', code))));
+      for (let i = 0; i < snap.docs.length; i += 400) { const b = fs.writeBatch(db); snap.docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await withTimeout(b.commit()); }
+      await withTimeout(fs.deleteDoc(fs.doc(db, 'classes', code)));
+    } catch (err) { throw fbError(err); }
+  },
+  async saveProgress(id, data) {
+    const { fs, db } = await fb();
+    await withTimeout(fs.setDoc(fs.doc(db, 'progress', id), { ...data, updated_at: fs.serverTimestamp() }));
+  },
+  async progress(code) {
+    try {
+      const { fs, db } = await fb(); const email = await this.me();
+      const snap = await withTimeout(fs.getDocs(fs.query(fs.collection(db, 'progress'), fs.where('owner', '==', email), fs.where('class_code', '==', code))));
+      return snap.docs.map(d => d.data());
+    } catch (err) { throw fbError(err); }
+  },
+  async deleteStudentProgress(code, sid) {
+    try {
+      const { fs, db } = await fb(); const email = await this.me();
+      const snap = await withTimeout(fs.getDocs(fs.query(fs.collection(db, 'progress'), fs.where('owner', '==', email), fs.where('class_code', '==', code))));
+      const mine = snap.docs.filter(d => d.data().sid === sid);
+      const b = fs.writeBatch(db); mine.forEach(d => b.delete(d.ref)); await withTimeout(b.commit());
+    } catch (err) { throw fbError(err); }
   },
   async scores(classCode) {
     try { return (await this.all(null, classCode || null)).sort((a, b) => String(a.level).localeCompare(String(b.level)) || rankSort(a, b)); }
@@ -1807,7 +1892,13 @@ const LocalBoard = {
   async myClasses() { return Object.entries(this.readClasses()).map(([code, c]) => ({ code, ...c })); },
   async createClass(name) { const c = this.readClasses(); let code; do code = newClassCode(); while (c[code]); c[code] = { name, ownerEmail: 'test-mode' }; this.writeClasses(c); return code; },
   async renameClass(code, name) { const c = this.readClasses(); if (c[code]) c[code].name = name; this.writeClasses(c); },
-  async deleteClass(code) { await this.resetScores(code); const c = this.readClasses(); delete c[code]; this.writeClasses(c); },
+  async saveAssignment(code, a) { const c = this.readClasses(); if (c[code]) c[code].assignment = a || null; this.writeClasses(c); },
+  async deleteClass(code) { await this.resetScores(code); const c = this.readClasses(); delete c[code]; this.writeClasses(c); const pr = this.readProgress(); for (const k of Object.keys(pr)) if (pr[k].class_code === code) delete pr[k]; this.writeProgress(pr); },
+  readProgress() { try { return JSON.parse(store.get('rdt_progress_local') || '{}'); } catch (e) { return {}; } },
+  writeProgress(pr) { store.set('rdt_progress_local', JSON.stringify(pr)); },
+  async saveProgress(id, data) { const pr = this.readProgress(); pr[id] = data; this.writeProgress(pr); },
+  async progress(code) { return Object.values(this.readProgress()).filter(d => d.class_code === code); },
+  async deleteStudentProgress(code, sid) { const pr = this.readProgress(); for (const k of Object.keys(pr)) if (pr[k].class_code === code && pr[k].sid === sid) delete pr[k]; this.writeProgress(pr); },
   async scores(classCode) { return (await this.all(null, classCode || null)).sort((a, b) => String(a.level || 'easy').localeCompare(String(b.level || 'easy')) || rankSort(a, b)); },
   async deleteScore(id) { this.write(this.read().filter(e => e.id !== id)); },
   async resetScores(classCode) { this.write(classCode ? this.read().filter(e => e.classCode !== classCode) : []); },
@@ -1856,23 +1947,25 @@ async function submitWelcome(e) {
   const err = $('#wError');
   if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{0,14}$/.test(first)) { err.textContent = 'Enter your first name (letters only).'; $('#wFirst').focus(); return; }
   if (!/^[A-Z]$/.test(init)) { err.textContent = 'Enter the first letter of your last name.'; $('#wInit').focus(); return; }
-  let className = '';
+  let className = '', classOwner = '';
+  if (solo) S.assignment = null;
   if (!solo) {
     if (!code) { err.textContent = 'Enter the class code from your teacher, or check "I\'m not in a class."'; $('#wCode').focus(); return; }
     $('#wGo').disabled = true; $('#wGo').textContent = 'Checking code…';
     try {
       const cls = await Board.getClass(code);
       if (!cls) { err.textContent = "We couldn't find that class code. Check it with your teacher."; $('#wCode').focus(); return; }
-      className = cls.name;
+      className = cls.name; classOwner = cls.ownerEmail || ''; S.assignment = cls.assignment || null;
     } catch (ex) { err.textContent = `Couldn't check the code: ${errMsg(ex)}`; return; }
     finally { $('#wGo').disabled = false; $('#wGo').textContent = "Let's go"; }
   }
   const before = getProfile();
-  setProfile({ first, init, classCode: solo ? '' : code, className });
+  setProfile({ first, init, classCode: solo ? '' : code, className, classOwner });
   if (!before || studentKey(before) !== studentKey(getProfile())) S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
   els.welcome.hidden = true;
   updateWho();
   updateUI();
+  renderAssignment();
   toast(`Hi ${first.charAt(0).toUpperCase() + first.slice(1)}!${className ? ` You're in ${className}.` : ''}`);
 }
 
@@ -1949,119 +2042,27 @@ els.boardArea.addEventListener('click', async e => {
 });
 
 // ---------- teacher panel ----------
-const T = { pin: null, email: null, view: 'classes', scope: null, classes: [] };
-const isAdmin = () => !Board.remote || CONFIG.adminEmails.includes(T.email);
-
 function teacherLogin() {
   if (Board.teacherAuth === 'google') {
-    openModal(`<h3>Teacher</h3><p class="muted">Sign in with Google to make class codes and manage your students' scores.</p>
+    openModal(`<h3>Teacher</h3><p class="muted">Sign in with Google to open the Teacher Dashboard: class codes, assignments, live progress and leaderboards.</p>
       <div class="form-error" id="pinErr"></div>
       <div class="modal-actions"><button class="btn" type="button" id="checkReportBtn" style="margin-right:auto">Check a report code</button><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-primary" type="button" id="googleBtn">Sign in with Google</button></div>`);
     $('#checkReportBtn').onclick = checkReportCode;
     $('#googleBtn').onclick = async () => {
-      try { T.email = await Board.signIn(); T.view = 'classes'; await teacherHome(); }
+      try { TD.email = await Board.signIn(); openTeacherView(); }
       catch (err) { $('#pinErr').textContent = errMsg(err); }
     };
     return;
   }
-  openModal(`<h3>Teacher</h3><p class="muted">Test mode: enter the PIN to manage test classes and scores.</p>
+  openModal(`<h3>Teacher</h3><p class="muted">Test mode: enter the PIN to open the Teacher Dashboard.</p>
     <form id="pinForm"><label>PIN<input type="password" inputmode="numeric" id="pinInput" autocomplete="off"></label>
     <div class="form-error" id="pinErr"></div>
     <div class="modal-actions"><button class="btn" type="button" id="checkReportBtn" style="margin-right:auto">Check a report code</button><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-primary" type="submit">Open</button></div></form>`);
   $('#checkReportBtn').onclick = checkReportCode;
-  $('#pinForm').onsubmit = async e => {
+  $('#pinForm').onsubmit = e => {
     e.preventDefault();
-    try { Board.checkPin($('#pinInput').value); T.pin = $('#pinInput').value; T.email = 'test-mode'; T.view = 'classes'; await teacherHome(); }
+    try { Board.checkPin($('#pinInput').value); TD.email = 'test-mode'; openTeacherView(); }
     catch (err) { $('#pinErr').textContent = errMsg(err); }
-  };
-}
-
-async function teacherHome(msg) {
-  try { T.classes = await Board.myClasses(); } catch (err) { T.classes = []; msg = errMsg(err); }
-  if (T.view === 'scores') return teacherScores(msg);
-  const rows = T.classes.map(c => `<tr><td><b>${esc(c.name)}</b></td><td><span class="code-pill">${esc(c.code)}</span></td>
-    <td><button class="btn btn-sm" type="button" data-rename="${esc(c.code)}">Rename</button> <button class="btn btn-sm" type="button" data-delclass="${esc(c.code)}">Delete</button></td></tr>`).join('');
-  openModal(`<h3>Teacher</h3><p class="muted small">${Board.remote ? `Signed in as ${esc(T.email || '')}` : 'Test mode'}</p>
-    ${teacherTabs()}
-    <p class="muted" style="margin:0 0 6px">Give students a class code. They type it on the welcome screen, and their scores go on that class's leaderboard (and the World board).</p>
-    ${T.classes.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>Class</th><th>Code</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p><b>No classes yet.</b> Make your first one below.</p>'}
-    <form class="t-row" id="newClassForm"><input id="newClassName" maxlength="40" placeholder="New class name, e.g. Period 3 – AP Theory"><button class="btn btn-primary" type="submit">Create class</button></form>
-    <div class="form-error" id="tErr">${msg ? esc(msg) : ''}</div>
-    <div class="modal-actions">${Board.remote ? '<button class="btn" type="button" id="tSignOut" style="margin-right:auto">Sign out</button>' : ''}<button class="btn" type="button" data-close>Close</button></div>`, true);
-  wireTeacherTabs();
-  $('#newClassForm').onsubmit = async e => {
-    e.preventDefault();
-    const name = $('#newClassName').value.trim().replace(/\s+/g, ' ');
-    if (!name) { $('#tErr').textContent = 'Type a class name first.'; return; }
-    try { const code = await Board.createClass(name); await teacherHome(); toast(`Created ${name}: code ${code}`, 4000); }
-    catch (err) { $('#tErr').textContent = errMsg(err); }
-  };
-  els.modalBox.querySelectorAll('[data-rename]').forEach(b => {
-    b.onclick = async () => {
-      const c = T.classes.find(x => x.code === b.dataset.rename);
-      const name = (window.prompt('New name for this class:', c.name) || '').trim();
-      if (!name || name === c.name) return;
-      try { await Board.renameClass(c.code, name.slice(0, 40)); await teacherHome(); }
-      catch (err) { $('#tErr').textContent = errMsg(err); }
-    };
-  });
-  els.modalBox.querySelectorAll('[data-delclass]').forEach(b => {
-    b.onclick = () => {
-      const c = T.classes.find(x => x.code === b.dataset.delclass);
-      openModal(`<h3>Delete ${esc(c.name)}?</h3><p>This deletes the class code <b>${esc(c.code)}</b> and all of its scores. Students who used this code will need a new one.</p>
-        <div class="form-error" id="dErr"></div>
-        <div class="modal-actions"><button class="btn" type="button" id="dNo">Cancel</button><button class="btn btn-danger" type="button" id="dYes">Delete class</button></div>`);
-      $('#dNo').onclick = () => teacherHome();
-      $('#dYes').onclick = async () => {
-        try { await Board.deleteClass(c.code); await teacherHome(); toast(`${c.name} deleted.`); }
-        catch (err) { $('#dErr').textContent = errMsg(err); }
-      };
-    };
-  });
-  const so = $('#tSignOut');
-  if (so) so.onclick = async () => { await Board.signOut(); T.email = null; closeModal(); toast('Signed out.'); };
-}
-
-function teacherTabs() {
-  return `<div class="seg t-tabs" role="group" aria-label="Teacher view"><button type="button" data-tview="classes" aria-pressed="${T.view === 'classes'}">My classes</button><button type="button" data-tview="scores" aria-pressed="${T.view === 'scores'}">Scores</button></div>`;
-}
-function wireTeacherTabs() {
-  els.modalBox.querySelectorAll('[data-tview]').forEach(b => { b.onclick = () => { T.view = b.dataset.tview; teacherHome(); }; });
-}
-
-async function teacherScores(msg) {
-  const options = T.classes.map(c => [c.code, c.name]).concat(isAdmin() ? [['__world', '🌎 World (every score)']] : []);
-  if (!options.length) { T.view = 'classes'; return teacherHome('Make a class first. Then its scores show up here.'); }
-  if (!options.some(([k]) => k === T.scope)) T.scope = options[0][0];
-  const world = T.scope === '__world';
-  let list = [];
-  try { list = await Board.scores(world ? null : T.scope); } catch (err) { msg = errMsg(err); }
-  const label = options.find(([k]) => k === T.scope)[1];
-  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>${world ? `<td class="muted">${esc(e.classCode || '—')}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
-    <td><button class="btn btn-sm" type="button" data-del="${esc(e.id)}">Delete</button></td></tr>`).join('');
-  openModal(`<h3>Teacher</h3><p class="muted small">${Board.remote ? `Signed in as ${esc(T.email || '')}` : 'Test mode'}</p>
-    ${teacherTabs()}
-    <div class="t-row"><label class="small muted" for="tScope">Leaderboard</label><select id="tScope">${options.map(([k, n]) => `<option value="${esc(k)}" ${k === T.scope ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
-    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th>${world ? '<th>Class</th>' : ''}<th>Level</th><th>Score</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No scores yet.</p>'}
-    <div class="form-error" id="tErr">${msg ? esc(msg) : ''}</div>
-    <div class="modal-actions" id="tActions"><button class="btn btn-danger" type="button" id="resetBtn" ${list.length ? '' : 'disabled'}>Reset ${esc(label)}</button><button class="btn" type="button" data-close>Close</button></div>`, true);
-  wireTeacherTabs();
-  $('#tScope').onchange = () => { T.scope = $('#tScope').value; teacherScores(); };
-  els.modalBox.querySelectorAll('[data-del]').forEach(b => {
-    b.onclick = async () => {
-      b.disabled = true;
-      try { await Board.deleteScore(b.dataset.del); await teacherScores(); }
-      catch (err) { $('#tErr').textContent = errMsg(err); b.disabled = false; }
-    };
-  });
-  $('#resetBtn').onclick = () => {
-    $('#tActions').innerHTML = `<span style="margin-right:auto;font-weight:650">Delete all ${list.length} scores on ${esc(label)}? This can't be undone.</span>
-      <button class="btn" type="button" id="resetNo">Cancel</button><button class="btn btn-danger" type="button" id="resetYes">Yes, reset</button>`;
-    $('#resetNo').onclick = () => teacherScores();
-    $('#resetYes').onclick = async () => {
-      try { await Board.resetScores(world ? null : T.scope); await teacherScores(); toast('Scores reset.'); }
-      catch (err) { $('#tErr').textContent = errMsg(err); }
-    };
   };
 }
 
@@ -2197,7 +2198,7 @@ document.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const tag = e.target.tagName;
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-  if (S.mode === 'end' || !els.reportView.hidden) { if (e.key === 'Escape') Engine.stop(); return; }
+  if (S.mode === 'end' || !els.reportView.hidden || !els.teacherView.hidden) { if (e.key === 'Escape') Engine.stop(); return; }
   const k = e.key;
   if (k === ' ') { e.preventDefault(); spaceHandled = true; if (!e.repeat) playQuestion(); }
   else if (k === 'a' || k === 'A') { e.preventDefault(); if (!e.repeat) playAnswer(); }
@@ -2370,11 +2371,12 @@ function writeLog(log) {
 }
 function todayOf(log) { const k = dayKey(); return log[k] || (log[k] = { rhythms: [], runs: [] }); }
 function logRhythm(e) {
+  setTimeout(() => { scheduleSync(); renderAssignment(); }, 0);
   const log = readLog();
   todayOf(log).rhythms.push({ ...e, q: e.q.slice(), a: e.a.slice(), ok: e.q.map((id, i) => (e.a[i] === id ? 1 : 0)).join('') });
   writeLog(log);
 }
-function logRun(r) { const log = readLog(); todayOf(log).runs.push(r); writeLog(log); }
+function logRun(r) { const log = readLog(); todayOf(log).runs.push(r); writeLog(log); scheduleSync(); }
 
 function activeMinutes(rhythms) {
   const times = rhythms.flatMap(r => [r.t0, r.t1]).filter(Boolean).sort((a, b) => a - b);
@@ -2428,7 +2430,7 @@ function buildReport() {
   }
   const accuracy = slots ? correct / slots : 0;
   const adjAcc = slots ? Math.min(1, adj / slots) : 0;
-  const effort = Math.min(1, rh.length / CONFIG.dailyGoal);
+  const effort = Math.min(1, rh.length / goalFor());
   const accPts = Math.round(75 * adjAcc), effPts = Math.round(25 * effort);
   const rated = SKILLS.filter(k => skills[k] && skills[k].n >= 4).map(k => ({ k, acc: skills[k].c / skills[k].n, n: skills[k].n }));
   const strengths = rated.filter(x => x.acc >= 0.85).sort((a, b) => b.acc - a.acc || b.n - a.n).slice(0, 2);
@@ -2436,13 +2438,15 @@ function buildReport() {
     .map(x => ({ ...x, tip: suggestionFor(x.k, byTs) }));
   const missed = Object.entries(pieces).filter(([, m]) => m.wrong > 0)
     .map(([id, m]) => ({ id, n: m.n, wrong: m.wrong, pick: Object.entries(m.picks).sort((a, b) => b[1] - a[1])[0]?.[0] || null }))
-    .sort((a, b) => b.wrong - a.wrong || b.wrong / b.n - a.wrong / a.n).slice(0, 6);
+    .sort((a, b) => b.wrong - a.wrong || b.wrong / b.n - a.wrong / a.n);
+  const missedAll = missed.slice(0, 15);
+  missed.splice(6);
   const best = {};
   for (const run of day.runs) if (!best[run.lv] || run.score > best[run.lv]) best[run.lv] = run.score;
   return {
     date: dayKey(), rhythms: rh.length, slots, correct, accuracy, adjAcc, effort, accPts, effPts,
     score: rh.length ? accPts + effPts : 0, minutes: activeMinutes(rh),
-    avgPlays: rh.length ? plays / rh.length : 0, avgPool: rh.length ? poolSum / rh.length : 1, missed, skills, meters, byTs, levels, strengths, work, rated, best,
+    avgPlays: rh.length ? plays / rh.length : 0, avgPool: rh.length ? poolSum / rh.length : 1, missed, missedAll, adj, poolSum, plays, runs: day.runs, extraSum: sum(rh.map(r => r.x || 0)), skills, meters, byTs, levels, strengths, work, rated, best,
     challenges: day.runs.length, first: rh.length ? Math.min(...rh.map(r => r.t0 || r.t1)) : null, last: rh.length ? Math.max(...rh.map(r => r.t1)) : null,
   };
 }
@@ -2503,7 +2507,7 @@ function renderReport() {
       <div class="rp-tile"><span>Practice time</span><b>${rep.minutes} min</b></div>
       <div class="rp-tile"><span>Avg. listens</span><b>${rep.avgPlays.toFixed(1)}</b></div>
     </div>
-    <p class="rp-break">Score = accuracy <b>${rep.accPts}/75</b> (Hard and Extreme count a little extra) + effort <b>${rep.effPts}/25</b> (${Math.min(rep.rhythms, CONFIG.dailyGoal)} of ${CONFIG.dailyGoal} rhythms). ${poolNote(rep)}Best challenge: ${bestText(rep)}.</p>
+    <p class="rp-break">Score = accuracy <b>${rep.accPts}/75</b> (Hard and Extreme count a little extra) + effort <b>${rep.effPts}/25</b> (${Math.min(rep.rhythms, goalFor())} of ${goalFor()} rhythms). ${poolNote(rep)}Best challenge: ${bestText(rep)}.</p>
     <div class="rp-cols">
       <div class="rp-box good"><h3>✅ Doing well</h3><ul>${goodHtml}</ul></div>
       <div class="rp-box work"><h3>🎯 Needs work</h3><ul>${workHtml}</ul></div>
@@ -2568,7 +2572,7 @@ async function drawReport(rep, name, noPictures = false) {
 
   y += 150;
   ctx.font = `400 22px ${FONT}`;
-  const breakdown = `Score = accuracy ${rep.accPts}/75 + effort ${rep.effPts}/25 (${Math.min(rep.rhythms, CONFIG.dailyGoal)} of ${CONFIG.dailyGoal} rhythms). ${poolNote(rep)}Best challenge: ${bestText(rep)}.`;
+  const breakdown = `Score = accuracy ${rep.accPts}/75 + effort ${rep.effPts}/25 (${Math.min(rep.rhythms, goalFor())} of ${goalFor()} rhythms). ${poolNote(rep)}Best challenge: ${bestText(rep)}.`;
   const bl = wrapLines(ctx, breakdown, W - 2 * P);
   bl.forEach((l, i) => text(l, P, y + i * 30, 22, '#5d6477'));
   y += bl.length * 30 + 30;
@@ -2698,6 +2702,349 @@ $('#rpExport').onclick = exportReport;
 $('#rpFresh').onclick = startFresh;
 
 
+/* =====================================================================
+   9. CLASS PROGRESS (student side) + TEACHER DASHBOARD
+   Students in a class sync a summary of today's practice (one document per
+   student per day). Only the class's teacher can read them.
+   ===================================================================== */
+S.assignment = null;
+const goalFor = () => (S.assignment && S.assignment.goal) || CONFIG.dailyGoal;
+const sidOf = p => (p.first + p.init).toLowerCase().replace(/[^a-z]/g, '');
+
+let syncTimer = 0;
+function scheduleSync() { clearTimeout(syncTimer); syncTimer = setTimeout(syncProgress, 1500); }
+async function syncProgress() {
+  const p = getProfile();
+  if (!p || !p.classCode || !Board.saveProgress) return;
+  if (!p.classOwner) {
+    try { const c = await Board.getClass(p.classCode); if (!c) return; p.classOwner = c.ownerEmail || ''; p.className = c.name; setProfile(p); }
+    catch (e) { return; }
+  }
+  const rep = buildReport();
+  if (!rep.rhythms && !rep.runs.length) return;
+  const pairs = obj => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, [v.c, v.n]]));
+  const data = {
+    class_code: p.classCode, owner: p.classOwner, date: rep.date, sid: sidOf(p), student: displayName(p),
+    rhythms: rep.rhythms, slots: rep.slots, correct: rep.correct, adj: Math.round(rep.adj * 1000) / 1000,
+    plays: rep.plays, extra: rep.extraSum, pool: Math.round(rep.poolSum * 1000) / 1000, minutes: rep.minutes,
+    first_at: rep.first || 0, last_at: rep.last || Date.now(), score: rep.score, goal: goalFor(),
+    skills: pairs(rep.skills), ts: pairs(rep.byTs),
+    levels: Object.fromEntries(Object.entries(rep.levels).map(([k, v]) => [k, [v.c, v.n, v.rhythms]])),
+    missed: Object.fromEntries(rep.missedAll.map(x => [x.id, [x.wrong, x.n, x.pick || '']])),
+    challenges: rep.runs.slice(-20).map(r => ({ lv: r.lv, score: r.score, t: r.t })),
+  };
+  try { await Board.saveProgress(`${p.classCode}_${rep.date}_${data.sid}`, data); }
+  catch (e) { console.warn('Progress sync failed:', e); }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(syncTimer); syncProgress(); } });
+
+async function refreshClassInfo() {
+  const p = getProfile();
+  if (!p || !p.classCode) { S.assignment = null; renderAssignment(); return; }
+  try {
+    const c = await Board.getClass(p.classCode);
+    if (!c) { toast(`The class code ${p.classCode} no longer exists. Ask your teacher for a new one.`, 6000); setProfile({ ...p, classCode: '', className: '', classOwner: '' }); updateWho(); S.assignment = null; renderAssignment(); return; }
+    setProfile({ ...p, className: c.name, classOwner: c.ownerEmail || '' });
+    S.assignment = c.assignment || null;
+    updateWho(); renderAssignment();
+  } catch (e) { /* offline: keep going */ }
+}
+
+const assignText = a => `${LEVEL_NAME[a.level] || 'Any level'} · ${a.type === 'simple' ? 'Simple' : a.type === 'compound' ? 'Compound' : 'Simple or Compound'}${a.lock && a.lock !== 'random' ? ` (${a.lock})` : ''} · ${a.measures || 2} measures`;
+function renderAssignment() {
+  const a = S.assignment, banner = els.assignBanner;
+  if (!a || S.mode !== 'practice') { banner.hidden = true; return; }
+  const day = todayOf(readLog()), done = day.rhythms.length, mins = activeMinutes(day.rhythms);
+  const goalBits = [a.goal ? `${Math.min(done, a.goal)}/${a.goal} rhythms` : `${done} rhythms`, a.minutes ? `${Math.min(mins, a.minutes)}/${a.minutes} min` : `${mins} min`];
+  const met = (!a.goal || done >= a.goal) && (!a.minutes || mins >= a.minutes) && (a.goal || a.minutes);
+  const st = S.settings;
+  const using = (!a.level || st.level === a.level) && (!a.type || a.type === 'either' || st.type === a.type) && (!a.measures || st.measures === a.measures) && (!a.lock || a.lock === 'random' || st.lock === a.lock);
+  banner.innerHTML = `<span class="ab-title">📌 Assignment</span><b>${esc(assignText(a))}</b>
+    <span class="ab-prog ${met ? 'done' : ''}">${met ? '✓ Goal met! ' : 'You: '}${goalBits.join(' · ')}</span>
+    ${using ? '<span class="small muted">✓ Using these settings</span>' : '<button class="btn btn-sm btn-primary" type="button" id="useAssign">Use these settings</button>'}
+    ${a.note ? `<span class="ab-note">“${esc(a.note)}”</span>` : ''}`;
+  banner.hidden = false;
+  const btn = $('#useAssign');
+  if (btn) btn.onclick = applyAssignment;
+}
+function applyAssignment() {
+  const a = S.assignment; if (!a) return;
+  if (a.level) S.settings.level = a.level;
+  if (a.type === 'simple' || a.type === 'compound') S.settings.type = a.type;
+  if (a.measures) S.settings.measures = a.measures;
+  S.settings.lock = a.lock && TIME_SIGS[a.lock] && TIME_SIGS[a.lock].type === S.settings.type ? a.lock : 'random';
+  S.pool = { pct: 1, custom: {} };
+  populateTsSelect(); saveSettings(); newPracticeRhythm(); renderAssignment();
+  toast('Assignment settings on. Have fun!');
+}
+
+// ---------- teacher dashboard ----------
+const TD = { email: null, classes: [], code: null, tab: 'progress', range: 'today', date: dayKey(), docs: [], sort: { key: 'minutes', dir: -1 }, open: null, timer: 0, scope: null };
+const tdIsAdmin = () => !Board.remote || CONFIG.adminEmails.includes(TD.email);
+const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return dayKey(d); };
+const relTime = t => { const m = Math.round((Date.now() - t) / 60000); return m < 2 ? 'Active now' : m < 60 ? `${m} min ago` : fmtClock(t); };
+
+async function openTeacherView() {
+  Engine.stop(); closeModal();
+  TD.backTo = S.mode === 'end' ? 'end' : 'play';
+  showView('teacher'); window.scrollTo({ top: 0 });
+  $('#tdWho').textContent = Board.remote ? `Signed in as ${TD.email}` : 'Test mode (this browser only)';
+  $('#tdSignOut').hidden = !Board.remote;
+  await tdLoadClasses();
+  tdRender();
+}
+async function tdLoadClasses() {
+  $('#tdErr').textContent = '';
+  try { TD.classes = await Board.myClasses(); } catch (err) { TD.classes = []; $('#tdErr').textContent = errMsg(err); }
+  if (!TD.classes.some(c => c.code === TD.code)) TD.code = TD.classes.length ? TD.classes[0].code : null;
+  $('#tdClass').innerHTML = TD.classes.length ? TD.classes.map(c => `<option value="${esc(c.code)}">${esc(c.name)} · ${esc(c.code)}</option>`).join('') : '<option value="">No classes yet</option>';
+  $('#tdClass').value = TD.code || '';
+}
+const tdClass = () => TD.classes.find(c => c.code === TD.code);
+
+function tdRender() {
+  for (const b of $('#tdTabs').children) b.setAttribute('aria-pressed', String(b.dataset.tab === TD.tab));
+  clearInterval(TD.timer);
+  if (!TD.code && (TD.tab === 'progress' || TD.tab === 'assign')) TD.tab = 'classes';
+  for (const b of $('#tdTabs').children) b.setAttribute('aria-pressed', String(b.dataset.tab === TD.tab));
+  ({ progress: tdProgress, assign: tdAssign, classes: tdClasses, scores: tdScores })[TD.tab]();
+}
+
+// ----- Progress -----
+function mergeDocs(docs) {
+  const by = {};
+  for (const d of docs) {
+    const s = by[d.sid] || (by[d.sid] = { sid: d.sid, student: d.student, rhythms: 0, slots: 0, correct: 0, adj: 0, plays: 0, extra: 0, pool: 0, minutes: 0, first: Infinity, last: 0, scores: [], skills: {}, ts: {}, levels: {}, missed: {}, challenges: [], goal: d.goal, days: 0 });
+    s.days++; s.student = d.student;
+    for (const k of ['rhythms', 'slots', 'correct', 'adj', 'plays', 'extra', 'pool', 'minutes']) s[k] += d[k] || 0;
+    s.first = Math.min(s.first, d.first_at || Infinity); s.last = Math.max(s.last, d.last_at || 0);
+    if (d.rhythms) s.scores.push(d.score || 0);
+    for (const [k, [c, n]] of Object.entries(d.skills || {})) { const a = s.skills[k] || (s.skills[k] = { c: 0, n: 0 }); a.c += c; a.n += n; }
+    for (const [k, [c, n]] of Object.entries(d.ts || {})) { const a = s.ts[k] || (s.ts[k] = { c: 0, n: 0 }); a.c += c; a.n += n; }
+    for (const [k, [c, n, r]] of Object.entries(d.levels || {})) { const a = s.levels[k] || (s.levels[k] = { c: 0, n: 0, r: 0 }); a.c += c; a.n += n; a.r += r; }
+    for (const [id, [w, n, pick]] of Object.entries(d.missed || {})) { const a = s.missed[id] || (s.missed[id] = { wrong: 0, n: 0, picks: {} }); a.wrong += w; a.n += n; if (pick) a.picks[pick] = (a.picks[pick] || 0) + w; }
+    s.challenges.push(...(d.challenges || []));
+  }
+  return Object.values(by).map(s => {
+    s.acc = s.slots ? s.correct / s.slots : 0;
+    s.score = s.scores.length ? Math.round(sum(s.scores) / s.scores.length) : 0;
+    const rated = SKILLS.filter(k => s.skills[k] && s.skills[k].n >= 4).map(k => ({ k, acc: s.skills[k].c / s.skills[k].n, n: s.skills[k].n }));
+    s.weak = rated.filter(x => x.acc < 0.85).sort((a, b) => a.acc - b.acc).slice(0, 2);
+    s.strong = rated.filter(x => x.acc >= 0.85).sort((a, b) => b.acc - a.acc).slice(0, 2);
+    s.avgPlays = s.rhythms ? s.plays / s.rhythms : 0;
+    return s;
+  });
+}
+function rangeDocs() {
+  const r = TD.range;
+  const keep = r === 'today' ? d => d.date === dayKey() : r === 'yesterday' ? d => d.date === daysAgo(1) : r === 'week' ? d => d.date >= daysAgo(6) : d => d.date === TD.date;
+  return TD.docs.filter(keep);
+}
+const rangeLabel = () => ({ today: 'Today', yesterday: 'Yesterday', week: 'Last 7 days' }[TD.range] || fmtLongDate(TD.date));
+
+async function tdProgress(keepOpen) {
+  const body = $('#tdBody');
+  if (!keepOpen) body.innerHTML = '<p class="muted">Loading progress…</p>';
+  try { TD.docs = await Board.progress(TD.code); $('#tdErr').textContent = ''; }
+  catch (err) { $('#tdErr').textContent = errMsg(err); TD.docs = []; }
+  const studs = mergeDocs(rangeDocs());
+  const k = TD.sort.key, dir = TD.sort.dir;
+  studs.sort((a, b) => (k === 'student' ? String(a.student).localeCompare(String(b.student)) : (a[k] - b[k])) * dir);
+  const cls = tdClass();
+  const totalMin = sum(studs.map(s => s.minutes)), rhythms = sum(studs.map(s => s.rhythms));
+  const slots = sum(studs.map(s => s.slots)), correct = sum(studs.map(s => s.correct));
+  const active = studs.filter(s => Date.now() - s.last < 2 * 60000).length;
+  const skills = {}, missed = {};
+  for (const s of studs) {
+    for (const [kk, v] of Object.entries(s.skills)) { const a = skills[kk] || (skills[kk] = { c: 0, n: 0, kids: 0, low: 0 }); a.c += v.c; a.n += v.n; if (v.n >= 4) { a.kids++; if (v.c / v.n < 0.7) a.low++; } }
+    for (const [id, v] of Object.entries(s.missed)) { const a = missed[id] || (missed[id] = { wrong: 0, n: 0, kids: 0 }); a.wrong += v.wrong; a.n += v.n; a.kids++; }
+  }
+  const skillRows = SKILLS.filter(kk => skills[kk]).map(kk => [kk, skills[kk]]).sort((a, b) => a[1].c / a[1].n - b[1].c / b[1].n);
+  const topMissed = Object.entries(missed).sort((a, b) => b[1].wrong - a[1].wrong).slice(0, 8);
+  const bars = rows => rows.map(([label, v]) => `<div class="bar-row"><span>${esc(label)}</span><div class="bar"><i class="${tone(v.c / v.n)}" style="width:${Math.round(v.c / v.n * 100)}%"></i></div><b>${pct(v.c / v.n)}</b><small>${v.kids ? `${v.low} of ${v.kids} kids <70%` : `${v.n} slots`}</small></div>`).join('');
+  const th = (key, label) => `<th data-sort="${key}" class="${TD.sort.key === key ? `sorted ${TD.sort.dir > 0 ? 'asc' : ''}` : ''}">${label}</th>`;
+  const goal = (cls && cls.assignment && cls.assignment.goal) || null;
+  const rows = studs.map(s => {
+    const open = TD.open === s.sid;
+    return `<tr data-sid="${esc(s.sid)}" class="${open ? 'open' : ''}">
+      <td><span class="dot ${Date.now() - s.last < 2 * 60000 ? 'on' : ''}"></span><b>${esc(s.student)}</b></td>
+      <td>${s.minutes} min</td><td>${s.rhythms}${goal && TD.range === 'today' ? ` <span class="muted">/ ${goal}</span>` : ''}</td>
+      <td><span class="chip ${tone(s.acc)}">${pct(s.acc)}</span></td><td>${s.score}</td><td>${s.avgPlays.toFixed(1)}</td>
+      <td>${s.weak.length ? s.weak.map(w => `${esc(w.k)} <span class="muted">${pct(w.acc)}</span>`).join(', ') : '<span class="muted">—</span>'}</td>
+      <td class="muted">${TD.range === 'today' ? relTime(s.last) : `${s.days} day${s.days > 1 ? 's' : ''}`}</td></tr>
+      ${open ? `<tr class="detail-row"><td colspan="8">${tdStudentDetail(s)}</td></tr>` : ''}`;
+  }).join('');
+  body.innerHTML = `
+    <div class="td-sub">
+      <select id="tdRange"><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="week">Last 7 days</option><option value="date">Pick a date…</option></select>
+      <input type="date" id="tdDate" value="${TD.date}" ${TD.range === 'date' ? '' : 'hidden'}>
+      <button class="btn btn-sm" type="button" id="tdRefresh">Refresh</button>
+      <button class="btn btn-sm" type="button" id="tdCsv" ${studs.length ? '' : 'disabled'}>Export CSV</button>
+      ${TD.range === 'today' ? '<span class="td-live"><i></i>Live: updates every 30 seconds</span>' : ''}
+    </div>
+    ${cls && cls.assignment ? `<p class="small muted" style="margin:0 0 8px">📌 Assignment: <b>${esc(assignText(cls.assignment))}</b>${cls.assignment.goal ? ` · goal ${cls.assignment.goal} rhythms` : ''}${cls.assignment.minutes ? ` · ${cls.assignment.minutes} min` : ''}</p>` : ''}
+    <div class="rp-tiles">
+      <div class="rp-tile"><span>Students</span><b>${studs.length}${TD.range === 'today' ? ` <small class="muted" style="font-size:13px">${active} active now</small>` : ''}</b></div>
+      <div class="rp-tile"><span>Avg. time</span><b>${studs.length ? Math.round(totalMin / studs.length) : 0} min</b></div>
+      <div class="rp-tile"><span>Rhythms done</span><b>${rhythms}</b></div>
+      <div class="rp-tile"><span>Class accuracy</span><b>${slots ? pct(correct / slots) : '—'}</b></div>
+    </div>
+    ${studs.length ? `
+    <div class="td-grid">
+      <div class="rp-section"><h3>Where the class is struggling</h3>${bars(skillRows)}</div>
+      <div class="rp-section"><h3>Most-missed rhythms</h3>${topMissed.length ? `<div class="miss-grid">${topMissed.map(([id, v]) => `<div class="miss-card"><div class="miss-svg">${cellSVG(CELLS[id])}</div><div class="miss-info"><b>Missed ${v.wrong} of ${v.n}</b><span>${v.kids} student${v.kids > 1 ? 's' : ''}</span></div></div>`).join('')}</div>` : '<p class="muted">No misses yet.</p>'}</div>
+    </div>
+    <div class="rp-section"><h3>Students <span class="muted small">(click a name for details)</span></h3>
+      <div style="overflow-x:auto"><table class="td-table"><thead><tr>${th('student', 'Student')}${th('minutes', 'Time')}${th('rhythms', 'Rhythms')}${th('acc', 'Accuracy')}${th('score', 'Score')}${th('avgPlays', 'Listens')}<th>Struggling with</th><th>${TD.range === 'today' ? 'Last active' : 'Days'}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>` : `<p class="muted" style="margin-top:12px">No practice yet for ${esc(rangeLabel().toLowerCase())}. Students show up here as soon as they check a rhythm while signed in with code <b>${esc(TD.code)}</b>.</p>`}`;
+  $('#tdRange').value = TD.range;
+  $('#tdRange').onchange = () => { TD.range = $('#tdRange').value; TD.open = null; tdProgress(); };
+  $('#tdDate').onchange = () => { TD.date = $('#tdDate').value; tdProgress(); };
+  $('#tdRefresh').onclick = () => tdProgress(true);
+  $('#tdCsv').onclick = () => tdCsv(studs);
+  body.querySelectorAll('[data-sort]').forEach(h => { h.onclick = () => { const key = h.dataset.sort; TD.sort = { key, dir: TD.sort.key === key ? -TD.sort.dir : (key === 'student' ? 1 : -1) }; tdProgress(true); }; });
+  body.querySelectorAll('tr[data-sid]').forEach(r => { r.onclick = () => { TD.open = TD.open === r.dataset.sid ? null : r.dataset.sid; tdProgress(true); }; });
+  const del = $('#tdDelStudent');
+  if (del) del.onclick = e => {
+    e.stopPropagation();
+    const s = studs.find(x => x.sid === TD.open);
+    openModal(`<h3>Remove ${esc(s.student)}?</h3><p>This deletes all of ${esc(s.student)}'s saved practice in ${esc(cls.name)}. Use it for test entries or a student who joined the wrong class.</p>
+      <div class="form-error" id="dErr"></div><div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-danger" type="button" id="dYes">Remove</button></div>`);
+    $('#dYes').onclick = async () => { try { await Board.deleteStudentProgress(TD.code, s.sid); closeModal(); TD.open = null; tdProgress(); } catch (err) { $('#dErr').textContent = errMsg(err); } };
+  };
+  if (TD.range === 'today') TD.timer = setInterval(() => { if (!document.hidden && TD.tab === 'progress' && !els.teacherView.hidden) tdProgress(true); }, 30000);
+}
+
+function tdStudentDetail(s) {
+  const bars = rows => rows.map(([label, v]) => `<div class="bar-row"><span>${esc(label)}</span><div class="bar"><i class="${tone(v.c / v.n)}" style="width:${Math.round(v.c / v.n * 100)}%"></i></div><b>${pct(v.c / v.n)}</b><small>${v.n} slots</small></div>`).join('');
+  const missed = Object.entries(s.missed).sort((a, b) => b[1].wrong - a[1].wrong).slice(0, 6);
+  const best = {}; for (const c of s.challenges) if (best[c.lv] == null || c.score > best[c.lv]) best[c.lv] = c.score;
+  const lv = Object.entries(s.levels).map(([k, v]) => `${LEVEL_NAME[k]} ${v.r}`).join(' · ');
+  return `<div class="td-detail">
+    <p style="margin:0 0 8px"><b>${esc(s.student)}</b> · ${s.minutes} min · ${s.rhythms} rhythms (${lv || '—'}) · ${s.extra} extra listens in challenges · best challenge: ${LEVELS.filter(l => best[l] != null).map(l => `${LEVEL_NAME[l]} ${best[l]}%`).join(', ') || 'none'}${s.first !== Infinity ? ` · ${fmtClock(s.first)}–${fmtClock(s.last)}` : ''}</p>
+    <div class="td-grid">
+      <div><h3 class="small" style="margin:4px 0">Skills</h3>${bars(SKILLS.filter(k => s.skills[k]).map(k => [k, s.skills[k]]))}
+        <h3 class="small" style="margin:10px 0 4px">Time signatures</h3>${bars(Object.keys(TIME_SIGS).filter(t => s.ts[t]).map(t => [t, s.ts[t]]))}</div>
+      <div><h3 class="small" style="margin:4px 0">Most-missed rhythms</h3>${missed.length ? `<div class="miss-grid">${missed.map(([id, v]) => { const pick = Object.entries(v.picks).sort((a, b) => b[1] - a[1])[0]; return `<div class="miss-card"><div class="miss-svg">${cellSVG(CELLS[id])}</div><div class="miss-info"><b>Missed ${v.wrong} of ${v.n}</b>${pick && CELLS[pick[0]] ? `<span>Often picked:</span><div class="miss-svg small">${cellSVG(CELLS[pick[0]])}</div>` : ''}</div></div>`; }).join('')}</div>` : '<p class="muted">No misses.</p>'}</div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-sm" type="button" id="tdDelStudent">Remove this student's data</button></div>
+  </div>`;
+}
+
+function tdCsv(studs) {
+  const cls = tdClass();
+  const head = ['Student', 'Range', 'Minutes', 'Rhythms', 'Accuracy %', 'Session score', 'Avg listens', 'Extra listens', 'Best Easy', 'Best Hard', 'Best Extreme', 'Struggling with', 'Strong at'];
+  const q = v => `"${String(v).replace(/"/g, '""')}"`;
+  const lines = [head.map(q).join(',')].concat(studs.map(s => {
+    const best = {}; for (const c of s.challenges) if (best[c.lv] == null || c.score > best[c.lv]) best[c.lv] = c.score;
+    return [s.student, rangeLabel(), s.minutes, s.rhythms, Math.round(s.acc * 100), s.score, s.avgPlays.toFixed(1), s.extra, best.easy ?? '', best.hard ?? '', best.extreme ?? '',
+      s.weak.map(w => `${w.k} ${pct(w.acc)}`).join('; '), s.strong.map(w => `${w.k} ${pct(w.acc)}`).join('; ')].map(q).join(',');
+  }));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `rhythm-progress-${(cls ? cls.name : 'class').replace(/[^A-Za-z0-9]+/g, '-')}-${TD.range === 'date' ? TD.date : TD.range}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+// ----- Assignment -----
+function tdAssign() {
+  const cls = tdClass(), a = (cls && cls.assignment) || {};
+  const tsOpts = t => ['random', ...(t === 'compound' ? COMPOUND_TS : t === 'simple' ? SIMPLE_TS : [])].map(v => `<option value="${v}" ${a.lock === v ? 'selected' : ''}>${v === 'random' ? 'Any' : v}</option>`).join('');
+  $('#tdBody').innerHTML = `
+    <p class="muted" style="margin:6px 0">Set what <b>${esc(cls.name)}</b> should practice. Students see it as a banner with a <b>Use these settings</b> button, plus their progress toward the goal. It stays until you change or clear it.</p>
+    <form class="td-form" id="assignForm">
+      <label>Level<select id="aLevel">${LEVELS.map(l => `<option value="${l}" ${a.level === l ? 'selected' : ''}>${LEVEL_NAME[l]}</option>`).join('')}</select></label>
+      <label>Meter<select id="aType"><option value="either" ${!a.type || a.type === 'either' ? 'selected' : ''}>Simple or Compound</option><option value="simple" ${a.type === 'simple' ? 'selected' : ''}>Simple</option><option value="compound" ${a.type === 'compound' ? 'selected' : ''}>Compound</option></select></label>
+      <label>Time signature<select id="aLock">${tsOpts(a.type)}</select></label>
+      <label>Length<select id="aMeasures"><option value="2" ${a.measures !== 4 ? 'selected' : ''}>2 measures</option><option value="4" ${a.measures === 4 ? 'selected' : ''}>4 measures</option></select></label>
+      <label>Goal: rhythms<input id="aGoal" type="number" min="0" max="200" value="${a.goal ?? 20}"></label>
+      <label>Goal: minutes<input id="aMinutes" type="number" min="0" max="240" value="${a.minutes ?? ''}" placeholder="optional"></label>
+      <label class="wide">Note to students<input id="aNote" maxlength="140" value="${esc(a.note || '')}" placeholder="optional, e.g. Focus on counting the off-beats"></label>
+    </form>
+    <div class="modal-actions" style="justify-content:flex-start"><button class="btn btn-primary" type="button" id="aSave">Save assignment</button>${cls.assignment ? '<button class="btn" type="button" id="aClear">Clear assignment</button>' : ''}</div>`;
+  $('#aType').onchange = () => { $('#aLock').innerHTML = tsOpts($('#aType').value); };
+  $('#aSave').onclick = async () => {
+    const assignment = { level: $('#aLevel').value, type: $('#aType').value, lock: $('#aLock').value, measures: +$('#aMeasures').value,
+      goal: Math.max(0, Math.min(200, +$('#aGoal').value || 0)), minutes: Math.max(0, Math.min(240, +$('#aMinutes').value || 0)), note: $('#aNote').value.trim().slice(0, 140), set_at: Date.now() };
+    try { await Board.saveAssignment(TD.code, assignment); cls.assignment = assignment; toast(`Assignment saved for ${cls.name}.`); tdAssign(); }
+    catch (err) { $('#tdErr').textContent = errMsg(err); }
+  };
+  const clr = $('#aClear');
+  if (clr) clr.onclick = async () => { try { await Board.saveAssignment(TD.code, null); cls.assignment = null; toast('Assignment cleared.'); tdAssign(); } catch (err) { $('#tdErr').textContent = errMsg(err); } };
+}
+
+// ----- Classes -----
+function tdClasses() {
+  const rows = TD.classes.map(c => `<tr><td><b>${esc(c.name)}</b></td><td><span class="code-pill">${esc(c.code)}</span></td><td class="muted small">${c.assignment ? esc(assignText(c.assignment)) : 'No assignment'}</td>
+    <td style="text-align:right"><button class="btn btn-sm" type="button" data-rename="${esc(c.code)}">Rename</button> <button class="btn btn-sm" type="button" data-delclass="${esc(c.code)}">Delete</button></td></tr>`).join('');
+  $('#tdBody').innerHTML = `
+    <p class="muted" style="margin:6px 0">Give each class its code. Students type it on the welcome screen, and from then on their practice shows up in <b>Progress</b> and their challenge scores go on that class's leaderboard.</p>
+    ${TD.classes.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>Class</th><th>Code</th><th>Assignment</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p><b>No classes yet.</b> Make your first one below.</p>'}
+    <form class="t-row" id="newClassForm"><input id="newClassName" maxlength="40" placeholder="New class name, e.g. Period 3 – AP Theory"><button class="btn btn-primary" type="submit">Create class</button></form>`;
+  $('#newClassForm').onsubmit = async e => {
+    e.preventDefault();
+    const name = $('#newClassName').value.trim().replace(/\s+/g, ' ');
+    if (!name) { $('#tdErr').textContent = 'Type a class name first.'; return; }
+    try { const code = await Board.createClass(name); TD.code = code; await tdLoadClasses(); tdRender(); toast(`Created ${name}: code ${code}`, 5000); }
+    catch (err) { $('#tdErr').textContent = errMsg(err); }
+  };
+  $('#tdBody').querySelectorAll('[data-rename]').forEach(b => {
+    b.onclick = async () => {
+      const c = TD.classes.find(x => x.code === b.dataset.rename);
+      const name = (window.prompt('New name for this class:', c.name) || '').trim();
+      if (!name || name === c.name) return;
+      try { await Board.renameClass(c.code, name.slice(0, 40)); await tdLoadClasses(); tdRender(); }
+      catch (err) { $('#tdErr').textContent = errMsg(err); }
+    };
+  });
+  $('#tdBody').querySelectorAll('[data-delclass]').forEach(b => {
+    b.onclick = () => {
+      const c = TD.classes.find(x => x.code === b.dataset.delclass);
+      openModal(`<h3>Delete ${esc(c.name)}?</h3><p>This deletes the code <b>${esc(c.code)}</b>, its leaderboard scores and all saved practice data. Students who used this code will need a new one.</p>
+        <div class="form-error" id="dErr"></div>
+        <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-danger" type="button" id="dYes">Delete class</button></div>`);
+      $('#dYes').onclick = async () => {
+        try { await Board.deleteClass(c.code); closeModal(); await tdLoadClasses(); tdRender(); toast(`${c.name} deleted.`); }
+        catch (err) { $('#dErr').textContent = errMsg(err); }
+      };
+    };
+  });
+}
+
+// ----- Leaderboard scores -----
+async function tdScores() {
+  const options = TD.classes.map(c => [c.code, c.name]).concat(tdIsAdmin() ? [['__world', '🌎 World (every score)']] : []);
+  if (!options.length) { $('#tdBody').innerHTML = '<p class="muted">Make a class first. Its leaderboard scores show up here.</p>'; return; }
+  if (!options.some(([k]) => k === TD.scope)) TD.scope = TD.code || options[0][0];
+  const world = TD.scope === '__world';
+  let list = [];
+  try { list = await Board.scores(world ? null : TD.scope); } catch (err) { $('#tdErr').textContent = errMsg(err); }
+  const label = options.find(([k]) => k === TD.scope)[1];
+  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>${world ? `<td class="muted">${esc(e.classCode || '—')}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${e.extra || 0}</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
+    <td style="text-align:right"><button class="btn btn-sm" type="button" data-del="${esc(e.id)}">Delete</button></td></tr>`).join('');
+  $('#tdBody').innerHTML = `
+    <div class="td-sub"><label class="small muted" for="tdScope">Leaderboard</label><select id="tdScope">${options.map(([k, n]) => `<option value="${esc(k)}" ${k === TD.scope ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th>${world ? '<th>Class</th>' : ''}<th>Level</th><th>Score</th><th>Extra listens</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No posted challenge scores yet.</p>'}
+    <div class="modal-actions" id="tActions" style="justify-content:flex-start"><button class="btn btn-danger" type="button" id="resetBtn" ${list.length ? '' : 'disabled'}>Reset ${esc(label)}</button></div>`;
+  $('#tdScope').onchange = () => { TD.scope = $('#tdScope').value; tdScores(); };
+  $('#tdBody').querySelectorAll('[data-del]').forEach(b => {
+    b.onclick = async () => { b.disabled = true; try { await Board.deleteScore(b.dataset.del); tdScores(); } catch (err) { $('#tdErr').textContent = errMsg(err); b.disabled = false; } };
+  });
+  $('#resetBtn').onclick = () => {
+    $('#tActions').innerHTML = `<span style="font-weight:650">Delete all ${list.length} scores on ${esc(label)}? This can't be undone.</span>
+      <button class="btn" type="button" id="resetNo">Cancel</button><button class="btn btn-danger" type="button" id="resetYes">Yes, reset</button>`;
+    $('#resetNo').onclick = () => tdScores();
+    $('#resetYes').onclick = async () => { try { await Board.resetScores(world ? null : TD.scope); tdScores(); toast('Scores reset.'); } catch (err) { $('#tdErr').textContent = errMsg(err); } };
+  };
+}
+
+$('#tdTabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; TD.tab = b.dataset.tab; TD.open = null; tdRender(); });
+$('#tdClass').onchange = () => { TD.code = $('#tdClass').value; TD.scope = TD.code; TD.open = null; tdRender(); };
+$('#tdBack').onclick = () => { showView(TD.backTo || 'play'); if ((TD.backTo || 'play') === 'play') { fitScreen(true); refreshClassInfo(); } };
+$('#tdSignOut').onclick = async () => { try { await Board.signOut(); } catch (e) { /* ignore */ } TD.email = null; showView('play'); fitScreen(true); toast('Signed out.'); };
+
 /* ---------- start ---------- */
 const dataErrors = validateData();
 if (dataErrors.length) {
@@ -2713,7 +3060,8 @@ showView('play');
 newPracticeRhythm();
 updateWho();
 if (!getProfile()) showWelcome(false);
-if (/[?&]selftest/.test(location.search)) window.RDT = { buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+else refreshClassInfo();
+if (/[?&]selftest/.test(location.search)) window.RDT = { syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
 </body>
