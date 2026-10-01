@@ -39,7 +39,7 @@
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-height:calc(100vh / var(--z,1));min-height:calc(100dvh / var(--z,1));display:flex;flex-direction:column}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .app{width:100%;max-width:1120px;margin:0 auto;padding:10px 16px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));flex:1}
@@ -169,6 +169,10 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 /* ---------- footer ---------- */
 .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--muted)}
 .foot b{color:var(--text)}
+.size-ctl{display:inline-flex;align-items:center;gap:4px;margin-right:6px}
+.size-ctl button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;min-width:34px;min-height:30px;padding:2px 8px;font-weight:700;font-size:12px;cursor:pointer}
+.size-ctl #zoomReset{min-width:58px;font-variant-numeric:tabular-nums}
+@media (max-width:700px){.size-ctl{display:none}}
 
 /* ---------- action bar ---------- */
 .actionbar{position:sticky;bottom:0;z-index:20;background:var(--surface);background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
@@ -209,7 +213,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 
 /* ---------- modal & toast ---------- */
 .modal{position:fixed;inset:0;z-index:50;background:rgba(10,12,20,.5);display:grid;place-items:center;padding:16px}
-.modal-box{background:var(--surface);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:100%;max-width:440px;max-height:calc(100dvh - 32px);overflow:auto;padding:18px}
+.modal-box{background:var(--surface);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:100%;max-width:440px;max-height:calc(100dvh / var(--z,1) - 32px);overflow:auto;padding:18px}
 .modal-box.wide{max-width:720px}
 .modal h3{margin:0 0 8px;font-size:18px}
 .modal p{margin:0 0 12px}
@@ -340,7 +344,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 
     <footer class="foot">
       <div id="statsLine"></div>
-      <div><span class="small" id="modeNote"></span> <button class="linkbtn" id="teacherBtn" type="button">Teacher</button></div>
+      <div><span class="size-ctl" role="group" aria-label="Screen size"><span>Size</span><button type="button" id="zoomOut" title="Smaller" aria-label="Smaller">A−</button><button type="button" id="zoomReset" title="Back to automatic size">Auto</button><button type="button" id="zoomIn" title="Bigger" aria-label="Bigger">A+</button></span><span class="small" id="modeNote"></span> <button class="linkbtn" id="teacherBtn" type="button">Teacher</button></div>
     </footer>
   </div>
 
@@ -1004,6 +1008,7 @@ function loadQuestion(rhythm) {
   renderMount(mainMount);
   els.staffWrap.scrollTop = 0;
   updateUI();
+  fitScreen(false);
 }
 
 let bankFor = null;
@@ -1371,6 +1376,7 @@ function showEndScreen() {
 }
 
 function showView(which) {
+  fitKey = '';
   els.playView.hidden = which !== 'play';
   els.endScreen.hidden = which !== 'end';
   els.actionbar.hidden = which !== 'play';
@@ -1706,6 +1712,98 @@ function selfTest() {
   return out;
 }
 
+/* =====================================================================
+   7. AUTOMATIC SCREEN FIT
+   Big windows (a smart board or projector in full screen) scale the whole app up
+   to the largest size where a question still fits without scrolling. Phones and
+   normal laptop/Chromebook windows stay at 100%, or shrink a little if needed.
+   A−/A+ in the footer nudge it; the nudge is remembered on this computer.
+   ===================================================================== */
+const ZOOM_STEPS = [0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.35, 1.5, 1.7];
+let zoomAdj = Math.max(0.6, Math.min(1.7, +(store.get('rdt_zoom_adj') || 1) || 1));
+let zoomNow = 1, fitKey = '', swapCache = null;
+
+function setZoom(z) {
+  zoomNow = z;
+  document.documentElement.style.zoom = z === 1 ? '' : String(z);
+  document.documentElement.style.setProperty('--z', String(z));
+}
+
+function fitScenario() {
+  if (S.mode === 'challenge' && S.ch) return { tsIds: Object.keys(TIME_SIGS), level: S.ch.level, measures: CONFIG.challengeMeasures };
+  const st = S.settings, list = tsListFor(st.type);
+  return { tsIds: list.includes(st.lock) ? [st.lock] : list, level: st.level, measures: st.measures };
+}
+
+// Height needed by the worst question these settings can produce (biggest staff + biggest bank).
+function worstSwapAreas(scn, staffW, bankW, cellH) {
+  let staffH = 0, swap = 0;
+  for (const t of scn.tsIds) {
+    const ts = TIME_SIGS[t];
+    const L = layoutFor(ts, scn.measures, staffW);
+    const h = Math.round(L.natH * L.s);
+    const cells = cellsFor(ts.bank, scn.level).length;
+    const minW = ts.bank === 'compound2' ? 150 : 108;
+    const perRow = Math.max(1, Math.floor((bankW + 8) / (minW + 8)));
+    const rows = Math.ceil(cells / perRow);
+    const bankH = rows * cellH + (rows - 1) * 8;
+    staffH = Math.max(staffH, h);
+    // after Check, the correct-answer staff takes the bank's place
+    swap = Math.max(swap, bankH + 50, h + 90);
+  }
+  return { staffH, swap };
+}
+
+function fitScreen(force) {
+  if (S.mode === 'end' || !S.q) { setZoom(Math.max(0.6, Math.min(2.5, zoomNow))); return; }
+  const scn = fitScenario();
+  const key = [innerWidth, innerHeight, zoomAdj, S.mode, scn.level, scn.measures, scn.tsIds.join()].join('|');
+  if (!force && key === fitKey) return;
+  fitKey = key;
+  const vw = innerWidth, vh = innerHeight;
+  if (vw <= 700) { setZoom(1); return; }                      // phones use their own layout
+
+  setZoom(1);                                                  // measure at 100%
+  const appEl = document.querySelector('.app');
+  appEl.style.flex = 'none';                                   // measure content height, not the stretched page
+  const appH = appEl.offsetHeight + els.actionbar.offsetHeight;
+  appEl.style.flex = '';
+  const staffW = els.staff.clientWidth || 1000, bankW = els.bank.clientWidth || staffW;
+  const cell = els.bank.querySelector('.cell-btn');
+  const cellH = cell ? cell.offsetHeight : 67;
+  if (!els.bankWrap.hidden) swapCache = appH - els.staffWrap.offsetHeight - els.bankWrap.offsetHeight;
+  const chrome = swapCache != null ? swapCache : appH - els.staffWrap.offsetHeight;
+  const worst = worstSwapAreas(scn, staffW, bankW, cellH);
+  const needed = chrome + worst.staffH + worst.swap + 12;
+  const contentW = Math.min(1120, vw) + 40;
+
+  let auto;
+  if (vw >= 1500 && vh >= 850) auto = Math.min(vw / contentW, vh / needed, 2.2);  // big screen: fill it
+  else auto = Math.min(1, vh / needed);                                            // laptop/Chromebook: shrink only if needed
+  auto = Math.max(0.75, auto);
+  setZoom(Math.max(0.6, Math.min(2.5, Math.round(auto * zoomAdj * 100) / 100)));
+  updateZoomLabel();
+}
+
+function updateZoomLabel() {
+  const r = $('#zoomReset');
+  if (r) r.textContent = zoomAdj === 1 ? `Auto ${Math.round(zoomNow * 100)}%` : `${Math.round(zoomNow * 100)}%`;
+  if (r) r.style.minWidth = '';
+}
+
+function nudgeZoom(dir) {
+  const i = ZOOM_STEPS.findIndex(v => Math.abs(v - zoomAdj) < 0.001);
+  const idx = Math.max(0, Math.min(ZOOM_STEPS.length - 1, (i < 0 ? ZOOM_STEPS.indexOf(1) : i) + dir));
+  zoomAdj = ZOOM_STEPS[idx];
+  store.set('rdt_zoom_adj', String(zoomAdj));
+  fitScreen(true);
+}
+$('#zoomIn').onclick = () => nudgeZoom(1);
+$('#zoomOut').onclick = () => nudgeZoom(-1);
+$('#zoomReset').onclick = () => { zoomAdj = 1; store.set('rdt_zoom_adj', '1'); fitScreen(true); };
+let fitTimer = 0;
+window.addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(() => fitScreen(false), 120); });
+
 /* ---------- start ---------- */
 const dataErrors = validateData();
 if (dataErrors.length) {
@@ -1719,7 +1817,7 @@ populateTsSelect();
 els.modeNote.textContent = Board.remote ? '' : 'Test mode (scores saved in this browser only) ·';
 showView('play');
 newPracticeRhythm();
-if (/[?&]selftest/.test(location.search)) window.RDT = { selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+if (/[?&]selftest/.test(location.search)) window.RDT = { fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
 </body>
