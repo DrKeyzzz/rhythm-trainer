@@ -53,28 +53,24 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 | Enter | Check / Submit |
 | Esc | Stop, or deselect a slot |
 
-## Class leaderboard setup (one time, about 5 minutes)
+## Class leaderboard setup (one time, about 10 minutes)
 
-Scores are saved in a free Supabase database. Until it's connected, the leaderboard runs in **test mode**: scores stay in each browser only, and the test PIN is 2468.
+Scores are saved in a free Firebase (Google) database. Until it's connected, the leaderboard runs in **test mode**: scores stay in each browser only, and the test Teacher PIN is 2468.
 
-1. Go to **supabase.com**, click **Start your project**, and sign in with GitHub.
-2. Click **New project**. Name it `rhythm-trainer`, make up a database password (you won't need it again), and click **Create new project**. Wait about a minute for it to finish.
-3. In the left sidebar, open **SQL Editor**.
-4. Paste in everything from [`supabase-setup.sql`](supabase-setup.sql). Change `2468` on the line marked **YOUR TEACHER PIN**, then click **Run**. It should say "Success".
-5. Click the **Connect** button at the top of the page, or go to **Project Settings → API Keys**. Copy two things:
-   - the **Project URL**, which looks like `https://abcdefgh.supabase.co`
-   - the **publishable** key (starts with `sb_publishable_`), or the **anon public** key
-6. Paste both into `const SUPABASE = { url: '', key: '' }` near the top of the script in `index.html`, and commit.
+Use a Google account that's allowed to create Firebase projects. Many school accounts block it; a personal Gmail works fine.
 
-These two values are meant to be public. The database rules only let visitors read the board and add a score; deleting and resetting require your PIN.
+1. Go to **console.firebase.google.com** and click **Create a project**. Name it `rhythm-trainer`. You can turn off Google Analytics. Click **Create project**.
+2. In the left menu, open **Build → Firestore Database** and click **Create database**. Pick a location near you, choose **Start in production mode**, and click **Create**.
+3. Open the **Rules** tab. Replace everything with the contents of [`firestore.rules`](firestore.rules), change `teacher@example.com` to **your** Google email, and click **Publish**.
+4. Open **Build → Authentication**, click **Get started**, choose **Google**, switch it on, pick your email as the support email, and click **Save**. Then go to the **Settings** tab → **Authorized domains** → **Add domain** and add `drkeyzzz.github.io`.
+5. Click the gear ⚙ → **Project settings**. Under **Your apps**, click the web icon `</>`, name it `rhythm-trainer`, and click **Register app** (skip hosting). Copy the `apiKey`, `authDomain`, `projectId` and `appId` values.
+6. Paste them into `const FIREBASE = { ... }` near the top of the script in `index.html`, and commit.
 
-**Managing scores:** at the bottom of the practice screen, click **Teacher** and enter your PIN. From there you can delete one entry (for example, an inappropriate name) or reset the whole leaderboard for a new marking period. You can also see scores in Supabase under **Table Editor → rhythm_scores**.
+These values are meant to be public. The rules only let visitors read the board and add a properly formed score. Only your Google account can delete scores.
 
-**Already ran the setup with an older version?** Run `supabase-setup.sql` again. It adds the newer columns (level, extra listens) and keeps your scores.
+**Managing scores:** at the bottom of the practice screen, click **Teacher → Sign in with Google**. From there you can delete one entry (for example, an inappropriate name) or reset the whole leaderboard for a new marking period. You can also see every score in the Firebase console under **Firestore Database → rhythm_scores**.
 
-**To change your PIN later:** edit the PIN line in `supabase-setup.sql` and run the file again in the SQL Editor. Your scores are kept.
-
-**Note:** Supabase pauses free projects after about a week with no visits. If that happens, the leaderboard shows a "couldn't reach" message. Log in to Supabase and click **Restore project**; your scores are kept.
+**Free limits:** the free plan allows 50,000 reads and 20,000 new scores per day, far more than a school needs. It never pauses for inactivity.
 
 ## Changing the answer bank
 

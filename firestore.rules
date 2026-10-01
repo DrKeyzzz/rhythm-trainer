@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Rhythm Dictation Trainer: Firestore security rules.
+// Paste this into Firebase → Firestore Database → Rules, then click Publish.
+// BEFORE PUBLISHING: replace teacher@example.com with the Google account you'll
+// use to sign in to the app's Teacher panel.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rhythm_scores/{scoreId} {
+      // Anyone can see the leaderboard.
+      allow read: if true;
+
+      // Anyone can add a score, but only in the right shape.
+      allow create: if request.resource.data.keys().hasOnly(['name', 'level', 'score', 'correct', 'total', 'extra_listens', 'time_sec', 'created_at'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 24
+        && request.resource.data.level in ['easy', 'hard', 'extreme']
+        && request.resource.data.score is number
+        && request.resource.data.score >= 0 && request.resource.data.score <= 100
+        && request.resource.data.correct is int && request.resource.data.total is int
+        && request.resource.data.correct >= 0 && request.resource.data.correct <= request.resource.data.total
+        && request.resource.data.total >= 1 && request.resource.data.total <= 200
+        && request.resource.data.extra_listens is int
+        && request.resource.data.extra_listens >= 0 && request.resource.data.extra_listens <= 100
+        && request.resource.data.time_sec is int
+        && request.resource.data.time_sec >= 1 && request.resource.data.time_sec <= 36000
+        && request.resource.data.created_at == request.time;
+
+      // Nobody can change a score after it's posted.
+      allow update: if false;
+
+      // Only the teacher can delete scores (one at a time or a full reset).
+      allow delete: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'teacher@example.com';
+    }
+  }
+}
