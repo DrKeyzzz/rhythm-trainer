@@ -30,6 +30,13 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - The leaderboard only appears after all 5 rhythms are finished. Easy, Hard and Extreme have separate leaderboards.
 - The score is the percent of correct slots, minus any extra-listen penalties, with ties broken by total time.
 
+**Report Session** (button at the bottom of the practice screen and on the Challenge results screen)
+- Saves every checked practice rhythm and finished challenge on that device for the day. A new day starts fresh automatically; **Start fresh** clears today early, for shared computers.
+- **Session score (0–100):** 75 points for accuracy (Hard counts ×1.1, Extreme ×1.2) + 25 points for effort (rhythms done toward a goal of 20, set in `CONFIG.dailyGoal`).
+- Shows rhythms done, accuracy, practice time, average listens, best challenge scores, **Doing well** and **Needs work** skills with a suggested practice setting, the **rhythms they missed most** (with what they picked instead), and accuracy by skill and meter.
+- **Save as image** makes a JPEG for Google Classroom (Downloads folder on a Chromebook; share sheet on iPhone).
+- Each image has a **check code** at the bottom. If an image looks edited, open **Teacher → Check a report code** and type it in; it says whether the name, date, score and rhythm count still match.
+
 **Big screens:** the app sizes itself to the window. On a smart board or projector in full screen (F11) it grows to fill the screen while keeping the whole question and answer bank visible. Phones and normal laptop or Chromebook windows stay at normal size. Use **A− / A+** at the bottom of the page to nudge the size; the app remembers it on that computer.
 
 **Keyboard shortcuts**

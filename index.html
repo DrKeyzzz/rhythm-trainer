@@ -219,6 +219,38 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .level-btn b{font-size:17px}
 .level-btn span{font-weight:500;color:var(--muted);font-size:14px}
 .board-tabs{margin-bottom:10px}
+.report h2{margin:0;font-size:22px}
+.report-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.rp-score{text-align:center}
+.rp-num{font-size:54px;font-weight:850;line-height:1;background:linear-gradient(135deg,#5a48d8,#a23fd0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rp-name{margin:12px 0 0}
+.rp-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+.rp-tile{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.rp-tile b{display:block;font-size:22px}
+.rp-tile span{font-size:12px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.04em}
+.rp-break{font-size:14px;color:var(--muted);margin:0 0 12px}
+.rp-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rp-box{border:1px solid var(--border);border-radius:12px;padding:10px 14px}
+.rp-box h3{margin:0 0 6px;font-size:16px}
+.rp-box.good h3{color:var(--ok)} .rp-box.work h3{color:var(--play)}
+.rp-box ul{margin:0;padding-left:18px} .rp-box li{margin:4px 0}
+.rp-box .try{display:block;font-size:13px;color:var(--muted)}
+.rp-section{margin-top:14px}
+.rp-section h3{margin:0 0 8px;font-size:16px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 52px 70px;gap:8px;align-items:center;font-size:14px;margin:5px 0}
+.bar{height:12px;background:var(--surface-2);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px}
+.bar i.hi{background:var(--ok)} .bar i.mid{background:var(--play)} .bar i.lo{background:var(--bad)}
+.bar-row small{color:var(--muted)}
+.rp-note{text-align:center;margin:4px 0 0}
+.miss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.miss-card{display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:8px 10px}
+.miss-svg{flex:none;width:120px;color:var(--text)}
+.miss-svg svg{width:100%;height:auto;display:block}
+.miss-svg.small{width:104px;opacity:.85}
+.miss-info{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted)}
+.miss-info b{color:var(--bad);font-size:14px}
+@media (max-width:600px){.rp-cols{grid-template-columns:1fr}.bar-row{grid-template-columns:110px 1fr 44px}.bar-row small{display:none}}
 .testmode{background:var(--play-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin:0 0 10px}
 
 /* ---------- modal & toast ---------- */
@@ -354,7 +386,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 
     <footer class="foot">
       <div id="statsLine"></div>
-      <div><span class="size-ctl" role="group" aria-label="Screen size"><span>Size</span><button type="button" id="zoomOut" title="Smaller" aria-label="Smaller">A−</button><button type="button" id="zoomReset" title="Back to automatic size">Auto</button><button type="button" id="zoomIn" title="Bigger" aria-label="Bigger">A+</button></span><span class="small" id="modeNote"></span> <button class="linkbtn" id="teacherBtn" type="button">Teacher</button></div>
+      <div><span class="size-ctl" role="group" aria-label="Screen size"><span>Size</span><button type="button" id="zoomOut" title="Smaller" aria-label="Smaller">A−</button><button type="button" id="zoomReset" title="Back to automatic size">Auto</button><button type="button" id="zoomIn" title="Bigger" aria-label="Bigger">A+</button></span><span class="small" id="modeNote"></span> <button class="btn btn-sm" id="reportBtn" type="button">📋 Report Session</button> <button class="linkbtn" id="teacherBtn" type="button">Teacher</button></div>
     </footer>
   </div>
 
@@ -391,7 +423,30 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
     <div class="end-actions">
       <button class="btn btn-challenge" id="againBtn" type="button">🏆 Try another challenge</button>
       <button class="btn" id="backBtn" type="button">Back to practice</button>
+      <button class="btn" id="endReportBtn" type="button">📋 Report Session</button>
     </div>
+  </div>
+
+  <!-- ===== Session report ===== -->
+  <div id="reportView" hidden>
+    <section class="card report">
+      <div class="report-head">
+        <div><h2>Today's Session Report</h2><div class="muted" id="rpDate"></div></div>
+        <div class="rp-score"><div class="rp-num" id="rpScore">0</div><div class="small muted">Session score</div></div>
+      </div>
+      <div class="form-row rp-name">
+        <label>First name<input id="rpFirst" maxlength="15" autocapitalize="words" spellcheck="false" autocomplete="off"></label>
+        <label>Last initial<input id="rpInit" maxlength="1" autocapitalize="characters" spellcheck="false" autocomplete="off"></label>
+      </div>
+      <div class="form-error" id="rpError"></div>
+      <div id="rpBody"></div>
+      <div class="end-actions">
+        <button class="btn btn-primary" id="rpExport" type="button">📷 Save as image</button>
+        <button class="btn" id="rpBack" type="button">Back</button>
+        <button class="btn" id="rpFresh" type="button">Start fresh</button>
+      </div>
+      <p class="muted small rp-note">Your progress is saved on this device for today. Save the image and turn it in on Google Classroom.</p>
+    </section>
   </div>
 </div>
 
@@ -427,6 +482,8 @@ const CONFIG = {
   challengePlays: 4,         // regular plays of the question per challenge rhythm
   challengeExtra: 3,         // extra listens after those, each one costs points
   extraPenalty: 0.10,        // each extra listen takes 10% off that rhythm's points
+  dailyGoal: 20,             // rhythms per day for full effort credit on the session report
+  levelBonus: { easy: 1.0, hard: 1.1, extreme: 1.2 },  // report accuracy multiplier per level
   localTeacherPin: '2468',   // only used in test mode; the real PIN is set in supabase-setup.sql
 };
 
@@ -473,7 +530,6 @@ const BANKS = {
     { id: 'sdes', name: 'Sixteenth + dotted eighth',      notes: [1, 3],       weight: 2, level: 'hard' },
     { id: 'rss',  name: 'Eighth rest + two sixteenths',   notes: [-2, 1, 1],   weight: 2, level: 'hard' },
     { id: 't3',   name: 'Eighth-note triplet',            notes: ['t8', 't8', 't8'], weight: 4, level: 'extreme' },
-    { id: 't3r',  name: 'Triplet with a rest in the middle', notes: ['t8', 'tr8', 't8'], weight: 2, level: 'extreme' },
     { id: 'ssr',  name: 'Two sixteenths + eighth rest',   notes: [1, 1, -2],    weight: 2, level: 'extreme' },
   ]},
   simple2: { slotUnits: 8, cells: [
@@ -995,7 +1051,7 @@ const els = {
   playView: $('#playView'), endScreen: $('#endScreen'), actionbar: $('#actionbar'),
   endScore: $('#endScore'), endDetail: $('#endDetail'), submitForm: $('#submitForm'), fname: $('#fname'), linit: $('#linit'), formError: $('#formError'),
   submitBtn: $('#submitBtn'), boardArea: $('#boardArea'), review: $('#review'), testModeNote: $('#testModeNote'),
-  modal: $('#modal'), modalBox: $('#modalBox'), toast: $('#toast'),
+  modal: $('#modal'), modalBox: $('#modalBox'), toast: $('#toast'), reportView: $('#reportView'),
 };
 
 const store = {
@@ -1066,6 +1122,8 @@ function loadQuestion(rhythm) {
   S.answer = new Array(rhythm.cells.length).fill(null);
   S.selected = null;
   S.checked = false;
+  S.qStart = Date.now();
+  S.qPlays = 0;
   els.feedback.hidden = true;
   els.bankWrap.hidden = false;
   els.hint.hidden = false;
@@ -1169,6 +1227,7 @@ function onCheck() {
     const c = S.answer.filter((id, i) => id === S.q.cells[i]).length;
     S.stats.rhythms++; S.stats.correct += c; S.stats.total += n;
     S.stats.streak = c === n ? S.stats.streak + 1 : 0;
+    logRhythm({ m: 'p', lv: S.q.level, ts: S.q.ts, ms: S.q.measures, q: S.q.cells, a: S.answer, pl: S.qPlays, x: 0, t0: S.qStart, t1: Date.now() });
     els.fbMsg.textContent = c === n
       ? (S.stats.streak > 1 ? `Perfect! ${S.stats.streak} in a row 🔥` : 'Perfect! Every slot is correct 🎉')
       : `${c} of ${n} slots correct. Compare with the correct rhythm below.`;
@@ -1184,6 +1243,7 @@ function onCheck() {
     Engine.stop();
     const ch = S.ch;
     ch.answers[ch.idx] = S.answer.slice();
+    (ch.times || (ch.times = []))[ch.idx] = [S.qStart, Date.now()];
     ch.idx++;
     if (ch.idx >= ch.rhythms.length) finishChallenge();
     else loadQuestion(ch.rhythms[ch.idx]);
@@ -1209,6 +1269,7 @@ function playQuestion() {
     ch.used[ch.idx] = used + 1;
     if (used === CONFIG.challengePlays) toast(`Extra listen: this rhythm is now worth ${Math.round((1 - CONFIG.extraPenalty) * 100)}% of its points.`, 3500);
   }
+  S.qPlays = (S.qPlays || 0) + 1;
   startPlayback(S.q, S.q.cells, 'question', S.checked ? correctMount : mainMount, S.checked, true);
 }
 
@@ -1412,6 +1473,11 @@ function finishChallenge() {
   ch.extra = extra;
   ch.score = Math.round(credit / total * 1000) / 10;
   ch.timeSec = Math.max(1, Math.round((ch.end - ch.start) / 1000));
+  ch.rhythms.forEach((r, i) => {
+    const [t0, t1] = (ch.times && ch.times[i]) || [ch.start, ch.end];
+    logRhythm({ m: 'c', lv: ch.level, ts: r.ts, ms: r.measures, q: r.cells, a: ch.answers[i], pl: ch.used[i], x: ch.results[i].x, t0, t1 });
+  });
+  logRun({ t: ch.end, lv: ch.level, score: ch.score });
   S.mode = 'end';
   S.q = null;
   showEndScreen();
@@ -1459,8 +1525,9 @@ function showView(which) {
   fitKey = '';
   els.playView.hidden = which !== 'play';
   els.endScreen.hidden = which !== 'end';
+  els.reportView.hidden = which !== 'report';
   els.actionbar.hidden = which !== 'play';
-  if (which !== 'end') { reviewMounts.forEach(destroyMount); reviewMounts = []; }
+  if (which === 'play') { reviewMounts.forEach(destroyMount); reviewMounts = []; }
 }
 
 /* =====================================================================
@@ -1592,7 +1659,8 @@ function teacherLogin() {
   openModal(`<h3>Teacher</h3><p class="muted">Enter your PIN to view or reset the leaderboard.</p>
     <form id="pinForm"><label>PIN<input type="password" inputmode="numeric" id="pinInput" autocomplete="off"></label>
     <div class="form-error" id="pinErr"></div>
-    <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-primary" type="submit">Open</button></div></form>`);
+    <div class="modal-actions"><button class="btn" type="button" id="checkReportBtn" style="margin-right:auto">Check a report code</button><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-primary" type="submit">Open</button></div></form>`);
+  $('#checkReportBtn').onclick = checkReportCode;
   $('#pinForm').onsubmit = async e => {
     e.preventDefault();
     const pin = $('#pinInput').value;
@@ -1744,7 +1812,7 @@ document.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const tag = e.target.tagName;
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-  if (S.mode === 'end') { if (e.key === 'Escape') Engine.stop(); return; }
+  if (S.mode === 'end' || !els.reportView.hidden) { if (e.key === 'Escape') Engine.stop(); return; }
   const k = e.key;
   if (k === ' ') { e.preventDefault(); spaceHandled = true; if (!e.repeat) playQuestion(); }
   else if (k === 'a' || k === 'A') { e.preventDefault(); if (!e.repeat) playAnswer(); }
@@ -1884,6 +1952,373 @@ $('#zoomReset').onclick = () => { zoomAdj = 1; store.set('rdt_zoom_adj', '1'); f
 let fitTimer = 0;
 window.addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(() => fitScreen(false), 120); });
 
+/* =====================================================================
+   8. SESSION REPORT
+   Every checked practice rhythm and every finished challenge is saved on this
+   device for today. The report turns that into a score, strengths, focus areas
+   and a JPEG students can turn in.
+   ===================================================================== */
+const SKILLS = ['Quarters & eighths', 'Sixteenths', 'Dotted rhythms', 'Rests', 'Syncopation', 'Compound beat', 'Triplets', 'Hemiola & duplets'];
+const SYNCOPATED = new Set(['eqe', 'rqe', 'rere', 'eq', 'rq', 'ses', 'sesq', 'sdes', 'tres', 'ses2', 'edqq', 'eqeq', 'eqdq', 'rqdq']);
+const HEMIOLA = new Set(['qqq', 'dede', 'dex4', 'edqq']);
+// A cell can list its own skills (skills: [...]) in BANKS; otherwise they're worked out from its notes.
+function skillsOf(cell) {
+  if (cell.skills) return cell.skills;
+  const out = new Set(), compound = cell.bank.startsWith('compound'), seq = cell.seq;
+  if (seq.some(n => n.tup)) out.add('Triplets');
+  if (seq.some(n => n.rest)) out.add('Rests');
+  if (seq.some(n => n.w === 1)) out.add('Sixteenths');
+  if (seq.some(n => !n.tup && (n.w === 3 || (!compound && n.w === 6)))) out.add('Dotted rhythms');
+  if (SYNCOPATED.has(cell.id)) out.add('Syncopation');
+  if (HEMIOLA.has(cell.id)) out.add('Hemiola & duplets');
+  if (!out.size) out.add(compound ? 'Compound beat' : 'Quarters & eighths');
+  return [...out];
+}
+
+const LOG_KEY = 'rdt_log_v1';
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function readLog() { try { return JSON.parse(store.get(LOG_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function writeLog(log) {
+  const keys = Object.keys(log).sort();
+  while (keys.length > 7) delete log[keys.shift()];          // keep one week
+  store.set(LOG_KEY, JSON.stringify(log));
+}
+function todayOf(log) { const k = dayKey(); return log[k] || (log[k] = { rhythms: [], runs: [] }); }
+function logRhythm(e) {
+  const log = readLog();
+  todayOf(log).rhythms.push({ ...e, q: e.q.slice(), a: e.a.slice(), ok: e.q.map((id, i) => (e.a[i] === id ? 1 : 0)).join('') });
+  writeLog(log);
+}
+function logRun(r) { const log = readLog(); todayOf(log).runs.push(r); writeLog(log); }
+
+function activeMinutes(rhythms) {
+  const times = rhythms.flatMap(r => [r.t0, r.t1]).filter(Boolean).sort((a, b) => a - b);
+  let ms = 0;
+  for (let i = 1; i < times.length; i++) { const gap = times[i] - times[i - 1]; if (gap <= 10 * 60 * 1000) ms += gap; }
+  return Math.max(rhythms.length ? 1 : 0, Math.round(ms / 60000));
+}
+
+function suggestionFor(skill, byTs) {
+  // the time signature where this skill went worst, at the lowest level that contains it
+  let best = null;
+  for (const [ts, v] of Object.entries(byTs)) {
+    const sk = v.skills[skill];
+    if (sk && sk.n >= 2 && (!best || sk.c / sk.n < best.acc)) best = { ts, acc: sk.c / sk.n };
+  }
+  let tsId = best && best.ts;
+  if (!tsId) tsId = Object.keys(TIME_SIGS).find(t => BANKS[TIME_SIGS[t].bank].cells.some(c => skillsOf(c).includes(skill)));
+  const ts = TIME_SIGS[tsId];
+  const level = LEVELS.find(lv => cellsFor(ts.bank, lv).some(c => skillsOf(c).includes(skill))) || 'hard';
+  return `${LEVEL_NAME[level]} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${ts.id}`;
+}
+
+function buildReport() {
+  const day = todayOf(readLog());
+  const rh = day.rhythms;
+  let slots = 0, correct = 0, adj = 0, plays = 0;
+  const skills = {}, meters = { Simple: { c: 0, n: 0 }, Compound: { c: 0, n: 0 } }, byTs = {}, levels = {}, pieces = {};
+  for (const r of rh) {
+    const ok = r.ok.split('').map(Number), c = sum(ok), n = ok.length;
+    slots += n; correct += c; plays += r.pl || 0;
+    adj += c * (CONFIG.levelBonus[r.lv] || 1);
+    const type = TIME_SIGS[r.ts].type === 'simple' ? 'Simple' : 'Compound';
+    meters[type].c += c; meters[type].n += n;
+    const t = byTs[r.ts] || (byTs[r.ts] = { c: 0, n: 0, skills: {} });
+    t.c += c; t.n += n;
+    const L = levels[r.lv] || (levels[r.lv] = { c: 0, n: 0, rhythms: 0 });
+    L.c += c; L.n += n; L.rhythms++;
+    r.q.forEach((id, i) => {
+      const cell = CELLS[id];
+      if (!cell) return;
+      const m = pieces[id] || (pieces[id] = { n: 0, wrong: 0, picks: {} });
+      m.n++;
+      if (!ok[i]) { m.wrong++; const pick = r.a && r.a[i]; if (pick && CELLS[pick]) m.picks[pick] = (m.picks[pick] || 0) + 1; }
+      for (const sk of skillsOf(cell)) {
+        const a = skills[sk] || (skills[sk] = { c: 0, n: 0 }); a.n++; a.c += ok[i];
+        const b = t.skills[sk] || (t.skills[sk] = { c: 0, n: 0 }); b.n++; b.c += ok[i];
+      }
+    });
+  }
+  const accuracy = slots ? correct / slots : 0;
+  const adjAcc = slots ? Math.min(1, adj / slots) : 0;
+  const effort = Math.min(1, rh.length / CONFIG.dailyGoal);
+  const accPts = Math.round(75 * adjAcc), effPts = Math.round(25 * effort);
+  const rated = SKILLS.filter(k => skills[k] && skills[k].n >= 4).map(k => ({ k, acc: skills[k].c / skills[k].n, n: skills[k].n }));
+  const strengths = rated.filter(x => x.acc >= 0.85).sort((a, b) => b.acc - a.acc || b.n - a.n).slice(0, 2);
+  const work = rated.filter(x => x.acc < 0.85).sort((a, b) => a.acc - b.acc || b.n - a.n).slice(0, 2)
+    .map(x => ({ ...x, tip: suggestionFor(x.k, byTs) }));
+  const missed = Object.entries(pieces).filter(([, m]) => m.wrong > 0)
+    .map(([id, m]) => ({ id, n: m.n, wrong: m.wrong, pick: Object.entries(m.picks).sort((a, b) => b[1] - a[1])[0]?.[0] || null }))
+    .sort((a, b) => b.wrong - a.wrong || b.wrong / b.n - a.wrong / a.n).slice(0, 6);
+  const best = {};
+  for (const run of day.runs) if (!best[run.lv] || run.score > best[run.lv]) best[run.lv] = run.score;
+  return {
+    date: dayKey(), rhythms: rh.length, slots, correct, accuracy, adjAcc, effort, accPts, effPts,
+    score: rh.length ? accPts + effPts : 0, minutes: activeMinutes(rh),
+    avgPlays: rh.length ? plays / rh.length : 0, missed, skills, meters, byTs, levels, strengths, work, rated, best,
+    challenges: day.runs.length, first: rh.length ? Math.min(...rh.map(r => r.t0 || r.t1)) : null, last: rh.length ? Math.max(...rh.map(r => r.t1)) : null,
+  };
+}
+
+// short code tied to the name, date, score and rhythm count, so an edited image won't match
+function reportCode(name, date, score, rhythms) {
+  const str = `${String(name).toLowerCase().replace(/[^a-z]/g, '')}|${date}|${score}|${rhythms}|rdt-report`;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36).toUpperCase().padStart(7, '0').slice(-6);
+}
+const checkString = (name, rep) => `${name.replace(/[^A-Za-z]/g, '')}-${rep.date.replace(/-/g, '')}-${rep.score}-${rep.rhythms}-${reportCode(name, rep.date, rep.score, rep.rhythms)}`;
+
+const pct = x => `${Math.round(x * 100)}%`;
+const tone = x => (x >= 0.85 ? 'hi' : x >= 0.65 ? 'mid' : 'lo');
+const fmtClock = t => new Date(t).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+const fmtLongDate = key => { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); };
+const bestText = rep => LEVELS.filter(lv => rep.best[lv] != null).map(lv => `${LEVEL_NAME[lv]} ${rep.best[lv]}%`).join(' · ') || 'none yet';
+
+function studentName() {
+  const first = $('#rpFirst').value.trim().replace(/\s+/g, ' ');
+  const init = $('#rpInit').value.trim().toUpperCase();
+  if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{0,14}$/.test(first) || !/^[A-Z]$/.test(init)) return null;
+  return `${first.charAt(0).toUpperCase()}${first.slice(1)} ${init}.`;
+}
+
+let reportBackTo = 'play';
+function openReport() {
+  Engine.stop();
+  reportBackTo = S.mode === 'end' ? 'end' : 'play';
+  try { const saved = JSON.parse(store.get('rdt_student') || '{}'); if (saved.first) $('#rpFirst').value = saved.first; if (saved.init) $('#rpInit').value = saved.init; } catch (e) { /* ignore */ }
+  if (!$('#rpFirst').value && els.fname.value) $('#rpFirst').value = els.fname.value;
+  if (!$('#rpInit').value && els.linit.value) $('#rpInit').value = els.linit.value;
+  $('#rpError').textContent = '';
+  renderReport();
+  showView('report');
+  window.scrollTo({ top: 0 });
+}
+
+function renderReport() {
+  const rep = buildReport();
+  $('#rpDate').textContent = fmtLongDate(rep.date) + (rep.first ? ` · ${fmtClock(rep.first)} – ${fmtClock(rep.last)}` : '');
+  $('#rpScore').textContent = rep.score;
+  if (!rep.rhythms) {
+    $('#rpBody').innerHTML = `<p class="rp-break" style="margin-top:14px">No rhythms yet today. Check a few practice rhythms or finish a challenge, then come back here.</p>`;
+    return;
+  }
+  const bars = (rows) => rows.map(([label, v]) => `<div class="bar-row"><span>${esc(label)}</span><div class="bar"><i class="${tone(v.c / v.n)}" style="width:${Math.round(v.c / v.n * 100)}%"></i></div><b>${pct(v.c / v.n)}</b><small>${v.n} slot${v.n === 1 ? '' : 's'}</small></div>`).join('');
+  const skillRows = SKILLS.filter(k => rep.skills[k]).map(k => [k, rep.skills[k]]);
+  const meterRows = [['Simple meter', rep.meters.Simple], ['Compound meter', rep.meters.Compound]].filter(([, v]) => v.n)
+    .concat(Object.keys(TIME_SIGS).filter(t => rep.byTs[t]).map(t => [t, rep.byTs[t]]));
+  const goodHtml = rep.strengths.length
+    ? rep.strengths.map(x => `<li><b>${x.k}</b>: ${pct(x.acc)} on ${x.n} tries</li>`).join('')
+    : `<li>${rep.rated.length ? 'Keep going! Get a skill to 85% to see it here.' : 'Do a few more rhythms to see your strengths.'}</li>`;
+  const workHtml = rep.work.length
+    ? rep.work.map(x => `<li><b>${x.k}</b>: ${pct(x.acc)} on ${x.n} tries<span class="try">Try: ${x.tip}</span></li>`).join('')
+    : `<li>${rep.rated.length ? 'No weak spots today! Try the next level up.' : 'Do a few more rhythms to find your focus areas.'}</li>`;
+  $('#rpBody').innerHTML = `
+    <div class="rp-tiles">
+      <div class="rp-tile"><span>Rhythms</span><b>${rep.rhythms}</b></div>
+      <div class="rp-tile"><span>Accuracy</span><b>${pct(rep.accuracy)}</b></div>
+      <div class="rp-tile"><span>Practice time</span><b>${rep.minutes} min</b></div>
+      <div class="rp-tile"><span>Avg. listens</span><b>${rep.avgPlays.toFixed(1)}</b></div>
+    </div>
+    <p class="rp-break">Score = accuracy <b>${rep.accPts}/75</b> (Hard and Extreme count a little extra) + effort <b>${rep.effPts}/25</b> (${Math.min(rep.rhythms, CONFIG.dailyGoal)} of ${CONFIG.dailyGoal} rhythms). Best challenge: ${bestText(rep)}.</p>
+    <div class="rp-cols">
+      <div class="rp-box good"><h3>✅ Doing well</h3><ul>${goodHtml}</ul></div>
+      <div class="rp-box work"><h3>🎯 Needs work</h3><ul>${workHtml}</ul></div>
+    </div>
+    ${rep.missed.length ? `<div class="rp-section"><h3>Rhythms you missed</h3><div class="miss-grid">${rep.missed.map(x => `
+      <div class="miss-card"><div class="miss-svg">${cellSVG(CELLS[x.id])}</div>
+        <div class="miss-info"><b>Missed ${x.wrong} of ${x.n}</b>${x.pick ? `<span>You often picked:</span><div class="miss-svg small">${cellSVG(CELLS[x.pick])}</div>` : ''}</div></div>`).join('')}</div></div>` : ''}
+    <div class="rp-section"><h3>By skill</h3>${bars(skillRows)}</div>
+    <div class="rp-section"><h3>By meter</h3>${bars(meterRows)}</div>`;
+}
+
+function rememberStudent() {
+  store.set('rdt_student', JSON.stringify({ first: $('#rpFirst').value.trim(), init: $('#rpInit').value.trim().toUpperCase() }));
+}
+
+// ---------- JPEG export (drawn on a canvas, no libraries) ----------
+function wrapLines(ctx, text, maxW) {
+  const words = String(text).split(' '), lines = [];
+  let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+  if (line) lines.push(line);
+  return lines;
+}
+
+const SVG_STYLE = '.staffline{stroke:#8a90a2;stroke-width:1.3}.nh,.beam,.flag,.dot,.rest{fill:#141824}.nh.hollow{fill:none;stroke:#141824;stroke-width:1.9}.stem{stroke:#141824;stroke-width:1.5}.rest-stroke{fill:none;stroke:#141824;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.tup{font:italic 700 11px Georgia,serif;text-anchor:middle;fill:#141824}.tup-br{fill:none;stroke:#141824;stroke-width:1.2}';
+function cellImage(cell) {
+  const w = SLOT_MIN[cell.bank];
+  const svg = cellSVG(cell).replace('<svg ', `<svg xmlns="http://www.w3.org/2000/svg" width="${w * 2}" height="124" `).replace('aria-hidden="true">', `aria-hidden="true"><style>${SVG_STYLE}</style>`);
+  return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+}
+
+async function drawReport(rep, name, noPictures = false) {
+  const W = 1200, P = 60, FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+  const skillRows = SKILLS.filter(k => rep.skills[k]).map(k => [k, rep.skills[k]]);
+  const meterRows = [['Simple meter', rep.meters.Simple], ['Compound meter', rep.meters.Compound]].filter(([, v]) => v.n)
+    .concat(Object.keys(TIME_SIGS).filter(t => rep.byTs[t]).map(t => [t, rep.byTs[t]]));
+  const imgs = {};
+  if (!noPictures) for (const x of rep.missed) for (const id of [x.id, x.pick]) if (id && !imgs[id]) imgs[id] = await cellImage(CELLS[id]);
+
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = 4000;                    // drawn tall, then cropped to fit
+  const ctx = cv.getContext('2d');
+  const text = (str, x, y, size, color = '#141824', weight = 400, align = 'left') => { ctx.font = `${weight} ${size}px ${FONT}`; ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(str, x, y); };
+  const roundRect = (x, y, w, h, r, fill, stroke) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); } };
+
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, cv.height);
+  const grad = ctx.createLinearGradient(0, 0, W, 0); grad.addColorStop(0, '#5a48d8'); grad.addColorStop(1, '#a23fd0');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, 150);
+  text('Rhythm Dictation Trainer', P, 70, 42, '#fff', 800);
+  text('Session Report', P, 118, 30, 'rgba(255,255,255,.9)', 600);
+
+  let y = 220;
+  text(name, P, y, 46, '#141824', 800);
+  text(fmtLongDate(rep.date), P, y + 48, 26, '#5d6477', 500);
+  if (rep.first) text(`${fmtClock(rep.first)} – ${fmtClock(rep.last)} · ${rep.minutes} min of practice`, P, y + 86, 26, '#5d6477', 500);
+  ctx.beginPath(); ctx.arc(W - P - 95, 260, 95, 0, Math.PI * 2); ctx.fillStyle = '#ebe8fc'; ctx.fill();
+  text(String(rep.score), W - P - 95, 290, 84, '#5a48d8', 850, 'center');
+  text('SESSION SCORE', W - P - 95, 385, 18, '#5d6477', 700, 'center');
+
+  y = 410;
+  const tiles = [['RHYTHMS', String(rep.rhythms)], ['ACCURACY', pct(rep.accuracy)], ['AVG. LISTENS', rep.avgPlays.toFixed(1)], ['CHALLENGES', String(rep.challenges)]];
+  const tw = (W - 2 * P - 3 * 20) / 4;
+  tiles.forEach(([k, v], i) => { const x = P + i * (tw + 20); roundRect(x, y, tw, 100, 16, '#f1f2f7'); text(k, x + 20, y + 34, 18, '#5d6477', 700); text(v, x + 20, y + 80, 40, '#141824', 800); });
+
+  y += 150;
+  ctx.font = `400 22px ${FONT}`;
+  const breakdown = `Score = accuracy ${rep.accPts}/75 + effort ${rep.effPts}/25 (${Math.min(rep.rhythms, CONFIG.dailyGoal)} of ${CONFIG.dailyGoal} rhythms). Best challenge: ${bestText(rep)}.`;
+  const bl = wrapLines(ctx, breakdown, W - 2 * P);
+  bl.forEach((l, i) => text(l, P, y + i * 30, 22, '#5d6477'));
+  y += bl.length * 30 + 30;
+
+  const colW = (W - 2 * P - 30) / 2;
+  const box = (x, title, color, items) => {
+    roundRect(x, y, colW, 230, 18, '#f7f8fb');
+    text(title, x + 24, y + 44, 28, color, 800);
+    let yy = y + 86;
+    ctx.font = `400 22px ${FONT}`;
+    for (const it of items) {
+      for (const [i, l] of wrapLines(ctx, it.main, colW - 48).entries()) { text(l, x + 24, yy, 22, '#141824', i ? 400 : 600); yy += 28; }
+      if (it.sub) { text(it.sub, x + 24, yy, 20, '#5d6477'); yy += 28; }
+      yy += 10;
+    }
+  };
+  box(P, 'Doing well', '#17864a', rep.strengths.length ? rep.strengths.map(x => ({ main: `${x.k}: ${pct(x.acc)} on ${x.n} tries` })) : [{ main: rep.rated.length ? 'Keep going! Get a skill to 85% to see it here.' : 'Do a few more rhythms to see strengths.' }]);
+  box(P + colW + 30, 'Needs work', '#b7791f', rep.work.length ? rep.work.map(x => ({ main: `${x.k}: ${pct(x.acc)} on ${x.n} tries`, sub: `Try: ${x.tip}` })) : [{ main: rep.rated.length ? 'No weak spots today! Try the next level up.' : 'Do a few more rhythms to find focus areas.' }]);
+  y += 290;
+
+  if (rep.missed.length) {
+    text('Rhythms you missed', P, y, 28, '#141824', 800);
+    y += 24;
+    const cw = (W - 2 * P - 2 * 20) / 3, ch = 170;
+    rep.missed.forEach((x, i) => {
+      const cx = P + (i % 3) * (cw + 20), cy = y + Math.floor(i / 3) * (ch + 20);
+      roundRect(cx, cy, cw, ch, 16, '#fff', '#e0e3ec');
+      const img = imgs[x.id], tx = cx + 196;
+      if (img) { const iw = 168, ih = iw * img.height / img.width; ctx.drawImage(img, cx + 14, cy + (ch - ih) / 2, iw, ih); }
+      else { ctx.font = `600 18px ${FONT}`; wrapLines(ctx, CELLS[x.id].name, 168).forEach((l, k) => text(l, cx + 16, cy + 60 + k * 24, 18, '#141824', 600)); }
+      text(`Missed ${x.wrong} of ${x.n}`, tx, cy + 48, 22, '#cc3434', 700);
+      if (x.pick) {
+        text('Often picked:', tx, cy + 82, 17, '#5d6477', 500);
+        const pi = imgs[x.pick];
+        if (pi) { const pw = Math.min(cw - 210, 130), ph = pw * pi.height / pi.width; ctx.globalAlpha = 0.85; ctx.drawImage(pi, tx - 6, cy + 92, pw, ph); ctx.globalAlpha = 1; }
+        else { ctx.font = `500 15px ${FONT}`; wrapLines(ctx, CELLS[x.pick].name, cw - 210).slice(0, 2).forEach((l, k) => text(l, tx, cy + 106 + k * 20, 15, '#5d6477', 500)); }
+      }
+    });
+    y += Math.ceil(rep.missed.length / 3) * (ch + 20) + 40;
+  }
+
+  const barSection = (title, rows) => {
+    text(title, P, y, 28, '#141824', 800); y += 24;
+    for (const [label, v] of rows) {
+      const acc = v.c / v.n, col = acc >= 0.85 ? '#17864a' : acc >= 0.65 ? '#d99a00' : '#cc3434';
+      y += 44;
+      text(label, P, y, 22, '#141824', 600);
+      roundRect(P + 260, y - 18, 640, 20, 10, '#eceef4');
+      roundRect(P + 260, y - 18, Math.max(8, 640 * acc), 20, 10, col);
+      text(pct(acc), P + 930, y, 22, '#141824', 700);
+      text(`${v.n} slots`, W - P, y, 18, '#5d6477', 500, 'right');
+    }
+    y += 50;
+  };
+  barSection('By skill', skillRows);
+  barSection('By meter', meterRows);
+
+  const H = y + 50;
+  ctx.fillStyle = '#eceef4'; ctx.fillRect(0, H - 70, W, 70);
+  text(`Check code: ${checkString(name, rep)}`, P, H - 28, 20, '#5d6477', 600);
+  text(`Saved ${new Date().toLocaleString()}`, W - P, H - 28, 18, '#5d6477', 500, 'right');
+  const out = document.createElement('canvas');
+  out.width = W; out.height = H;
+  out.getContext('2d').drawImage(cv, 0, 0);
+  return out;
+}
+
+async function exportReport() {
+  const name = studentName();
+  if (!name) { $('#rpError').textContent = 'Enter your first name and last initial first.'; $('#rpFirst').focus(); return; }
+  const rep = buildReport();
+  if (!rep.rhythms) { $('#rpError').textContent = 'There is nothing to save yet. Do a few rhythms first.'; return; }
+  $('#rpError').textContent = '';
+  rememberStudent();
+  const toJpeg = c => new Promise((res, rej) => { try { c.toBlob(res, 'image/jpeg', 0.92); } catch (err) { rej(err); } });
+  let blob;
+  try { blob = await toJpeg(await drawReport(rep, name)); }
+  catch (err) { blob = await toJpeg(await drawReport(rep, name, true)); }
+  if (!blob) { $('#rpError').textContent = "Sorry, this browser couldn't make the image."; return; }
+  const fileName = `rhythm-report-${name.replace(/[^A-Za-z]/g, '').toLowerCase()}-${rep.date}.jpg`;
+  const file = new File([blob], fileName, { type: 'image/jpeg' });
+  const mobile = IS_IOS || /Android/i.test(navigator.userAgent);
+  if (mobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Rhythm session report' }); return; }
+    catch (err) { if (err && err.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('Saved! Find it in your Downloads folder, then upload it to Google Classroom.', 5000);
+}
+
+function startFresh() {
+  openModal(`<h3>Start fresh?</h3><p>This clears today's saved progress on this device. Use it when a new student starts on a shared computer. Save your report image first if you need it.</p>
+    <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-danger" type="button" id="freshYes">Clear today</button></div>`);
+  $('#freshYes').onclick = () => {
+    const log = readLog(); delete log[dayKey()]; writeLog(log);
+    $('#rpFirst').value = ''; $('#rpInit').value = ''; store.set('rdt_student', '{}');
+    S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
+    closeModal(); renderReport(); updateUI(); toast("Today's progress cleared.");
+  };
+}
+
+function checkReportCode() {
+  openModal(`<h3>Check a report code</h3><p class="muted">Type the check code from the bottom of a student's report image.</p>
+    <form id="codeForm"><label>Check code<input id="codeInput" placeholder="MayaR-20261001-87-24-AB12CD" autocomplete="off" spellcheck="false"></label>
+    <div class="form-error" id="codeMsg"></div>
+    <div class="modal-actions"><button class="btn" type="button" data-close>Close</button><button class="btn btn-primary" type="submit">Check</button></div></form>`);
+  $('#codeForm').onsubmit = e => {
+    e.preventDefault();
+    const m = $('#codeInput').value.trim().match(/^([A-Za-z]+)-(\d{4})(\d{2})(\d{2})-(\d{1,3})-(\d+)-([A-Za-z0-9]{6})$/);
+    const msg = $('#codeMsg');
+    if (!m) { msg.style.color = ''; msg.textContent = 'That doesn\'t look like a check code. It has 5 parts separated by dashes.'; return; }
+    const [, nm, y, mo, d, score, rhythms, code] = m;
+    const ok = reportCode(nm, `${y}-${mo}-${d}`, +score, +rhythms) === code.toUpperCase();
+    msg.style.color = ok ? 'var(--ok)' : '';
+    msg.textContent = ok
+      ? `✓ Matches: score ${score} with ${rhythms} rhythms on ${mo}/${d}/${y}. Make sure the image shows the same score.`
+      : '✗ No match. The name, date, score or rhythm count on this report may have been changed.';
+  };
+}
+
+$('#reportBtn').onclick = openReport;
+$('#endReportBtn').onclick = openReport;
+$('#rpBack').onclick = () => { showView(reportBackTo); if (reportBackTo === 'play') fitScreen(true); };
+$('#rpExport').onclick = exportReport;
+$('#rpFresh').onclick = startFresh;
+$('#rpInit').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase(); });
+
 /* ---------- start ---------- */
 const dataErrors = validateData();
 if (dataErrors.length) {
@@ -1897,7 +2332,7 @@ populateTsSelect();
 els.modeNote.textContent = Board.remote ? '' : 'Test mode (scores saved in this browser only) ·';
 showView('play');
 newPracticeRhythm();
-if (/[?&]selftest/.test(location.search)) window.RDT = { fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+if (/[?&]selftest/.test(location.search)) window.RDT = { buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
 </body>
