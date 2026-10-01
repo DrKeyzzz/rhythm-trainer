@@ -138,6 +138,17 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .fb-label,.ri-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:6px 0 0}
 .bank-wrap{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
 .bank-label{font-size:13px;color:var(--muted);font-weight:600;margin:0 0 8px}
+.pool-row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;margin:0 0 10px}
+.pool-label{font-size:14px;font-weight:650;color:var(--muted);white-space:nowrap}
+.pool-label b{color:var(--text)}
+.pool-slide{display:flex;align-items:center;gap:8px;flex:1;min-width:220px}
+.pool-slide input{flex:1;min-height:44px;accent-color:var(--accent-btn)}
+#poolEdit[aria-pressed="true"]{background:var(--accent-btn);color:#fff;border-color:transparent}
+.bank.editing .cell-btn{border-style:dashed}
+.bank.editing .cell-btn.on{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.bank.editing .cell-btn.off{opacity:.4}
+.bank.editing .cell-btn::after{content:"";position:absolute;top:5px;right:6px;width:16px;height:16px;border-radius:5px;border:2px solid var(--border);background:var(--surface)}
+.bank.editing .cell-btn.on::after{content:"✓";background:var(--accent-btn);border-color:var(--accent-btn);color:#fff;font-size:12px;font-weight:800;line-height:14px;text-align:center}
 .bank{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell-min,108px),1fr));gap:8px}
 .cell-btn{position:relative;min-height:64px;padding:6px 8px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;transition:transform .06s ease,border-color .15s,background .15s}
 .cell-btn:active{transform:scale(.97);background:var(--accent-soft);border-color:var(--accent)}
@@ -380,6 +391,11 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 
       <div class="bank-wrap" id="bankWrap">
         <p class="bank-label" id="bankLabel">Answer bank</p>
+        <div class="pool-row" id="poolRow">
+          <label for="poolSlider" class="pool-label">Rhythms in play: <b id="poolCount"></b></label>
+          <div class="pool-slide"><span class="small muted">Easiest</span><input type="range" id="poolSlider" min="0" max="100" step="1" value="100" aria-label="How many rhythms are in play"><span class="small muted">All</span></div>
+          <button class="btn btn-sm" id="poolEdit" type="button" aria-pressed="false" title="Pick exactly which rhythms are in play">Edit</button>
+        </div>
         <div class="bank" id="bank"></div>
       </div>
     </section>
@@ -670,27 +686,46 @@ function pickWeighted(pool, level) {
   return pool[pool.length - 1];
 }
 
-function generateRhythm(tsId, measures, avoidCells, level = 'easy') {
+// Practice-mode "rhythms in play": the level's pieces ordered easiest to hardest.
+const LEVEL_RANK = { easy: 0, hard: 1, extreme: 2 };
+function orderedCells(bankId, level) {
+  return cellsFor(bankId, level).map((c, i) => ({ c, i })).sort((a, b) => LEVEL_RANK[a.c.level] - LEVEL_RANK[b.c.level] || a.i - b.i).map(x => x.c);
+}
+const poolKey = (bankId, level) => `${bankId}:${level}`;
+function poolFor(bankId, level) {
+  const all = orderedCells(bankId, level);
+  if (S.mode !== 'practice') return all;
+  const custom = S.pool.custom[poolKey(bankId, level)];
+  if (custom) return all.filter(c => custom.has(c.id));
+  return all.slice(0, Math.max(2, Math.round(S.pool.pct * all.length)));
+}
+
+function generateRhythm(tsId, measures, avoidCells, level = 'easy', poolCells = null) {
   const ts = TIME_SIGS[tsId];
-  const available = cellsFor(ts.bank, level);
+  const available = poolCells || cellsFor(ts.bank, level);
   const n = measures * slotsPerMeasure(ts);
-  const minSignature = level === 'easy' ? 0 : (measures >= 4 ? 3 : 2);   // pieces from the level's own list
-  for (let attempt = 0; attempt < 500; attempt++) {
+  // pieces from the level's own list (skipped if the slider removed them all)
+  const hasOwn = available.some(c => c.level === level);
+  const minSignature = level === 'easy' || !hasOwn ? 0 : (measures >= 4 ? 3 : 2);
+  const needDistinct = n >= 8 ? Math.min(3, available.length) : Math.min(2, available.length);
+  for (let attempt = 0; attempt < 600; attempt++) {
+    const strict = attempt < 400;             // with a tiny pool, loosen the rules if needed
     const cells = [];
     let ok = true;
     for (let i = 0; i < n; i++) {
       let pool = available;
       if (i === n - 1) pool = pool.filter(c => c.ending);                       // finish on a longer note
-      if (i >= 2 && cells[i - 1] === cells[i - 2]) pool = pool.filter(c => c.id !== cells[i - 1]); // max 2 in a row
+      if (strict && i >= 2 && cells[i - 1] === cells[i - 2]) pool = pool.filter(c => c.id !== cells[i - 1]); // max 2 in a row
       if (!pool.length) { ok = false; break; }
       cells.push(pickWeighted(pool, level).id);
     }
     if (!ok) continue;
     const distinct = new Set(cells).size;
-    if (distinct < 2 || (n >= 8 && distinct < 3)) continue;                      // not all one cell
+    if (strict && distinct < needDistinct) continue;                              // not all one cell
     if (avoidCells && avoidCells.join() === cells.join()) continue;              // don't repeat last question
-    if (cells.filter(id => CELLS[id].level === level).length < minSignature) continue; // Hard/Extreme always sound like it
-    return { ts: tsId, measures, cells, level };
+    if (strict && cells.filter(id => CELLS[id].level === level).length < minSignature) continue; // Hard/Extreme always sound like it
+    const full = cellsFor(ts.bank, level).length;
+    return { ts: tsId, measures, cells, level, poolFrac: Math.min(1, available.length / full), easier: level !== 'easy' && !hasOwn };
   }
   throw new Error('Could not generate a rhythm for ' + tsId);
 }
@@ -1052,6 +1087,7 @@ const els = {
   endScore: $('#endScore'), endDetail: $('#endDetail'), submitForm: $('#submitForm'), fname: $('#fname'), linit: $('#linit'), formError: $('#formError'),
   submitBtn: $('#submitBtn'), boardArea: $('#boardArea'), review: $('#review'), testModeNote: $('#testModeNote'),
   modal: $('#modal'), modalBox: $('#modalBox'), toast: $('#toast'), reportView: $('#reportView'),
+  poolRow: $('#poolRow'), poolSlider: $('#poolSlider'), poolCount: $('#poolCount'), poolEdit: $('#poolEdit'),
 };
 
 const store = {
@@ -1063,6 +1099,7 @@ const S = {
   mode: 'practice',                // 'practice' | 'challenge' | 'end'
   settings: { type: 'simple', level: 'easy', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false },
   q: null, answer: [], selected: null, checked: false, nextLockUntil: 0,
+  pool: { pct: 1, custom: {} }, poolEdit: false,      // practice "rhythms in play" (resets every visit)
   stats: { rhythms: 0, correct: 0, total: 0, streak: 0 },
   ch: null, playing: null,
 };
@@ -1114,7 +1151,7 @@ function newPracticeRhythm() {
   const list = tsListFor(type);
   const tsId = list.includes(lock) ? lock : list[rand(list.length)];
   const avoid = S.q && S.q.ts === tsId && S.q.measures === measures ? S.q.cells : null;
-  loadQuestion(generateRhythm(tsId, measures, avoid, S.settings.level));
+  loadQuestion(generateRhythm(tsId, measures, avoid, S.settings.level, poolFor(TIME_SIGS[tsId].bank, S.settings.level)));
 }
 
 function loadQuestion(rhythm) {
@@ -1135,22 +1172,51 @@ function loadQuestion(rhythm) {
 }
 
 let bankFor = null;
-function renderBank() {
-  const ts = TIME_SIGS[S.q.ts];
+function renderBank(force) {
+  const ts = TIME_SIGS[S.q.ts], practice = S.mode === 'practice';
   els.bankLabel.textContent = `Answer bank: each rhythm fills one slot, ${SLOT_DESCRIPTION[ts.id]}`;
-  const key = ts.bank + ':' + S.q.level;
-  if (bankFor === key) return;
+  const all = orderedCells(ts.bank, S.q.level);
+  const inPlay = poolFor(ts.bank, S.q.level);
+  const editing = practice && S.poolEdit;
+  els.poolRow.hidden = !practice;
+  if (practice) {
+    const custom = !!S.pool.custom[poolKey(ts.bank, S.q.level)];
+    els.poolCount.textContent = `${inPlay.length} of ${all.length}${custom ? ' (your picks)' : ''}`;
+    els.poolSlider.value = Math.round(S.pool.pct * 100);
+    els.poolEdit.setAttribute('aria-pressed', String(editing));
+    els.poolEdit.textContent = editing ? 'Done' : 'Edit';
+  }
+  const shown = editing ? all : inPlay;
+  const key = [ts.bank, S.q.level, editing, shown.map(c => c.id).join(','), inPlay.map(c => c.id).join(',')].join('|');
+  if (!force && bankFor === key) return;
   bankFor = key;
-  S.bankCells = cellsFor(ts.bank, S.q.level);
+  S.bankCells = inPlay;
+  const on = new Set(inPlay.map(c => c.id));
   els.bank.classList.toggle('wide', ts.bank === 'compound2');
+  els.bank.classList.toggle('editing', editing);
   els.bank.style.setProperty('--cell-min', ts.bank === 'compound2' ? '150px' : '108px');
-  els.bank.innerHTML = S.bankCells.map((c, i) =>
-    `<button type="button" class="cell-btn" data-id="${c.id}" aria-label="${esc(c.name)}" title="${esc(c.name)} (key ${i + 1})"><span class="key">${i + 1}</span>${cellSVG(c)}</button>`
+  els.bank.innerHTML = shown.map((c, i) => editing
+    ? `<button type="button" class="cell-btn ${on.has(c.id) ? 'on' : 'off'}" data-id="${c.id}" aria-pressed="${on.has(c.id)}" aria-label="${esc(c.name)}" title="${esc(c.name)}">${cellSVG(c)}</button>`
+    : `<button type="button" class="cell-btn" data-id="${c.id}" aria-label="${esc(c.name)}" title="${esc(c.name)} (key ${i + 1})"><span class="key">${i + 1}</span>${cellSVG(c)}</button>`
   ).join('');
+}
+
+function togglePoolCell(id) {
+  const ts = TIME_SIGS[S.q.ts], k = poolKey(ts.bank, S.q.level);
+  const set = new Set(poolFor(ts.bank, S.q.level).map(c => c.id));
+  if (set.has(id)) {
+    const after = [...set].filter(x => x !== id);
+    if (after.length < 2) { toast('Keep at least 2 rhythms in play.'); return; }
+    if (!after.some(x => CELLS[x].ending)) { toast('Keep at least one rhythm that can end a phrase (like a quarter or half note).'); return; }
+    set.delete(id);
+  } else set.add(id);
+  S.pool.custom[k] = set;
+  renderBank();
 }
 
 function pickCell(id) {
   if (!S.q || S.checked || S.mode === 'end') return;
+  if (S.poolEdit && S.mode === 'practice') { toast('Tap Done to finish picking rhythms.'); return; }
   const t = targetSlot();
   if (t == null) { toast('All slots are full. Tap a slot to change it.'); return; }
   S.answer[t] = id;
@@ -1227,7 +1293,7 @@ function onCheck() {
     const c = S.answer.filter((id, i) => id === S.q.cells[i]).length;
     S.stats.rhythms++; S.stats.correct += c; S.stats.total += n;
     S.stats.streak = c === n ? S.stats.streak + 1 : 0;
-    logRhythm({ m: 'p', lv: S.q.level, ts: S.q.ts, ms: S.q.measures, q: S.q.cells, a: S.answer, pl: S.qPlays, x: 0, t0: S.qStart, t1: Date.now() });
+    logRhythm({ m: 'p', lv: S.q.level, ts: S.q.ts, ms: S.q.measures, q: S.q.cells, a: S.answer, pl: S.qPlays, x: 0, pf: S.q.poolFrac ?? 1, t0: S.qStart, t1: Date.now() });
     els.fbMsg.textContent = c === n
       ? (S.stats.streak > 1 ? `Perfect! ${S.stats.streak} in a row 🔥` : 'Perfect! Every slot is correct 🎉')
       : `${c} of ${n} slots correct. Compare with the correct rhythm below.`;
@@ -1359,7 +1425,7 @@ function updateUI() {
   if (!S.q) return;
   const ts = TIME_SIGS[S.q.ts];
   els.tsBadge.textContent = ts.id;
-  els.qInfo.textContent = `${LEVEL_NAME[S.q.level]} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${S.q.measures} measures`;
+  els.qInfo.textContent = `${LEVEL_NAME[S.q.level]}${S.q.easier ? ' (easier mix)' : ''} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${S.q.measures} measures`;
 
   const filled = S.answer.filter(Boolean).length;
   const full = filled === S.answer.length;
@@ -1425,6 +1491,7 @@ function chooseChallenge() {
 
 function startChallenge(level) {
   Engine.stop();
+  S.poolEdit = false;
   closeModal();
   const meters = pickChallengeMeters();
   S.mode = 'challenge';
@@ -1730,8 +1797,21 @@ els.staff.addEventListener('click', e => {
 els.bank.addEventListener('click', e => {
   const b = e.target.closest('.cell-btn');
   if (!b) return;
+  if (S.poolEdit && S.mode === 'practice') { togglePoolCell(b.dataset.id); return; }
   pickCell(b.dataset.id);
   b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
+});
+els.poolSlider.addEventListener('input', () => {
+  S.pool.pct = +els.poolSlider.value / 100;
+  S.pool.custom = {};                               // the slider replaces hand-picked sets
+  if (S.q) renderBank();                            // live preview while dragging
+});
+els.poolSlider.addEventListener('change', () => { if (S.mode === 'practice') newPracticeRhythm(); });
+els.poolEdit.addEventListener('click', () => {
+  if (!S.q || S.mode !== 'practice') return;
+  S.poolEdit = !S.poolEdit;
+  if (S.poolEdit) renderBank();
+  else newPracticeRhythm();                         // Done: new rhythm from the picked set
 });
 els.playQBtn.onclick = playQuestion;
 els.playABtn.onclick = playAnswer;
@@ -1821,7 +1901,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); deleteSlot(); }
   else if (k === 'ArrowRight') { e.preventDefault(); moveSelection(1); }
   else if (k === 'ArrowLeft') { e.preventDefault(); moveSelection(-1); }
-  else if (/^[0-9]$/.test(k) && S.q) { e.preventDefault(); typeBankNumber(k); }
+  else if (/^[0-9]$/.test(k) && S.q && !S.poolEdit) { e.preventDefault(); typeBankNumber(k); }
 });
 document.addEventListener('keyup', e => { if (e.key === ' ' && spaceHandled) { e.preventDefault(); spaceHandled = false; } });
 document.addEventListener('visibilitychange', () => { if (document.hidden) Engine.stop(); else Engine.resumeIfNeeded(); });
@@ -1884,7 +1964,7 @@ function fitScenario() {
 }
 
 // Height needed by the worst question these settings can produce (biggest staff + biggest bank).
-function worstSwapAreas(scn, staffW, bankW, cellH) {
+function worstSwapAreas(scn, staffW, bankW, cellH, extra = 0) {
   let staffH = 0, swap = 0;
   for (const t of scn.tsIds) {
     const ts = TIME_SIGS[t];
@@ -1897,7 +1977,7 @@ function worstSwapAreas(scn, staffW, bankW, cellH) {
     const bankH = rows * cellH + (rows - 1) * 8;
     staffH = Math.max(staffH, h);
     // after Check, the correct-answer staff takes the bank's place
-    swap = Math.max(swap, bankH + 50, h + 90);
+    swap = Math.max(swap, bankH + 50 + extra, h + 90);
   }
   return { staffH, swap };
 }
@@ -1921,7 +2001,7 @@ function fitScreen(force) {
   const cellH = cell ? cell.offsetHeight : 67;
   if (!els.bankWrap.hidden) swapCache = appH - els.staffWrap.offsetHeight - els.bankWrap.offsetHeight;
   const chrome = swapCache != null ? swapCache : appH - els.staffWrap.offsetHeight;
-  const worst = worstSwapAreas(scn, staffW, bankW, cellH);
+  const worst = worstSwapAreas(scn, staffW, bankW, cellH, els.poolRow.hidden ? 0 : els.poolRow.offsetHeight + 10);
   const needed = chrome + worst.staffH + worst.swap + 12;
   const contentW = Math.min(1120, vw) + 40;
 
@@ -2015,12 +2095,14 @@ function suggestionFor(skill, byTs) {
 function buildReport() {
   const day = todayOf(readLog());
   const rh = day.rhythms;
-  let slots = 0, correct = 0, adj = 0, plays = 0;
+  let slots = 0, correct = 0, adj = 0, plays = 0, poolSum = 0;
   const skills = {}, meters = { Simple: { c: 0, n: 0 }, Compound: { c: 0, n: 0 } }, byTs = {}, levels = {}, pieces = {};
   for (const r of rh) {
     const ok = r.ok.split('').map(Number), c = sum(ok), n = ok.length;
     slots += n; correct += c; plays += r.pl || 0;
-    adj += c * (CONFIG.levelBonus[r.lv] || 1);
+    const pf = r.pf ?? 1;
+    poolSum += pf;
+    adj += c * (CONFIG.levelBonus[r.lv] || 1) * (0.7 + 0.3 * pf);   // fewer rhythms in play counts a little less
     const type = TIME_SIGS[r.ts].type === 'simple' ? 'Simple' : 'Compound';
     meters[type].c += c; meters[type].n += n;
     const t = byTs[r.ts] || (byTs[r.ts] = { c: 0, n: 0, skills: {} });
@@ -2055,7 +2137,7 @@ function buildReport() {
   return {
     date: dayKey(), rhythms: rh.length, slots, correct, accuracy, adjAcc, effort, accPts, effPts,
     score: rh.length ? accPts + effPts : 0, minutes: activeMinutes(rh),
-    avgPlays: rh.length ? plays / rh.length : 0, missed, skills, meters, byTs, levels, strengths, work, rated, best,
+    avgPlays: rh.length ? plays / rh.length : 0, avgPool: rh.length ? poolSum / rh.length : 1, missed, skills, meters, byTs, levels, strengths, work, rated, best,
     challenges: day.runs.length, first: rh.length ? Math.min(...rh.map(r => r.t0 || r.t1)) : null, last: rh.length ? Math.max(...rh.map(r => r.t1)) : null,
   };
 }
@@ -2073,6 +2155,7 @@ const pct = x => `${Math.round(x * 100)}%`;
 const tone = x => (x >= 0.85 ? 'hi' : x >= 0.65 ? 'mid' : 'lo');
 const fmtClock = t => new Date(t).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 const fmtLongDate = key => { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); };
+const poolNote = rep => (rep.avgPool < 0.995 ? `Practiced with ${pct(rep.avgPool)} of the rhythms on average (smaller sets count a little less). ` : '');
 const bestText = rep => LEVELS.filter(lv => rep.best[lv] != null).map(lv => `${LEVEL_NAME[lv]} ${rep.best[lv]}%`).join(' · ') || 'none yet';
 
 function studentName() {
@@ -2120,7 +2203,7 @@ function renderReport() {
       <div class="rp-tile"><span>Practice time</span><b>${rep.minutes} min</b></div>
       <div class="rp-tile"><span>Avg. listens</span><b>${rep.avgPlays.toFixed(1)}</b></div>
     </div>
-    <p class="rp-break">Score = accuracy <b>${rep.accPts}/75</b> (Hard and Extreme count a little extra) + effort <b>${rep.effPts}/25</b> (${Math.min(rep.rhythms, CONFIG.dailyGoal)} of ${CONFIG.dailyGoal} rhythms). Best challenge: ${bestText(rep)}.</p>
+    <p class="rp-break">Score = accuracy <b>${rep.accPts}/75</b> (Hard and Extreme count a little extra) + effort <b>${rep.effPts}/25</b> (${Math.min(rep.rhythms, CONFIG.dailyGoal)} of ${CONFIG.dailyGoal} rhythms). ${poolNote(rep)}Best challenge: ${bestText(rep)}.</p>
     <div class="rp-cols">
       <div class="rp-box good"><h3>✅ Doing well</h3><ul>${goodHtml}</ul></div>
       <div class="rp-box work"><h3>🎯 Needs work</h3><ul>${workHtml}</ul></div>
@@ -2187,7 +2270,7 @@ async function drawReport(rep, name, noPictures = false) {
 
   y += 150;
   ctx.font = `400 22px ${FONT}`;
-  const breakdown = `Score = accuracy ${rep.accPts}/75 + effort ${rep.effPts}/25 (${Math.min(rep.rhythms, CONFIG.dailyGoal)} of ${CONFIG.dailyGoal} rhythms). Best challenge: ${bestText(rep)}.`;
+  const breakdown = `Score = accuracy ${rep.accPts}/75 + effort ${rep.effPts}/25 (${Math.min(rep.rhythms, CONFIG.dailyGoal)} of ${CONFIG.dailyGoal} rhythms). ${poolNote(rep)}Best challenge: ${bestText(rep)}.`;
   const bl = wrapLines(ctx, breakdown, W - 2 * P);
   bl.forEach((l, i) => text(l, P, y + i * 30, 22, '#5d6477'));
   y += bl.length * 30 + 30;

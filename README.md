@@ -17,6 +17,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - **My Answer** plays what the student has built so far, including a partial answer, in a different sound.
 - Tap a rhythm in the answer bank to fill the outlined slot. Tap a filled slot to select it; the next bank tap replaces it, or **Delete** empties it.
 - **Check** marks each slot green or red and shows the correct rhythm. Students press **Next Rhythm** when they're ready.
+- **Rhythms in play** slider (above the answer bank): every visit starts with all rhythms. Slide left to remove the hardest pieces first (down to 2) so beginners have fewer choices; slide right to add them back, easiest first. **Edit** lets you tap individual pieces on or off. Challenge Mode always uses every rhythm.
 
 **Slot sizes**
 - 2/4, 4/4, 6/8 and 12/8 split into half measures.
@@ -32,7 +33,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 
 **Report Session** (button at the bottom of the practice screen and on the Challenge results screen)
 - Saves every checked practice rhythm and finished challenge on that device for the day. A new day starts fresh automatically; **Start fresh** clears today early, for shared computers.
-- **Session score (0–100):** 75 points for accuracy (Hard counts ×1.1, Extreme ×1.2) + 25 points for effort (rhythms done toward a goal of 20, set in `CONFIG.dailyGoal`).
+- **Session score (0–100):** 75 points for accuracy (Hard counts ×1.1, Extreme ×1.2; practicing with fewer rhythms in play counts ×0.7–1.0) + 25 points for effort (rhythms done toward a goal of 20, set in `CONFIG.dailyGoal`).
 - Shows rhythms done, accuracy, practice time, average listens, best challenge scores, **Doing well** and **Needs work** skills with a suggested practice setting, the **rhythms they missed most** (with what they picked instead), and accuracy by skill and meter.
 - **Save as image** makes a JPEG for Google Classroom (Downloads folder on a Chromebook; share sheet on iPhone).
 - Each image has a **check code** at the bottom. If an image looks edited, open **Teacher → Check a report code** and type it in; it says whether the name, date, score and rhythm count still match.
