@@ -278,6 +278,8 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .w-solo{flex-direction:row!important;align-items:center;gap:8px!important;margin-top:10px;font-weight:600!important;min-height:44px}
 .w-solo input{width:20px;height:20px;accent-color:var(--accent-btn)}
 .w-go{width:100%;margin-top:6px;min-height:50px;font-size:16px}
+.w-guest{width:100%;margin-top:8px;min-height:44px}
+.w-note{margin:8px 0 0;text-align:center}
 .welcome-logo{width:52px;height:52px;border-radius:14px}
 .welcome-logo svg{width:30px;height:30px}
 .who{color:var(--text);text-decoration:none;font-weight:650}
@@ -555,6 +557,8 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
     <label class="w-solo"><input type="checkbox" id="wSolo"> I'm not in a class (World leaderboard only)</label>
     <div class="form-error" id="wError"></div>
     <button class="btn btn-primary w-go" type="submit" id="wGo">Let's go</button>
+    <button class="btn w-guest" type="button" id="wGuest">Play as guest</button>
+    <p class="muted small w-note">Guests' practice and scores aren't saved. One sign-in works for the Rhythm Trainer, Scale Quest and Tidal Tones.</p>
   </form>
 </div>
 
@@ -1669,7 +1673,7 @@ function showEndScreen() {
   els.endScore.textContent = `${ch.score}%`;
   $('#endTitle').textContent = `${LEVEL_NAME[ch.level]} Challenge complete!`;
   els.endDetail.textContent = `${ch.correct} of ${ch.total} slots correct · ${ch.extra ? `${ch.extra} extra listen${ch.extra > 1 ? 's' : ''} used (−${Math.round(CONFIG.extraPenalty * 100)}% each)` : 'no extra listens'} · ${fmtTime(ch.timeSec)}`;
-  els.postArea.hidden = false;
+  els.postArea.hidden = isGuest();
   const prof = getProfile();
   els.postMsg.innerHTML = prof ? `Post your score as <b>${esc(displayName(prof))}</b>${prof.classCode ? ` to <b>${esc(prof.className)}</b> and the World leaderboard` : ' to the World leaderboard'}. This is optional.` : '';
   els.boardArea.hidden = true;
@@ -1678,6 +1682,7 @@ function showEndScreen() {
   els.formError.textContent = '';
   els.submitBtn.disabled = false;
   els.testModeNote.hidden = Board.remote;
+  if (isGuest()) els.formError.textContent = 'Guest game: this score isn\'t saved. Tap 👤 Guest at the bottom to sign in for next time.';
 
   reviewMounts.forEach(destroyMount);
   reviewMounts = [];
@@ -1914,14 +1919,25 @@ const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLoc
 
 // ---------- student profile (welcome screen) ----------
 const PROFILE_KEY = 'rdt_profile_v1';
-function getProfile() { try { const p = JSON.parse(store.get(PROFILE_KEY) || 'null'); return p && p.first && p.init ? p : null; } catch (e) { return null; } }
-function setProfile(p) { store.set(PROFILE_KEY, JSON.stringify(p)); }
+// One sign-in for all of Mr. Milnes's games on this site (Rhythm Trainer, Scale Quest, Tidal Tones): they share this key.
+function getProfile() { if (isGuest()) return null; try { const p = JSON.parse(store.get(PROFILE_KEY) || 'null'); return p && p.first && p.init ? p : null; } catch (e) { return null; } }
+function setProfile(p) { store.set(PROFILE_KEY, JSON.stringify(p)); try { sessionStorage.removeItem(GUEST_KEY); } catch (e) { /* ignore */ } }
+// Guests play without saving anything (no progress, no scores, no session report) until the tab closes.
+const GUEST_KEY = 'music_guest';
+function isGuest() { try { return sessionStorage.getItem(GUEST_KEY) === '1'; } catch (e) { return false; } }
+function playAsGuest() {
+  try { sessionStorage.setItem(GUEST_KEY, '1'); } catch (e) { /* ignore */ }
+  S.assignment = null; S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
+  els.welcome.hidden = true;
+  updateWho(); updateUI(); renderAssignment();
+  toast('Playing as a guest. Nothing is saved.');
+}
 const displayName = p => `${p.first.charAt(0).toUpperCase()}${p.first.slice(1)} ${p.init}.`;
 const studentKey = p => `${(p.first + p.init).toLowerCase().replace(/[^a-z]/g, '')}:${p.classCode || ''}`;
 
 function updateWho() {
   const p = getProfile();
-  els.whoBtn.textContent = p ? `👤 ${displayName(p)}${p.classCode ? ` · ${p.className}` : ''}` : '';
+  els.whoBtn.textContent = p ? `👤 ${displayName(p)}${p.classCode ? ` · ${p.className}` : ''}` : isGuest() ? '👤 Guest (sign in)' : '';
 }
 
 function showWelcome(keep) {
@@ -2136,6 +2152,7 @@ $('#wInit').addEventListener('input', e => { e.target.value = e.target.value.rep
 $('#wCode').addEventListener('input', e => { e.target.value = cleanCode(e.target.value); });
 $('#wSolo').addEventListener('change', e => { $('#wCode').disabled = e.target.checked; if (e.target.checked) $('#wCode').value = ''; });
 els.whoBtn.onclick = whoMenu;
+$('#wGuest').onclick = playAsGuest;
 
 els.review.addEventListener('click', e => {
   const b = e.target.closest('[data-play]');
@@ -2371,12 +2388,13 @@ function writeLog(log) {
 }
 function todayOf(log) { const k = dayKey(); return log[k] || (log[k] = { rhythms: [], runs: [] }); }
 function logRhythm(e) {
+  if (isGuest()) return;
   setTimeout(() => { scheduleSync(); renderAssignment(); }, 0);
   const log = readLog();
   todayOf(log).rhythms.push({ ...e, q: e.q.slice(), a: e.a.slice(), ok: e.q.map((id, i) => (e.a[i] === id ? 1 : 0)).join('') });
   writeLog(log);
 }
-function logRun(r) { const log = readLog(); todayOf(log).runs.push(r); writeLog(log); scheduleSync(); }
+function logRun(r) { if (isGuest()) return; const log = readLog(); todayOf(log).runs.push(r); writeLog(log); scheduleSync(); }
 
 function activeMinutes(rhythms) {
   const times = rhythms.flatMap(r => [r.t0, r.t1]).filter(Boolean).sort((a, b) => a - b);
@@ -2472,6 +2490,7 @@ const studentClass = () => { const p = getProfile(); return p && p.classCode ? p
 
 let reportBackTo = 'play';
 function openReport() {
+  if (isGuest()) { toast('Guests don\'t get a session report. Tap 👤 Guest at the bottom to sign in.', 4500); return; }
   Engine.stop();
   reportBackTo = S.mode === 'end' ? 'end' : 'play';
   const p = getProfile();
@@ -3059,7 +3078,7 @@ els.modeNote.textContent = Board.remote ? '' : 'Test mode (scores saved in this 
 showView('play');
 newPracticeRhythm();
 updateWho();
-if (!getProfile()) showWelcome(false);
+if (!getProfile() && !isGuest()) showWelcome(false);
 else refreshClassInfo();
 if (/[?&]selftest/.test(location.search)) window.RDT = { syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
