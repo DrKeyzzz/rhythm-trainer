@@ -597,6 +597,7 @@ const CONFIG = {
   dailyGoal: 20,             // rhythms per day for full effort credit on the session report
   levelBonus: { easy: 1.0, hard: 1.1, extreme: 1.2 },  // report accuracy multiplier per level
   localTeacherPin: '2468',   // test mode only; with Firebase the teacher signs in with Google
+  teacherEmails: ['milnesda@eht.k12.nj.us'], // only these accounts can open the Teacher Dashboard (must match teacherEmails() in firestore.rules)
   adminEmails: ['milnesda@eht.k12.nj.us'],  // can manage the World board (must match firestore.rules)
 };
 
@@ -2065,7 +2066,11 @@ function teacherLogin() {
       <div class="modal-actions"><button class="btn" type="button" id="checkReportBtn" style="margin-right:auto">Check a report code</button><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-primary" type="button" id="googleBtn">Sign in with Google</button></div>`);
     $('#checkReportBtn').onclick = checkReportCode;
     $('#googleBtn').onclick = async () => {
-      try { TD.email = await Board.signIn(); openTeacherView(); }
+      try {
+        const email = await Board.signIn();
+        if (!CONFIG.teacherEmails.includes(String(email).toLowerCase())) { await Board.signOut(); $('#pinErr').textContent = 'The Teacher Dashboard is for teachers only.'; return; }
+        TD.email = email; openTeacherView();
+      }
       catch (err) { $('#pinErr').textContent = errMsg(err); }
     };
     return;
