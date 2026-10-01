@@ -17,6 +17,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - **My Answer** plays what the student has built so far, including a partial answer, in a different sound.
 - Tap a rhythm in the answer bank to fill the outlined slot. Tap a filled slot to select it; the next bank tap replaces it, or **Delete** empties it.
 - **Check** marks each slot green or red and shows the correct rhythm. Students press **Next Rhythm** when they're ready.
+- Counts appear under each piece as it's placed: **1 e & a** in simple meter, **1 ta & ta a ta** in compound meter, **1 trip let** for triplets, and rests in parentheses, like **(&)**. Counts show in Practice mode only.
 - **Rhythms in play** slider (above the answer bank): every visit starts with all rhythms. Slide left to remove the hardest pieces first (down to 2) so beginners have fewer choices; slide right to add them back, easiest first. **Edit** lets you tap individual pieces on or off. Challenge Mode always uses every rhythm.
 
 **Slot sizes**

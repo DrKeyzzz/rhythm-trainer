@@ -173,6 +173,8 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .tup{font:italic 700 11px Georgia,"Times New Roman",serif;text-anchor:middle;fill:currentColor}
 .tup-br{fill:none;stroke:currentColor;stroke-width:1.2}
 .rest-stroke{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.count{font:700 11px system-ui,sans-serif;text-anchor:middle;fill:currentColor;opacity:.8}
+.count.rest{font-weight:500;opacity:.55}
 .rhythm .slot-bg{fill:transparent;stroke:var(--border);stroke-width:1.5;stroke-dasharray:5 4;transition:fill .12s,stroke .12s}
 .rhythm .slot.filled .slot-bg{stroke:transparent}
 .rhythm.interactive .slot{cursor:pointer}
@@ -936,7 +938,18 @@ function eighthRest(cx, cy) {
 const rect = (x, y, w, h, cls) => `<rect class="${cls}" x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}"/>`;
 
 // Draw one cell's notes. Returns per-note SVG strings plus beams and triplet brackets.
-function notesSVG(seq, x0, innerW, cy, stemTop, beatU) {
+// Counting syllables: simple "1 e & a", compound "1 ta & ta a ta", triplets "1 trip let".
+function countLabel(posInMeasure, beatU, tup) {
+  const beat = Math.floor(posInMeasure / beatU + 1e-6);
+  const inBeat = posInMeasure - beat * beatU;
+  const num = String(beat + 1);
+  if (tup) return [num, 'trip', 'let'][Math.round(inBeat / (4 / 3))] || '';
+  const k = Math.round(inBeat);
+  return (beatU === 4 ? [num, 'e', '&', 'a'] : [num, 'ta', '&', 'ta', 'a', 'ta'])[k] || '';
+}
+
+// counts: null, or the slot's start position in the measure (sixteenths) to write counts under the notes
+function notesSVG(seq, x0, innerW, cy, stemTop, beatU, counts = null) {
   const weights = seq.map(n => 1 + 0.55 * n.dur);
   const total = sum(weights);
   let acc = 0;
@@ -945,16 +958,19 @@ function notesSVG(seq, x0, innerW, cy, stemTop, beatU) {
   const beamOf = new Array(seq.length).fill(-1);
   groups.forEach((g, gi) => { if (g.idx.length > 1) g.idx.forEach(i => { beamOf[i] = gi; }); });
   const stemX = [], headX = [];
+  let at = counts == null ? 0 : counts;
   const parts = seq.map((n, i) => {
     const cx = xs[i] + G.rx + 1, sx = cx + G.rx - 0.9;
     stemX[i] = sx; headX[i] = cx;
-    if (n.rest) return eighthRest(cx, cy);
+    const pos = at; at += n.dur;
+    const cnt = counts == null ? '' : (lbl => `<text class="count${n.rest ? ' rest' : ''}" x="${r1(cx)}" y="${cy + 21}">${n.rest ? `(${lbl})` : lbl}</text>`)(countLabel(pos, beatU, n.tup));
+    if (n.rest) return eighthRest(cx, cy) + cnt;
     const w = n.w, hollow = w >= 8;
     let s = `<ellipse class="nh${hollow ? ' hollow' : ''}" cx="${r1(cx)}" cy="${cy}" rx="${hollow ? G.rx - 0.6 : G.rx}" ry="${hollow ? G.ry - 0.6 : G.ry}" transform="rotate(-20 ${r1(cx)} ${cy})"/>`;
     s += `<line class="stem" x1="${r1(sx)}" y1="${cy - 1}" x2="${r1(sx)}" y2="${stemTop}"/>`;
     if (w === 3 || w === 6 || w === 12) s += `<circle class="dot" cx="${r1(cx + G.rx + 4.8)}" cy="${cy - 4}" r="2.1"/>`;
     if (w < 4 && beamOf[i] < 0) { const f = w === 1 ? 2 : 1; for (let k = 0; k < f; k++) s += flagPath(sx, stemTop + k * 7); }
-    return s;
+    return s + cnt;
   });
   let beams = '';
   for (const g of groups) {
@@ -1007,7 +1023,7 @@ function layoutFor(ts, measures, cw) {
   return { m, s, spm, slotW, lines, natW, natH: lines * G.lineH + 4 };
 }
 
-function renderRhythm({ ts: tsId, measures, cells, states = [], interactive = false, cw, label = '' }) {
+function renderRhythm({ ts: tsId, measures, cells, states = [], interactive = false, cw, label = '', counts = false }) {
   const ts = TIME_SIGS[tsId];
   const L = layoutFor(ts, measures, cw);
   const beatU = BEAT_UNITS[ts.type];
@@ -1028,7 +1044,7 @@ function renderRhythm({ ts: tsId, measures, cells, states = [], interactive = fa
         out += `<g class="slot ${id ? 'filled' : 'empty'} ${states[si] || ''}" data-slot="${si}">`;
         out += `<rect class="slot-bg" x="${r1(sx + 3)}" y="${y0 + G.slotTop}" width="${r1(L.slotW - 6)}" height="${G.slotH}" rx="9"/>`;
         if (id) {
-          const r = notesSVG(CELLS[id].seq, sx + G.padL, L.slotW - G.padL - G.padR, cy, y0 + G.stemTop, beatU);
+          const r = notesSVG(CELLS[id].seq, sx + G.padL, L.slotW - G.padL - G.padR, cy, y0 + G.stemTop, beatU, counts ? j * slotUnitsOf(ts) : null);
           r.parts.forEach((p, n) => { out += `<g class="note" data-n="${n}">${p}</g>`; });
           out += r.beams;
         }
@@ -1105,10 +1121,10 @@ const S = {
 };
 
 const mainMount = createMount(els.staff, () => S.q && ({
-  ts: S.q.ts, measures: S.q.measures, cells: S.answer, states: slotStates(), interactive: !S.checked, label: 'Your answer',
+  ts: S.q.ts, measures: S.q.measures, cells: S.answer, states: slotStates(), interactive: !S.checked, label: 'Your answer', counts: S.mode === 'practice',
 }));
 const correctMount = createMount(els.correctStaff, () => S.q && S.checked && ({
-  ts: S.q.ts, measures: S.q.measures, cells: S.q.cells, label: 'Correct rhythm',
+  ts: S.q.ts, measures: S.q.measures, cells: S.q.cells, label: 'Correct rhythm', counts: S.mode === 'practice',
 }));
 
 function loadSettings() {
