@@ -35,7 +35,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 |---|---|
 | Space | Play question |
 | A | Play my answer |
-| 1–9 | Pick an answer-bank rhythm |
+| 1–9, 10+ | Pick an answer-bank rhythm by its number (for 10 and up, type both digits quickly) |
 | ← → | Move between slots |
 | Delete | Clear the selected slot |
 | Enter | Check / Submit |

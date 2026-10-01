@@ -253,7 +253,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
   .status:empty{display:none}
   .bank{grid-template-columns:repeat(3,1fr)}
   .bank.wide{grid-template-columns:repeat(2,1fr)}
-  .cell-btn .key{display:none}
+  .cell-btn .key{font-size:10px;top:3px;left:6px}
   .cell-btn svg{height:46px}
   .actionbar{padding-top:8px}
   .actionbar-inner{grid-template-columns:1fr 1fr 56px 1fr;gap:6px}
@@ -1017,7 +1017,7 @@ function renderBank() {
   els.bank.classList.toggle('wide', ts.bank === 'compound2');
   els.bank.style.setProperty('--cell-min', ts.bank === 'compound2' ? '150px' : '108px');
   els.bank.innerHTML = S.bankCells.map((c, i) =>
-    `<button type="button" class="cell-btn" data-id="${c.id}" aria-label="${esc(c.name)}" title="${esc(c.name)}${i < 9 ? ` (key ${i + 1})` : ''}">${i < 9 ? `<span class="key">${i + 1}</span>` : ''}${cellSVG(c)}</button>`
+    `<button type="button" class="cell-btn" data-id="${c.id}" aria-label="${esc(c.name)}" title="${esc(c.name)} (key ${i + 1})"><span class="key">${i + 1}</span>${cellSVG(c)}</button>`
   ).join('');
 }
 
@@ -1634,6 +1634,24 @@ els.settingsToggle.addEventListener('click', () => {
   updateUI();
 });
 
+// Number keys pick answer-bank rhythms. With 10+ rhythms, type two digits quickly (e.g. 1 then 2 for #12).
+let numBuffer = '', numTimer = 0;
+function pickByNumber(n) {
+  const cell = (S.bankCells || [])[n - 1];
+  if (!cell) return;
+  const b = els.bank.querySelector(`[data-id="${cell.id}"]`);
+  pickCell(cell.id);
+  if (b) { b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); }
+}
+function typeBankNumber(digit) {
+  clearTimeout(numTimer);
+  if (!numBuffer && digit === '0') return;
+  numBuffer += digit;
+  const n = +numBuffer, count = (S.bankCells || []).length;
+  if (n * 10 > count || numBuffer.length >= 2) { numBuffer = ''; pickByNumber(n); return; }
+  numTimer = setTimeout(() => { numBuffer = ''; pickByNumber(n); }, 600);
+}
+
 let spaceHandled = false;
 document.addEventListener('keydown', e => {
   if (!els.modal.hidden) { if (e.key === 'Escape') closeModal(); return; }
@@ -1649,10 +1667,7 @@ document.addEventListener('keydown', e => {
   else if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); deleteSlot(); }
   else if (k === 'ArrowRight') { e.preventDefault(); moveSelection(1); }
   else if (k === 'ArrowLeft') { e.preventDefault(); moveSelection(-1); }
-  else if (/^[1-9]$/.test(k) && S.q) {
-    const cell = (S.bankCells || [])[+k - 1];
-    if (cell) { e.preventDefault(); const b = els.bank.querySelector(`[data-id="${cell.id}"]`); pickCell(cell.id); if (b) { b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); } }
-  }
+  else if (/^[0-9]$/.test(k) && S.q) { e.preventDefault(); typeBankNumber(k); }
 });
 document.addEventListener('keyup', e => { if (e.key === ' ' && spaceHandled) { e.preventDefault(); spaceHandled = false; } });
 document.addEventListener('visibilitychange', () => { if (document.hidden) Engine.stop(); else Engine.resumeIfNeeded(); });
