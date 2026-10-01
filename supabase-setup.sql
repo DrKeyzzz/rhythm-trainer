@@ -8,16 +8,26 @@
 create table if not exists public.rhythm_scores (
   id         uuid primary key default gen_random_uuid(),
   name       text not null check (char_length(name) between 2 and 24 and name ~ '^[A-Za-zÀ-ÿ'' .-]+$'),
-  level      text not null default 'easy' check (level in ('easy', 'hard')),
+  level      text not null default 'easy',
   correct    int  not null check (correct >= 0),
   total      int  not null check (total between 1 and 200 and correct <= total),
-  score      numeric generated always as (round(correct::numeric * 100 / total, 1)) stored,
+  score      numeric not null check (score between 0 and 100),   -- percent, after extra-listen penalties
+  extra_listens int not null default 0 check (extra_listens between 0 and 100),
   time_sec   int  not null check (time_sec between 1 and 36000),
   created_at timestamptz not null default now()
 );
 
--- Adds the Easy/Hard column if the table was created before levels existed.
-alter table public.rhythm_scores add column if not exists level text not null default 'easy' check (level in ('easy', 'hard'));
+-- Upgrades a table made by an older version of this file (keeps existing scores).
+alter table public.rhythm_scores add column if not exists level text not null default 'easy';
+alter table public.rhythm_scores add column if not exists extra_listens int not null default 0;
+do $$ begin
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'rhythm_scores'
+             and column_name = 'score' and is_generated = 'ALWAYS') then
+    alter table public.rhythm_scores alter column score drop expression;
+  end if;
+end $$;
+alter table public.rhythm_scores drop constraint if exists rhythm_scores_level_check;
+alter table public.rhythm_scores add constraint rhythm_scores_level_check check (level in ('easy', 'hard', 'extreme'));
 
 -- Visitors can read the board and add a score, but can't change or delete anything.
 alter table public.rhythm_scores enable row level security;

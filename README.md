@@ -9,9 +9,10 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 **Levels**
 - **Easy:** quarters, eighths, basic sixteenth patterns (four sixteenths, eighth-two sixteenths, two sixteenths-eighth), dotted quarter-eighth, and eighth rests on the beat or right after a note.
 - **Hard:** everything in Easy, plus syncopations (eighth-quarter-eighth, rest-quarter-eighth), dotted eighth-sixteenth and sixteenth-eighth-sixteenth figures, off-beat eighths, and eighth rests before sixteenths. Every Hard rhythm includes several of these harder pieces.
+- **Extreme:** the Hard pieces plus eighth-note triplets, quarter-note triplets, 3+3+2 (dotted eighth, dotted eighth, eighth), sixteenth-note syncopations, and in compound meter hemiola (three quarters in 12/8) and duplets (dotted eighths). It keeps a few basic pieces so rhythms still make musical sense, but drops most of the Easy ones so the bank stays manageable.
 
 **Practice mode**
-- Choose Easy or Hard, Simple meter (2/4, 3/4, 4/4) or Compound meter (6/8, 9/8, 12/8), and 2 measures (the default) or 4 measures for extra challenge. You can also lock one time signature.
+- Choose Easy, Hard or Extreme, Simple meter (2/4, 3/4, 4/4) or Compound meter (6/8, 9/8, 12/8), and 2 measures (the default) or 4 measures for extra challenge. You can also lock one time signature.
 - **Question** plays the rhythm after a one-measure count-in.
 - **My Answer** plays what the student has built so far, including a partial answer, in a different sound.
 - Tap a rhythm in the answer bank to fill the outlined slot. Tap a filled slot to select it; the next bank tap replaces it, or **Delete** empties it.
@@ -22,12 +23,14 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - 3/4 and 9/8 split into one-beat slots, because those meters can't be halved on a beat.
 
 **Challenge Mode**
-- Students pick an **Easy** or **Hard** challenge.
-- 5 rhythms, each 2 measures long, mixing simple and compound meters.
-- Up to 4 plays of each question; **My Answer** is unlimited.
+- Students pick an **Easy**, **Hard** or **Extreme** challenge.
+- 5 rhythms, each 4 measures long, mixing simple and compound meters.
+- 4 regular plays of each question (blue), then 3 **extra listens** (gold). Each extra listen takes 10% off that rhythm's points. **My Answer** is unlimited.
 - Tempo is fixed at 72 so scores compare fairly.
-- The leaderboard only appears after all 5 rhythms are finished. Easy and Hard have separate leaderboards.
-- The score is the percent of correct slots, with ties broken by total time.
+- The leaderboard only appears after all 5 rhythms are finished. Easy, Hard and Extreme have separate leaderboards.
+- The score is the percent of correct slots, minus any extra-listen penalties, with ties broken by total time.
+
+**Big screens:** the app sizes itself to the window. On a smart board or projector in full screen (F11) it grows to fill the screen while keeping the whole question and answer bank visible. Phones and normal laptop or Chromebook windows stay at normal size. Use **A− / A+** at the bottom of the page to nudge the size; the app remembers it on that computer.
 
 **Keyboard shortcuts**
 
@@ -58,7 +61,7 @@ These two values are meant to be public. The database rules only let visitors re
 
 **Managing scores:** at the bottom of the practice screen, click **Teacher** and enter your PIN. From there you can delete one entry (for example, an inappropriate name) or reset the whole leaderboard for a new marking period. You can also see scores in Supabase under **Table Editor → rhythm_scores**.
 
-**Already ran the setup before Easy/Hard levels were added?** Run `supabase-setup.sql` again. It adds the level column and keeps your scores.
+**Already ran the setup with an older version?** Run `supabase-setup.sql` again. It adds the newer columns (level, extra listens) and keeps your scores.
 
 **To change your PIN later:** edit the PIN line in `supabase-setup.sql` and run the file again in the SQL Editor. Your scores are kept.
 
@@ -66,7 +69,7 @@ These two values are meant to be public. The database rules only let visitors re
 
 ## Changing the answer bank
 
-All rhythms live in `const BANKS` near the top of the script in `index.html`. Each rhythm has a `level` (`'easy'` rhythms appear in both levels, `'hard'` rhythms only in Hard) and a list of durations in sixteenth-note units. A negative number is a rest; `-2` is an eighth rest.
+All rhythms live in `const BANKS` near the top of the script in `index.html`. Each rhythm has a `level` (`'easy'` rhythms appear in both levels, `'hard'` rhythms only in Hard) and a list of durations in sixteenth-note units. A negative number is a rest; `-2` is an eighth rest. Triplets use `'t8'` (eighth-note triplet note), `'t4'` (quarter-note triplet note) and `'tr8'` (triplet eighth rest).
 
 | Value | Duration |
 |---|---|
