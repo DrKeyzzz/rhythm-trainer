@@ -45,7 +45,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - **Session score (0–100):** 75 points for accuracy (Hard counts ×1.1, Extreme ×1.2; practicing with fewer rhythms in play counts ×0.7–1.0) + 25 points for effort (rhythms done toward a goal of 20, set in `CONFIG.dailyGoal`).
 - Shows rhythms done, accuracy, practice time, average listens, best challenge scores, **Doing well** and **Needs work** skills with a suggested practice setting, the **rhythms they missed most** (with what they picked instead), and accuracy by skill and meter.
 - **Save as image** makes a JPEG for Google Classroom (Downloads folder on a Chromebook; share sheet on iPhone).
-- Each image has a **check code** at the bottom. If an image looks edited, open **Teacher → Check a report code** and type it in; it says whether the name, date, score and rhythm count still match.
+- Each image has a **check code** at the bottom. If an image looks edited, open **Teacher Dashboard** (top right) → **Check a report code** and type it in; it says whether the name, date, score and rhythm count still match.
 
 **Big screens:** the app sizes itself to the window. On a smart board or projector in full screen (F11) it grows to fill the screen while keeping the whole question and answer bank visible. Phones and normal laptop or Chromebook windows stay at normal size. Use **A− / A+** at the bottom of the page to nudge the size; the app remembers it on that computer.
 
@@ -76,7 +76,7 @@ Use a Google account that's allowed to create Firebase projects. Many school acc
 
 These values are meant to be public. The rules only let visitors read the board and add a properly formed score. Only your Google account can delete scores.
 
-**Teacher Dashboard** (Teacher → Sign in with Google)
+**Teacher Dashboard** (the **Teacher Dashboard** button at the top right of every game → Sign in with Google)
 - **Progress:** for the selected class and day (Today, Yesterday, Last 7 days or any date): time spent, rhythms done (against the assignment goal), accuracy, session score, average listens, what each student is struggling with, and when they were last active. It updates live every 30 seconds during class. Click a student for their skill and time-signature breakdown and the rhythms they miss most, with what they picked instead. The top of the page shows where the whole class is struggling and its most-missed rhythms. **Export CSV** downloads it for your gradebook.
 - **Assignment:** set a level, meter, time signature, length, a rhythm goal, a minutes goal and a note. Students in that class see a banner with their progress and a one-tap **Use these settings** button. The rhythm goal also becomes the effort goal on their session report.
 - **Classes:** create, rename or delete classes and see their codes.
@@ -84,9 +84,9 @@ These values are meant to be public. The rules only let visitors read the board 
 
 Practice progress syncs automatically for students who entered a class code: one summary per student per day (first name and last initial only). Only that class's teacher can read it.
 
-**Classes:** click **Teacher → Sign in with Google → My classes**, type a class name and click **Create class**. Each class gets a 5-character code (like `K7QMA`) to give students. Any teacher can sign in and make their own classes; they can only manage their own.
+**Classes:** click **Teacher Dashboard → Sign in with Google → Classes**, type a class name and click **Create class**. Each class gets a 5-character code (like `K7QMA`) to give students. Any teacher can sign in and make their own classes; they can only manage their own.
 
-**Managing scores:** **Teacher → Scores** shows each of your classes. You can delete one entry (for example, an inappropriate name) or reset a class for a new marking period. The admin email in `firestore.rules` (and `CONFIG.adminEmails` in `index.html`) can also manage the **World** board. You can see everything in the Firebase console under **Firestore Database**.
+**Managing scores:** **Teacher Dashboard → Leaderboard** shows each of your classes. You can delete one entry (for example, an inappropriate name) or reset a class for a new marking period. The admin email in `firestore.rules` (and `CONFIG.adminEmails` in `index.html`) can also manage the **World** board. You can see everything in the Firebase console under **Firestore Database**.
 
 **Free limits:** the free plan allows 50,000 reads and 20,000 new scores per day, far more than a school needs. It never pauses for inactivity.
 
