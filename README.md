@@ -14,7 +14,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 
 **Levels**
 - **Beginner:** always one measure of 4/4, using only half notes, quarters, eighths and simple rests (quarter rests and eighth rests). Great for students who find Easy too hard.
-- **Beginner + 16ths:** the Beginner pieces plus four sixteenths, eighth–two sixteenths and two sixteenths–eighth (each with a quarter), still one measure of 4/4. Every rhythm includes at least one sixteenth piece, and the slider adds them last, four sixteenths first.
+- **Beginner + 16ths:** turn on **＋ Add 16th notes** (shown only when Beginner is selected) to add four sixteenths, eighth–two sixteenths and two sixteenths–eighth (each with a quarter), still one measure of 4/4. Every rhythm includes at least one sixteenth piece, and the slider adds them last, four sixteenths first.
 - **Easy:** quarters, eighths, basic sixteenth patterns (four sixteenths, eighth-two sixteenths, two sixteenths-eighth), dotted quarter-eighth, and eighth rests on the beat or right after a note.
 - **Hard:** everything in Easy, plus syncopations (eighth-quarter-eighth, rest-quarter-eighth), dotted eighth-sixteenth and sixteenth-eighth-sixteenth figures, off-beat eighths, and eighth rests before sixteenths. Every Hard rhythm includes several of these harder pieces.
 - **Extreme:** the Hard pieces plus eighth-note triplets, quarter-note triplets, 3+3+2 (dotted eighth, dotted eighth, eighth), sixteenth-note syncopations, and in compound meter hemiola (three quarters in 12/8) and duplets (dotted eighths). It keeps a few basic pieces so rhythms still make musical sense, but drops most of the Easy ones so the bank stays manageable.

@@ -80,6 +80,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .seg button{border:0;background:transparent;color:var(--muted);font-weight:650;padding:6px 14px;border-radius:10px;min-height:44px;cursor:pointer}
 .seg.locked{opacity:.45;pointer-events:none}
 .beg-note{font-weight:650}
+.b16-toggle[aria-pressed="true"]{background:var(--accent-btn);color:#fff;border-color:transparent}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .field{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);font-weight:600}
 .field select{min-height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:6px 10px;font-weight:650}
@@ -412,13 +413,14 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
           <button type="button" data-v="simple">Simple</button><button type="button" data-v="compound">Compound</button>
         </div>
         <div class="seg" id="levelSeg" role="group" aria-label="Level">
-          <button type="button" data-v="beginner">Beginner</button><button type="button" data-v="beginner16" title="Beginner + sixteenth notes">+16ths</button><button type="button" data-v="easy">Easy</button><button type="button" data-v="hard">Hard</button><button type="button" data-v="extreme">Extreme</button>
+          <button type="button" data-v="beginner">Beginner</button><button type="button" data-v="easy">Easy</button><button type="button" data-v="hard">Hard</button><button type="button" data-v="extreme">Extreme</button>
         </div>
         <div class="seg" id="lenSeg" role="group" aria-label="Length">
           <button type="button" data-v="2">2 measures</button><button type="button" data-v="4">4 measures</button>
         </div>
         <label class="field"><span>Time signature</span><select id="tsSelect" aria-label="Time signature"></select></label>
         <span class="beg-note small muted" id="begNote" hidden>One measure of 4/4</span>
+        <button class="btn btn-sm b16-toggle" type="button" id="b16Toggle" aria-pressed="false" hidden title="Add sixteenth-note patterns to Beginner">＋ Add 16th notes</button>
       </div>
 
       <div class="challenge-bar" id="challengeBar" hidden>
@@ -1597,7 +1599,11 @@ function updateUI() {
 
   for (const b of els.typeSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.type));
   for (const b of els.lenSeg.children) b.setAttribute('aria-pressed', String(!beg && +b.dataset.v === s.measures));
-  for (const b of els.levelSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.level));
+  for (const b of els.levelSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.level || (b.dataset.v === 'beginner' && s.level === 'beginner16')));
+  const t16 = $('#b16Toggle');
+  t16.hidden = !beg;
+  t16.setAttribute('aria-pressed', String(s.level === 'beginner16'));
+  t16.textContent = s.level === 'beginner16' ? '✓ 16th notes on' : '＋ Add 16th notes';
 
   if (!S.q) return;
   const ts = TIME_SIGS[S.q.ts];
@@ -2285,6 +2291,10 @@ els.typeSeg.addEventListener('click', e => {
   S.settings.type = b.dataset.v;
   S.settings.lock = 'random';
   populateTsSelect(); saveSettings(); newPracticeRhythm();
+});
+$('#b16Toggle').addEventListener('click', () => {
+  S.settings.level = S.settings.level === 'beginner16' ? 'beginner' : 'beginner16';
+  saveSettings(); newPracticeRhythm();
 });
 els.levelSeg.addEventListener('click', e => {
   const b = e.target.closest('button');
