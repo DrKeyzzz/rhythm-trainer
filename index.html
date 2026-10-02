@@ -623,6 +623,7 @@ const TIME_SIGS = {
   '2/4':  { id: '2/4',  type: 'simple',   top: 2,  bottom: 4, measureUnits: 8,  bank: 'simple1' },
   '3/4':  { id: '3/4',  type: 'simple',   top: 3,  bottom: 4, measureUnits: 12, bank: 'simple1' },
   '4/4':  { id: '4/4',  type: 'simple',   top: 4,  bottom: 4, measureUnits: 16, bank: 'simple2' },
+  '4/4b': { id: '4/4b', label: '4/4', type: 'simple', top: 4, bottom: 4, measureUnits: 16, bank: 'simple1' },   // Beginner: one-beat slots
   '6/8':  { id: '6/8',  type: 'compound', top: 6,  bottom: 8, measureUnits: 12, bank: 'compound1' },
   '9/8':  { id: '9/8',  type: 'compound', top: 9,  bottom: 8, measureUnits: 18, bank: 'compound1' },
   '12/8': { id: '12/8', type: 'compound', top: 12, bottom: 8, measureUnits: 24, bank: 'compound2' },
@@ -643,13 +644,14 @@ const COMPOUND_TS = ['6/8', '9/8', '12/8'];
 // A negative number is a rest: -2 = eighth rest.
 const BANKS = {
   simple1: { slotUnits: 4, cells: [
-    { id: 'q',    name: 'Quarter note',                   notes: [4],          weight: 6, level: 'easy', core: true, ending: true },
-    { id: 'ee',   name: 'Two eighth notes',               notes: [2, 2],       weight: 6, level: 'easy', core: true },
-    { id: 'ssss', name: 'Four sixteenth notes',           notes: [1, 1, 1, 1], weight: 3, level: 'easy', core: true },
-    { id: 'ess',  name: 'Eighth + two sixteenths',        notes: [2, 1, 1],    weight: 3, level: 'easy' },
-    { id: 'sse',  name: 'Two sixteenths + eighth',        notes: [1, 1, 2],    weight: 3, level: 'easy' },
-    { id: 'er',   name: 'Eighth note + eighth rest',      notes: [2, -2],      weight: 2, level: 'easy', core: true },
-    { id: 're',   name: 'Eighth rest + eighth note',      notes: [-2, 2],      weight: 2, level: 'easy' },
+    { id: 'q',    name: 'Quarter note',                   notes: [4],          weight: 6, level: 'easy', beginner: true, core: true, ending: true },
+    { id: 'ee',   name: 'Two eighth notes',               notes: [2, 2],       weight: 6, level: 'easy', beginner: true, core: true },
+    { id: 'ssss', name: 'Four sixteenth notes',           notes: [1, 1, 1, 1], weight: 3, level: 'easy', b16: true, core: true },
+    { id: 'ess',  name: 'Eighth + two sixteenths',        notes: [2, 1, 1],    weight: 3, level: 'easy', b16: true },
+    { id: 'sse',  name: 'Two sixteenths + eighth',        notes: [1, 1, 2],    weight: 3, level: 'easy', b16: true },
+    { id: 'er',   name: 'Eighth note + eighth rest',      notes: [2, -2],      weight: 2, level: 'easy', beginner: true, core: true },
+    { id: 're',   name: 'Eighth rest + eighth note',      notes: [-2, 2],      weight: 2, level: 'easy', beginner: true },
+    { id: 'qr',   name: 'Quarter rest',                   notes: [-4],         weight: 2, level: 'easy', beginner: true },
     { id: 'des',  name: 'Dotted eighth + sixteenth',      notes: [3, 1],       weight: 3, level: 'hard' },
     { id: 'ses',  name: 'Sixteenth, eighth, sixteenth',   notes: [1, 2, 1],    weight: 3, level: 'hard' },
     { id: 'sdes', name: 'Sixteenth + dotted eighth',      notes: [1, 3],       weight: 2, level: 'hard' },
@@ -658,25 +660,25 @@ const BANKS = {
     { id: 'ssr',  name: 'Two sixteenths + eighth rest',   notes: [1, 1, -2],    weight: 2, level: 'extreme' },
   ]},
   simple2: { slotUnits: 8, cells: [
-    { id: 'h',     name: 'Half note',                         notes: [8],             weight: 4, level: 'easy', beginner: true, core: true, ending: true },
-    { id: 'qq',    name: 'Two quarter notes',                 notes: [4, 4],          weight: 6, level: 'easy', beginner: true, core: true, ending: true },
-    { id: 'qee',   name: 'Quarter + two eighths',             notes: [4, 2, 2],       weight: 4, level: 'easy', beginner: true, core: true },
-    { id: 'eeq',   name: 'Two eighths + quarter',             notes: [2, 2, 4],       weight: 4, level: 'easy', beginner: true, core: true, ending: true },
-    { id: 'eeee',  name: 'Four eighth notes',                 notes: [2, 2, 2, 2],    weight: 3, level: 'easy', beginner: true, core: true },
+    { id: 'h',     name: 'Half note',                         notes: [8],             weight: 4, level: 'easy', core: true, ending: true },
+    { id: 'qq',    name: 'Two quarter notes',                 notes: [4, 4],          weight: 6, level: 'easy', core: true, ending: true },
+    { id: 'qee',   name: 'Quarter + two eighths',             notes: [4, 2, 2],       weight: 4, level: 'easy', core: true },
+    { id: 'eeq',   name: 'Two eighths + quarter',             notes: [2, 2, 4],       weight: 4, level: 'easy', core: true, ending: true },
+    { id: 'eeee',  name: 'Four eighth notes',                 notes: [2, 2, 2, 2],    weight: 3, level: 'easy', core: true },
     { id: 'dqe',   name: 'Dotted quarter + eighth',           notes: [6, 2],          weight: 3, level: 'easy', core: true },
-    { id: 'qess',  name: 'Quarter + eighth, two sixteenths',  notes: [4, 2, 1, 1],    weight: 2, level: 'easy', b16: true },
-    { id: 'essq',  name: 'Eighth, two sixteenths + quarter',  notes: [2, 1, 1, 4],    weight: 2, level: 'easy', b16: true, ending: true },
-    { id: 'qssss', name: 'Quarter + four sixteenths',         notes: [4, 1, 1, 1, 1], weight: 2, level: 'easy', b16: true },
-    { id: 'ssssq', name: 'Four sixteenths + quarter',         notes: [1, 1, 1, 1, 4], weight: 2, level: 'easy', b16: true, ending: true },
-    { id: 'qer',   name: 'Quarter, eighth + eighth rest',     notes: [4, 2, -2],      weight: 2, level: 'easy', beginner: true },
-    { id: 'erq',   name: 'Eighth, eighth rest + quarter',     notes: [2, -2, 4],      weight: 2, level: 'easy', beginner: true, ending: true },
-    { id: 'q_r',   name: 'Quarter + quarter rest',            notes: [4, -4],         weight: 3, level: 'easy', beginner: true },
-    { id: 'r_q',   name: 'Quarter rest + quarter',            notes: [-4, 4],         weight: 3, level: 'easy', beginner: true, ending: true },
-    { id: 'r_ee',  name: 'Quarter rest + two eighths',        notes: [-4, 2, 2],      weight: 2, level: 'easy', beginner: true },
-    { id: 'ee_r',  name: 'Two eighths + quarter rest',        notes: [2, 2, -4],      weight: 2, level: 'easy', beginner: true },
+    { id: 'qess',  name: 'Quarter + eighth, two sixteenths',  notes: [4, 2, 1, 1],    weight: 2, level: 'easy' },
+    { id: 'essq',  name: 'Eighth, two sixteenths + quarter',  notes: [2, 1, 1, 4],    weight: 2, level: 'easy', ending: true },
+    { id: 'qssss', name: 'Quarter + four sixteenths',         notes: [4, 1, 1, 1, 1], weight: 2, level: 'easy' },
+    { id: 'ssssq', name: 'Four sixteenths + quarter',         notes: [1, 1, 1, 1, 4], weight: 2, level: 'easy', ending: true },
+    { id: 'qer',   name: 'Quarter, eighth + eighth rest',     notes: [4, 2, -2],      weight: 2, level: 'easy' },
+    { id: 'erq',   name: 'Eighth, eighth rest + quarter',     notes: [2, -2, 4],      weight: 2, level: 'easy', ending: true },
+    { id: 'q_r',   name: 'Quarter + quarter rest',            notes: [4, -4],         weight: 3, level: 'easy' },
+    { id: 'r_q',   name: 'Quarter rest + quarter',            notes: [-4, 4],         weight: 3, level: 'easy', ending: true },
+    { id: 'r_ee',  name: 'Quarter rest + two eighths',        notes: [-4, 2, 2],      weight: 2, level: 'easy' },
+    { id: 'ee_r',  name: 'Two eighths + quarter rest',        notes: [2, 2, -4],      weight: 2, level: 'easy' },
     { id: 'eqe',   name: 'Eighth, quarter, eighth (syncopation)', notes: [2, 4, 2],   weight: 3, level: 'hard' },
-    { id: 'qsse',  name: 'Quarter + two sixteenths, eighth',  notes: [4, 1, 1, 2],    weight: 2, level: 'hard', b16: true },
-    { id: 'sseq',  name: 'Two sixteenths, eighth + quarter',  notes: [1, 1, 2, 4],    weight: 2, level: 'hard', b16: true, ending: true },
+    { id: 'qsse',  name: 'Quarter + two sixteenths, eighth',  notes: [4, 1, 1, 2],    weight: 2, level: 'hard' },
+    { id: 'sseq',  name: 'Two sixteenths, eighth + quarter',  notes: [1, 1, 2, 4],    weight: 2, level: 'hard', ending: true },
     { id: 'desq',  name: 'Dotted eighth, sixteenth + quarter', notes: [3, 1, 4],      weight: 3, level: 'hard', ending: true },
     { id: 'sesq',  name: 'Sixteenth, eighth, sixteenth + quarter', notes: [1, 2, 1, 4], weight: 2, level: 'hard', ending: true },
     { id: 'rqe',   name: 'Eighth rest, quarter, eighth (syncopation)', notes: [-2, 4, 2], weight: 2, level: 'hard' },
@@ -734,8 +736,9 @@ const LEVEL_NAME = { beginner: 'Beginner', beginner16: 'Beginner + 16ths', easy:
 const isLocked = lv => lv === 'beginner' || lv === 'beginner16';   // one measure of 4/4
 const has16 = c => c.seq.some(n => n.w === 1);
 // Order sixteenths are introduced in Beginner + 16ths (the slider adds them in this order).
-const B16_ORDER = ['qssss', 'ssssq', 'qess', 'essq', 'qsse', 'sseq'];
-const BEGINNER = { ts: '4/4', measures: 1 };     // Beginner is locked to one measure of 4/4
+const B16_ORDER = ['ssss', 'ess', 'sse'];
+const BEGINNER = { ts: '4/4b', measures: 1 };    // Beginner: one measure of 4/4, one beat per slot
+const tsLabel = id => (TIME_SIGS[id] && TIME_SIGS[id].label) || id;
 function inLevel(cell, level) {
   if (level === 'beginner') return !!cell.beginner;
   if (level === 'beginner16') return !!cell.beginner || !!cell.b16;
@@ -756,7 +759,7 @@ function normalizeNote(n) {
 const seqLen = seq => rp(sum(seq.map(n => n.dur)));
 
 const SLOT_DESCRIPTION = {
-  '2/4': 'half a measure (1 beat)', '3/4': 'one beat', '4/4': 'half a measure (2 beats)',
+  '2/4': 'half a measure (1 beat)', '3/4': 'one beat', '4/4': 'half a measure (2 beats)', '4/4b': 'one beat',
   '6/8': 'half a measure (1 dotted-quarter beat)', '9/8': 'one dotted-quarter beat', '12/8': 'half a measure (2 dotted-quarter beats)',
 };
 
@@ -837,7 +840,7 @@ function generateRhythm(tsId, measures, avoidCells, level = 'easy', poolCells = 
     let ok = true;
     for (let i = 0; i < n; i++) {
       let pool = available;
-      if (i === n - 1) pool = pool.filter(c => c.ending);                       // finish on a longer note
+      if (i === n - 1) pool = pool.filter(c => c.ending || (isLocked(level) && c.id === 'ee'));   // finish on a longer note
       if (strict && i >= 2 && cells[i - 1] === cells[i - 2]) pool = pool.filter(c => c.id !== cells[i - 1]); // max 2 in a row
       if (!pool.length) { ok = false; break; }
       cells.push(pickWeighted(pool, level).id);
@@ -1607,7 +1610,7 @@ function updateUI() {
 
   if (!S.q) return;
   const ts = TIME_SIGS[S.q.ts];
-  els.tsBadge.textContent = ts.id;
+  els.tsBadge.textContent = tsLabel(ts.id);
   els.qInfo.textContent = `${LEVEL_NAME[S.q.level]}${S.q.easier ? ' (easier mix)' : ''} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${S.q.measures} measure${S.q.measures === 1 ? '' : 's'}`;
 
   const filled = S.answer.filter(Boolean).length;
@@ -1761,7 +1764,7 @@ function showEndScreen() {
   els.review.innerHTML = ch.rhythms.map((r, i) => {
     const res = ch.results[i];
     return `<div class="review-item">
-      <div class="ri-head"><b>Rhythm ${i + 1}</b><span class="ts-badge">${r.ts}</span>
+      <div class="ri-head"><b>Rhythm ${i + 1}</b><span class="ts-badge">${tsLabel(r.ts)}</span>
         <span class="ri-score ${res.c === res.n ? 'perfect' : ''}">${res.c}/${res.n} correct${res.c === res.n ? ' ✓' : ''}${res.x ? ` <span class="ri-extra">· ${res.x} extra listen${res.x > 1 ? 's' : ''} (−${Math.round(res.x * CONFIG.extraPenalty * 100)}%)</span>` : ''}</span>
         <button class="btn btn-sm btn-q" type="button" data-play="q" data-i="${i}">▶ Question</button>
         <button class="btn btn-sm btn-a" type="button" data-play="a" data-i="${i}">▶ Your answer</button></div>
@@ -2370,7 +2373,7 @@ function selfTest() {
       if (r.cells.some(id => !inLevel(CELLS[id], lv))) bad++;
       if ((lv === 'hard' || lv === 'extreme') && !r.cells.some(id => CELLS[id].level === lv)) bad++;
       if (lv === 'beginner16' && !r.cells.some(id => has16(CELLS[id]))) bad++;
-      if (!CELLS[r.cells[n - 1]].ending) bad++;
+      if (!CELLS[r.cells[n - 1]].ending && !(isLocked(lv) && r.cells[n - 1] === 'ee')) bad++;
       for (let i = 2; i < n; i++) if (r.cells[i] === r.cells[i - 1] && r.cells[i] === r.cells[i - 2]) bad++;
       if (new Set(r.cells).size < 2) bad++;
     }
@@ -2543,7 +2546,7 @@ function suggestionFor(skill, byTs) {
   if (!tsId) tsId = Object.keys(TIME_SIGS).find(t => BANKS[TIME_SIGS[t].bank].cells.some(c => skillsOf(c).includes(skill)));
   const ts = TIME_SIGS[tsId];
   const level = LEVELS.find(lv => cellsFor(ts.bank, lv).some(c => skillsOf(c).includes(skill))) || 'hard';
-  return `${LEVEL_NAME[level]} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${ts.id}`;
+  return `${LEVEL_NAME[level]} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${tsLabel(ts.id)}`;
 }
 
 function buildReport() {
@@ -2641,7 +2644,7 @@ function renderReport() {
   const bars = (rows) => rows.map(([label, v]) => `<div class="bar-row"><span>${esc(label)}</span><div class="bar"><i class="${tone(v.c / v.n)}" style="width:${Math.round(v.c / v.n * 100)}%"></i></div><b>${pct(v.c / v.n)}</b><small>${v.n} slot${v.n === 1 ? '' : 's'}</small></div>`).join('');
   const skillRows = SKILLS.filter(k => rep.skills[k]).map(k => [k, rep.skills[k]]);
   const meterRows = [['Simple meter', rep.meters.Simple], ['Compound meter', rep.meters.Compound]].filter(([, v]) => v.n)
-    .concat(Object.keys(TIME_SIGS).filter(t => rep.byTs[t]).map(t => [t, rep.byTs[t]]));
+    .concat(Object.keys(TIME_SIGS).filter(t => rep.byTs[t]).map(t => [t === BEGINNER.ts ? '4/4 (Beginner)' : t, rep.byTs[t]]));
   const goodHtml = rep.strengths.length
     ? rep.strengths.map(x => `<li><b>${x.k}</b>: ${pct(x.acc)} on ${x.n} tries</li>`).join('')
     : `<li>${rep.rated.length ? 'Keep going! Get a skill to 85% to see it here.' : 'Do a few more rhythms to see your strengths.'}</li>`;
@@ -2689,7 +2692,7 @@ async function drawReport(rep, name, noPictures = false) {
   const W = 1200, P = 60, FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
   const skillRows = SKILLS.filter(k => rep.skills[k]).map(k => [k, rep.skills[k]]);
   const meterRows = [['Simple meter', rep.meters.Simple], ['Compound meter', rep.meters.Compound]].filter(([, v]) => v.n)
-    .concat(Object.keys(TIME_SIGS).filter(t => rep.byTs[t]).map(t => [t, rep.byTs[t]]));
+    .concat(Object.keys(TIME_SIGS).filter(t => rep.byTs[t]).map(t => [t === BEGINNER.ts ? '4/4 (Beginner)' : t, rep.byTs[t]]));
   const imgs = {};
   if (!noPictures) for (const x of rep.missed) for (const id of [x.id, x.pick]) if (id && !imgs[id]) imgs[id] = await cellImage(CELLS[id]);
 
@@ -3074,7 +3077,7 @@ function tdStudentDetail(s) {
     <p style="margin:0 0 8px"><b>${esc(s.student)}</b> · ${s.minutes} min · ${s.rhythms} rhythms (${lv || '—'}) · ${s.extra} extra listens in challenges · best challenge: ${LEVELS.filter(l => best[l] != null).map(l => `${LEVEL_NAME[l]} ${best[l]}%`).join(', ') || 'none'}${s.first !== Infinity ? ` · ${fmtClock(s.first)}–${fmtClock(s.last)}` : ''}</p>
     <div class="td-grid">
       <div><h3 class="small" style="margin:4px 0">Skills</h3>${bars(SKILLS.filter(k => s.skills[k]).map(k => [k, s.skills[k]]))}
-        <h3 class="small" style="margin:10px 0 4px">Time signatures</h3>${bars(Object.keys(TIME_SIGS).filter(t => s.ts[t]).map(t => [t, s.ts[t]]))}</div>
+        <h3 class="small" style="margin:10px 0 4px">Time signatures</h3>${bars(Object.keys(TIME_SIGS).filter(t => s.ts[t]).map(t => [t === BEGINNER.ts ? '4/4 (Beginner)' : t, s.ts[t]]))}</div>
       <div><h3 class="small" style="margin:4px 0">Most-missed rhythms</h3>${missed.length ? `<div class="miss-grid">${missed.map(([id, v]) => { const pick = Object.entries(v.picks).sort((a, b) => b[1] - a[1])[0]; return `<div class="miss-card"><div class="miss-svg">${cellSVG(CELLS[id])}</div><div class="miss-info"><b>Missed ${v.wrong} of ${v.n}</b>${pick && CELLS[pick[0]] ? `<span>Often picked:</span><div class="miss-svg small">${cellSVG(CELLS[pick[0]])}</div>` : ''}</div></div>`; }).join('')}</div>` : '<p class="muted">No misses.</p>'}</div>
     </div>
     <div class="modal-actions"><button class="btn btn-sm" type="button" id="tdDelStudent">Remove this student's data</button></div>
