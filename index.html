@@ -412,13 +412,13 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
           <button type="button" data-v="simple">Simple</button><button type="button" data-v="compound">Compound</button>
         </div>
         <div class="seg" id="levelSeg" role="group" aria-label="Level">
-          <button type="button" data-v="beginner">Beginner</button><button type="button" data-v="easy">Easy</button><button type="button" data-v="hard">Hard</button><button type="button" data-v="extreme">Extreme</button>
+          <button type="button" data-v="beginner">Beginner</button><button type="button" data-v="beginner16" title="Beginner + sixteenth notes">+16ths</button><button type="button" data-v="easy">Easy</button><button type="button" data-v="hard">Hard</button><button type="button" data-v="extreme">Extreme</button>
         </div>
         <div class="seg" id="lenSeg" role="group" aria-label="Length">
           <button type="button" data-v="2">2 measures</button><button type="button" data-v="4">4 measures</button>
         </div>
         <label class="field"><span>Time signature</span><select id="tsSelect" aria-label="Time signature"></select></label>
-        <span class="beg-note small muted" id="begNote" hidden>Beginner: one measure of 4/4</span>
+        <span class="beg-note small muted" id="begNote" hidden>One measure of 4/4</span>
       </div>
 
       <div class="challenge-bar" id="challengeBar" hidden>
@@ -433,6 +433,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
         <div class="audio-settings" id="audioSettings">
           <label class="tempo"><span>Tempo</span><input type="range" id="tempo" min="50" max="120" step="1" aria-label="Tempo in beats per minute"><output id="tempoOut">72 BPM</output></label>
           <label class="switch"><input type="checkbox" id="metro"><span class="track"></span><span>Metronome</span></label>
+          <label class="field"><span>Sound</span><select id="soundSel" aria-label="Sound"></select></label>
           <span class="muted small" id="tempoNote" hidden>Tempo is fixed in Challenge Mode</span>
         </div>
       </div>
@@ -598,7 +599,7 @@ const CONFIG = {
   challengeExtra: 3,         // extra listens after those, each one costs points
   extraPenalty: 0.10,        // each extra listen takes 10% off that rhythm's points
   dailyGoal: 20,             // rhythms per day for full effort credit on the session report
-  levelBonus: { beginner: 0.9, easy: 1.0, hard: 1.1, extreme: 1.2 },  // report accuracy multiplier per level
+  levelBonus: { beginner: 0.9, beginner16: 0.95, easy: 1.0, hard: 1.1, extreme: 1.2 },  // report accuracy multiplier per level
   localTeacherPin: '2468',   // test mode only; with Firebase the teacher signs in with Google
   teacherEmails: ['milnesda@eht.k12.nj.us'], // built-in teachers (must match teacherEmails() in firestore.rules); others request access and the admin approves them
   adminEmails: ['milnesda@eht.k12.nj.us'],  // can manage the World board (must match firestore.rules)
@@ -632,6 +633,7 @@ const COMPOUND_TS = ['6/8', '9/8', '12/8'];
 //        cells (triplets, 3+3+2, hemiola, duplets) appear only in Extreme.
 // core:  easy cells that Extreme keeps too, so its bank stays a manageable size.
 // beginner: the pieces used by the Beginner level (always one measure of 4/4).
+// b16: sixteenth pieces added on top of Beginner for "Beginner + 16ths".
 // Notes: numbers are sixteenth-note units. 't8' = eighth-note triplet note,
 //        't4' = quarter-note triplet note, 'tr8' = triplet eighth rest.
 // weight = how often the generator uses a cell (bigger = more often).
@@ -660,10 +662,10 @@ const BANKS = {
     { id: 'eeq',   name: 'Two eighths + quarter',             notes: [2, 2, 4],       weight: 4, level: 'easy', beginner: true, core: true, ending: true },
     { id: 'eeee',  name: 'Four eighth notes',                 notes: [2, 2, 2, 2],    weight: 3, level: 'easy', beginner: true, core: true },
     { id: 'dqe',   name: 'Dotted quarter + eighth',           notes: [6, 2],          weight: 3, level: 'easy', core: true },
-    { id: 'qess',  name: 'Quarter + eighth, two sixteenths',  notes: [4, 2, 1, 1],    weight: 2, level: 'easy' },
-    { id: 'essq',  name: 'Eighth, two sixteenths + quarter',  notes: [2, 1, 1, 4],    weight: 2, level: 'easy', ending: true },
-    { id: 'qssss', name: 'Quarter + four sixteenths',         notes: [4, 1, 1, 1, 1], weight: 2, level: 'easy' },
-    { id: 'ssssq', name: 'Four sixteenths + quarter',         notes: [1, 1, 1, 1, 4], weight: 2, level: 'easy', ending: true },
+    { id: 'qess',  name: 'Quarter + eighth, two sixteenths',  notes: [4, 2, 1, 1],    weight: 2, level: 'easy', b16: true },
+    { id: 'essq',  name: 'Eighth, two sixteenths + quarter',  notes: [2, 1, 1, 4],    weight: 2, level: 'easy', b16: true, ending: true },
+    { id: 'qssss', name: 'Quarter + four sixteenths',         notes: [4, 1, 1, 1, 1], weight: 2, level: 'easy', b16: true },
+    { id: 'ssssq', name: 'Four sixteenths + quarter',         notes: [1, 1, 1, 1, 4], weight: 2, level: 'easy', b16: true, ending: true },
     { id: 'qer',   name: 'Quarter, eighth + eighth rest',     notes: [4, 2, -2],      weight: 2, level: 'easy', beginner: true },
     { id: 'erq',   name: 'Eighth, eighth rest + quarter',     notes: [2, -2, 4],      weight: 2, level: 'easy', beginner: true, ending: true },
     { id: 'q_r',   name: 'Quarter + quarter rest',            notes: [4, -4],         weight: 3, level: 'easy', beginner: true },
@@ -671,8 +673,8 @@ const BANKS = {
     { id: 'r_ee',  name: 'Quarter rest + two eighths',        notes: [-4, 2, 2],      weight: 2, level: 'easy', beginner: true },
     { id: 'ee_r',  name: 'Two eighths + quarter rest',        notes: [2, 2, -4],      weight: 2, level: 'easy', beginner: true },
     { id: 'eqe',   name: 'Eighth, quarter, eighth (syncopation)', notes: [2, 4, 2],   weight: 3, level: 'hard' },
-    { id: 'qsse',  name: 'Quarter + two sixteenths, eighth',  notes: [4, 1, 1, 2],    weight: 2, level: 'hard' },
-    { id: 'sseq',  name: 'Two sixteenths, eighth + quarter',  notes: [1, 1, 2, 4],    weight: 2, level: 'hard', ending: true },
+    { id: 'qsse',  name: 'Quarter + two sixteenths, eighth',  notes: [4, 1, 1, 2],    weight: 2, level: 'hard', b16: true },
+    { id: 'sseq',  name: 'Two sixteenths, eighth + quarter',  notes: [1, 1, 2, 4],    weight: 2, level: 'hard', b16: true, ending: true },
     { id: 'desq',  name: 'Dotted eighth, sixteenth + quarter', notes: [3, 1, 4],      weight: 3, level: 'hard', ending: true },
     { id: 'sesq',  name: 'Sixteenth, eighth, sixteenth + quarter', notes: [1, 2, 1, 4], weight: 2, level: 'hard', ending: true },
     { id: 'rqe',   name: 'Eighth rest, quarter, eighth (syncopation)', notes: [-2, 4, 2], weight: 2, level: 'hard' },
@@ -725,11 +727,16 @@ const BANKS = {
   ]},
 };
 
-const LEVELS = ['beginner', 'easy', 'hard', 'extreme'];
-const LEVEL_NAME = { beginner: 'Beginner', easy: 'Easy', hard: 'Hard', extreme: 'Extreme' };
+const LEVELS = ['beginner', 'beginner16', 'easy', 'hard', 'extreme'];
+const LEVEL_NAME = { beginner: 'Beginner', beginner16: 'Beginner + 16ths', easy: 'Easy', hard: 'Hard', extreme: 'Extreme' };
+const isLocked = lv => lv === 'beginner' || lv === 'beginner16';   // one measure of 4/4
+const has16 = c => c.seq.some(n => n.w === 1);
+// Order sixteenths are introduced in Beginner + 16ths (the slider adds them in this order).
+const B16_ORDER = ['qssss', 'ssssq', 'qess', 'essq', 'qsse', 'sseq'];
 const BEGINNER = { ts: '4/4', measures: 1 };     // Beginner is locked to one measure of 4/4
 function inLevel(cell, level) {
   if (level === 'beginner') return !!cell.beginner;
+  if (level === 'beginner16') return !!cell.beginner || !!cell.b16;
   if (level === 'easy') return cell.level === 'easy';
   if (level === 'hard') return cell.level === 'easy' || cell.level === 'hard';
   return cell.level !== 'easy' || !!cell.core;
@@ -798,9 +805,11 @@ function pickWeighted(pool, level) {
 }
 
 // Practice-mode "rhythms in play": the level's pieces ordered easiest to hardest.
-const LEVEL_RANK = { beginner: 0, easy: 0, hard: 1, extreme: 2 };
+const LEVEL_RANK = { beginner: 0, beginner16: 0, easy: 0, hard: 1, extreme: 2 };
+// Easiest first: by level, then pieces without sixteenths (so rests come in before sixteenths).
 function orderedCells(bankId, level) {
-  return cellsFor(bankId, level).map((c, i) => ({ c, i })).sort((a, b) => LEVEL_RANK[a.c.level] - LEVEL_RANK[b.c.level] || a.i - b.i).map(x => x.c);
+  const rank = c => level === 'beginner16' ? (c.b16 ? 10 + B16_ORDER.indexOf(c.id) : 0) : LEVEL_RANK[c.level] * 2 + (has16(c) ? 1 : 0);
+  return cellsFor(bankId, level).map((c, i) => ({ c, i })).sort((a, b) => rank(a.c) - rank(b.c) || a.i - b.i).map(x => x.c);
 }
 const poolKey = (bankId, level) => `${bankId}:${level}`;
 function poolFor(bankId, level) {
@@ -819,6 +828,7 @@ function generateRhythm(tsId, measures, avoidCells, level = 'easy', poolCells = 
   const hasOwn = available.some(c => c.level === level);
   const minSignature = level === 'easy' || !hasOwn ? 0 : (measures >= 4 ? 3 : 2);
   const needDistinct = n >= 8 ? Math.min(3, available.length) : Math.min(2, available.length);
+  const need16 = level === 'beginner16' && available.some(has16);
   for (let attempt = 0; attempt < 600; attempt++) {
     const strict = attempt < 400;             // with a tiny pool, loosen the rules if needed
     const cells = [];
@@ -835,6 +845,7 @@ function generateRhythm(tsId, measures, avoidCells, level = 'easy', poolCells = 
     if (strict && distinct < needDistinct) continue;                              // not all one cell
     if (avoidCells && avoidCells.join() === cells.join()) continue;              // don't repeat last question
     if (strict && cells.filter(id => CELLS[id].level === level).length < minSignature) continue; // Hard/Extreme always sound like it
+    if (strict && need16 && !cells.some(id => has16(CELLS[id]))) continue;          // Beginner + 16ths always has sixteenths
     const full = cellsFor(ts.bank, level).length;
     return { ts: tsId, measures, cells, level, poolFrac: Math.min(1, available.length / full), easier: (level === 'hard' || level === 'extreme') && !hasOwn };
   }
@@ -855,12 +866,18 @@ function pickChallengeMeters() {
 /* =====================================================================
    3. AUDIO ENGINE  (Web Audio, synthesized, scheduled on the audio clock)
    ===================================================================== */
-const VOICES = {
-  // question: bright, wood-like tone
-  question: { freq: 659.25, type: 'triangle', peak: 0.42, sustain: 0.5, partial: 2.76, partialGain: 0.3, filter: 0 },
-  // answer: lower, reedy tone so it never sounds like the question
-  answer:   { freq: 392.0,  type: 'sawtooth', peak: 0.2,  sustain: 0.65, partial: 4.0, partialGain: 0.32, filter: 1500 },
-};
+// Instrument sounds. By default the sound changes with each new rhythm so it stays fresh.
+// "q" plays the question; "a" plays the student's answer an octave lower, so they never sound alike.
+// sustain = level a long note settles to (long notes still sound long); decay = how fast it settles.
+const SOUNDS = [
+  { name: 'Marimba', q: { type: 'sine', freq: 523.25, peak: 0.5, sustain: 0.28, decay: 0.12, partial: 4, partialGain: 0.22, partialDecay: 0.07 } },
+  { name: 'Soft piano', q: { type: 'triangle', freq: 440, peak: 0.4, sustain: 0.32, decay: 0.25, filter: 1800, partial: 2, partialGain: 0.14, partialDecay: 0.15 } },
+  { name: 'Kalimba', q: { type: 'sine', freq: 587.33, peak: 0.46, sustain: 0.24, decay: 0.14, partial: 5.4, partialGain: 0.18, partialDecay: 0.05 } },
+  { name: 'Flute', q: { type: 'sine', freq: 659.25, peak: 0.32, sustain: 0.85, decay: 0.08, attack: 0.03, partial: 2, partialGain: 0.05, partialDecay: 0.2 } },
+  { name: 'Bells', q: { type: 'sine', freq: 783.99, peak: 0.36, sustain: 0.3, decay: 0.3, partial: 2.76, partialGain: 0.16, partialDecay: 0.4 } },
+  { name: 'Woodblock', q: { type: 'triangle', freq: 659.25, peak: 0.4, sustain: 0.45, decay: 0.04, partial: 2.76, partialGain: 0.26, partialDecay: 0.05 } },
+];
+for (const snd of SOUNDS) snd.a = { ...snd.q, freq: snd.q.freq / 2, peak: snd.q.peak * 1.1 };
 
 function buildSchedule(rhythm, cells, voice, bpm, metronome) {
   const ts = TIME_SIGS[rhythm.ts];
@@ -896,7 +913,7 @@ function buildSchedule(rhythm, cells, voice, bpm, metronome) {
     // metronome when on; always keep the beat going through empty slots
     if (metronome || !cells[slotIdx]) events.push({ kind: 'click', t: countIn + b * beatSec, accent: (b * beatU) % ts.measureUnits === 0 });
   }
-  return { events, slots, notes, countIn, beatSec, beatsPerMeasure, total: countIn + totalU * u + 0.3 };
+  return { events, slots, notes, countIn, beatSec, beatsPerMeasure, sound: rhythm.sound || 0, total: countIn + totalU * u + 0.3 };
 }
 
 const Engine = {
@@ -928,14 +945,14 @@ const Engine = {
     if (this.ctx && this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
   },
 
-  tone(bus, t, dur, voiceName, nodes) {
-    const ctx = this.ctx, v = VOICES[voiceName];
+  tone(bus, t, dur, v, nodes) {
+    const ctx = this.ctx, attack = v.attack || 0.005;
     const len = Math.max(0.05, dur - Math.min(0.06, dur * 0.2));   // small gap so repeated notes articulate
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(v.peak, t + 0.005);
-    g.gain.setTargetAtTime(v.peak * v.sustain, t + 0.005, 0.04);
-    g.gain.setTargetAtTime(0.0001, t + len, 0.015);
+    g.gain.linearRampToValueAtTime(v.peak, t + attack);
+    g.gain.setTargetAtTime(v.peak * v.sustain, t + attack, v.decay || 0.04);
+    g.gain.setTargetAtTime(0.0001, t + len, 0.02);
     const osc = ctx.createOscillator();
     osc.type = v.type;
     osc.frequency.setValueAtTime(v.freq, t);
@@ -952,19 +969,19 @@ const Engine = {
     p.type = 'sine'; p.frequency.value = v.freq * v.partial;
     pg.gain.setValueAtTime(0.0001, t);
     pg.gain.linearRampToValueAtTime(v.partialGain, t + 0.003);
-    pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    pg.gain.exponentialRampToValueAtTime(0.0001, t + (v.partialDecay || 0.06));
     p.connect(pg); pg.connect(bus);
-    p.start(t); p.stop(t + 0.08);
+    p.start(t); p.stop(t + (v.partialDecay || 0.06) + 0.02);
     nodes.push(osc, p);
   },
 
   click(bus, t, accent, nodes) {
     const ctx = this.ctx;
     const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = 'sine'; o.frequency.value = accent ? 1900 : 1300;
+    o.type = 'triangle'; o.frequency.value = accent ? 1320 : 880;      // softer, lower tick
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(accent ? 0.5 : 0.32, t + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    g.gain.linearRampToValueAtTime(accent ? 0.26 : 0.16, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
     o.connect(g); g.connect(bus);
     o.start(t); o.stop(t + 0.07);
     nodes.push(o);
@@ -984,7 +1001,7 @@ const Engine = {
       const t0 = ctx.currentTime + 0.12;
       for (const ev of sched.events) {
         if (ev.kind === 'click') this.click(bus, t0 + ev.t, ev.accent, token.nodes);
-        else this.tone(bus, t0 + ev.t, ev.dur, ev.voice, token.nodes);
+        else { const snd = SOUNDS[sched.sound] || SOUNDS[0]; this.tone(bus, t0 + ev.t, ev.dur, ev.voice === 'answer' ? snd.a : snd.q, token.nodes); }
       }
       const end = t0 + sched.total;
       const loop = () => {
@@ -1228,7 +1245,7 @@ const store = {
 
 const S = {
   mode: 'practice',                // 'practice' | 'challenge' | 'end'
-  settings: { type: 'simple', level: 'easy', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false },
+  settings: { type: 'simple', level: 'easy', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false, sound: 'cycle' },
   q: null, answer: [], selected: null, checked: false, nextLockUntil: 0,
   pool: { pct: 1, custom: {} }, poolEdit: false,      // practice "rhythms in play" (resets every visit)
   stats: { rhythms: 0, correct: 0, total: 0, streak: 0 },
@@ -1250,6 +1267,7 @@ function loadSettings() {
     if (LEVELS.includes(saved.level)) S.settings.level = saved.level;
     if (saved.lock && (saved.lock === 'random' || TIME_SIGS[saved.lock])) S.settings.lock = saved.lock;
     if (saved.tempo >= 50 && saved.tempo <= 120) S.settings.tempo = saved.tempo;
+    if (saved.sound === 'cycle' || SOUNDS[saved.sound]) S.settings.sound = saved.sound;
     S.settings.metronome = !!saved.metronome;
   } catch (e) { /* ignore bad saved settings */ }
 }
@@ -1279,7 +1297,7 @@ function slotStates() {
 function newPracticeRhythm() {
   Engine.stop();
   const { type, lock } = S.settings;
-  const beg = S.settings.level === 'beginner';
+  const beg = isLocked(S.settings.level);
   const measures = beg ? BEGINNER.measures : S.settings.measures;
   const list = tsListFor(type);
   const tsId = beg ? BEGINNER.ts : list.includes(lock) ? lock : list[rand(list.length)];
@@ -1295,6 +1313,7 @@ function loadQuestion(rhythm) {
   S.checked = false;
   S.qStart = Date.now();
   S.qPlays = 0;
+  if (rhythm.sound == null) rhythm.sound = pickSound();
   els.feedback.hidden = true;
   els.bankWrap.hidden = false;
   els.hint.hidden = false;
@@ -1529,9 +1548,27 @@ function showCountIn(total, beat) {
   els.status.innerHTML = `<span>Count-in</span><span class="countin">${dots}</span>`;
 }
 function showPlaying(voice) {
+  const name = S.q && SOUNDS[S.q.sound] ? ` · ${SOUNDS[S.q.sound].name}` : '';
   els.status.innerHTML = voice === 'question'
-    ? '<span class="pill question">♪ Playing question</span>'
-    : '<span class="pill answer">♪ Playing your answer</span>';
+    ? `<span class="pill question">♪ Playing question${name}</span>`
+    : `<span class="pill answer">♪ Playing your answer${name}</span>`;
+}
+
+let soundTurn = Math.floor(Math.random() * SOUNDS.length);
+function pickSound() {
+  if (S.settings.sound !== 'cycle' && SOUNDS[S.settings.sound]) return +S.settings.sound;
+  soundTurn = (soundTurn + 1) % SOUNDS.length;
+  return soundTurn;
+}
+function populateSounds() {
+  const sel = $('#soundSel');
+  sel.innerHTML = `<option value="cycle">Change each rhythm</option>` + SOUNDS.map((x, i) => `<option value="${i}">${x.name}</option>`).join('');
+  sel.value = String(S.settings.sound);
+  sel.onchange = () => {
+    S.settings.sound = sel.value === 'cycle' ? 'cycle' : +sel.value;
+    saveSettings();
+    if (S.q && S.settings.sound !== 'cycle') S.q.sound = S.settings.sound;
+  };
 }
 
 // ---------- UI refresh ----------
@@ -1547,14 +1584,14 @@ function updateUI() {
   els.tempo.value = tempo;
   els.tempoOut.textContent = `${tempo} BPM`;
   els.metro.checked = s.metronome;
-  const beg = s.level === 'beginner';
+  const beg = isLocked(s.level);
   els.typeSeg.classList.toggle('locked', beg);
   els.lenSeg.classList.toggle('locked', beg);
   els.tsSelect.disabled = beg;
   $('#begNote').hidden = !beg;
   els.settingsSummary.textContent = inChallenge
     ? `${tempo} BPM · Metronome ${s.metronome ? 'on' : 'off'}`
-    : beg ? `Beginner · 4/4 · 1 measure · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`
+    : beg ? `${LEVEL_NAME[s.level]} · 4/4 · 1 measure · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`
     : `${LEVEL_NAME[s.level]} · ${s.type === 'simple' ? 'Simple' : 'Compound'} · ${s.measures} measures · ${s.lock === 'random' ? 'Random' : s.lock} · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`;
   els.settingsCaret.textContent = els.controls.classList.contains('open') ? '▴' : '▾';
 
@@ -1619,9 +1656,10 @@ function populateTsSelect() {
 // ---------- challenge ----------
 function chooseChallenge() {
   openModal(`<h3>🏆 Challenge Mode</h3>
-    <p class="muted">${CONFIG.challengeRhythms} rhythms. Beginner uses one measure of 4/4; the other levels use ${CONFIG.challengeMeasures} measures, mixing simple and compound meters. You get ${CONFIG.challengePlays} plays of each question, plus ${CONFIG.challengeExtra} gold extra listens if you need them. Each extra listen takes ${Math.round(CONFIG.extraPenalty * 100)}% off that rhythm's points. Pick your level:</p>
+    <p class="muted">${CONFIG.challengeRhythms} rhythms. Beginner levels use one measure of 4/4; the others use ${CONFIG.challengeMeasures} measures, mixing simple and compound meters. You get ${CONFIG.challengePlays} plays of each question, plus ${CONFIG.challengeExtra} gold extra listens if you need them. Each extra listen takes ${Math.round(CONFIG.extraPenalty * 100)}% off that rhythm's points. Pick your level:</p>
     <div class="level-pick">
       <button class="btn level-btn" type="button" data-level="beginner"><b>Beginner 🌱</b><span>One measure of 4/4: quarters, halves, eighths and simple rests</span></button>
+      <button class="btn level-btn" type="button" data-level="beginner16"><b>Beginner + 16ths 🌿</b><span>Beginner, plus four sixteenths, eighth–two sixteenths and two sixteenths–eighth</span></button>
       <button class="btn level-btn" type="button" data-level="easy"><b>Easy</b><span>Quarters, eighths, basic sixteenths, eighth rests</span></button>
       <button class="btn level-btn" type="button" data-level="hard"><b>Hard</b><span>Adds syncopation, dotted-sixteenth figures, off-beat rests</span></button>
       <button class="btn level-btn" type="button" data-level="extreme"><b>Extreme 🔥</b><span>Adds triplets, 3+3+2, hemiola and duplets</span></button>
@@ -1634,7 +1672,7 @@ function startChallenge(level) {
   Engine.stop();
   S.poolEdit = false;
   closeModal();
-  const beg = level === 'beginner';
+  const beg = isLocked(level);
   const meters = beg ? Array(CONFIG.challengeRhythms).fill(BEGINNER.ts) : pickChallengeMeters();
   const chMeasures = beg ? BEGINNER.measures : CONFIG.challengeMeasures;
   S.mode = 'challenge';
@@ -2311,7 +2349,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) Engin
 /* ---------- self-test (open with ?selftest to expose it) ---------- */
 function selfTest() {
   const out = { dataErrors: validateData(), generatorProblems: {}, challengeProblems: 0, sameTiming: null, partialAnswerClicks: null };
-  for (const lv of LEVELS) for (const tsId of (lv === 'beginner' ? [BEGINNER.ts] : Object.keys(TIME_SIGS))) for (const m of (lv === 'beginner' ? [BEGINNER.measures] : [2, 4])) {
+  for (const lv of LEVELS) for (const tsId of (isLocked(lv) ? [BEGINNER.ts] : Object.keys(TIME_SIGS))) for (const m of (isLocked(lv) ? [BEGINNER.measures] : [2, 4])) {
     const ts = TIME_SIGS[tsId], n = m * slotsPerMeasure(ts);
     let bad = 0;
     for (let k = 0; k < 300; k++) {
@@ -2320,7 +2358,8 @@ function selfTest() {
       if (rp(sum(r.cells.map(id => seqLen(CELLS[id].seq)))) !== m * ts.measureUnits) bad++;
       if (r.cells.some(id => CELLS[id].bank !== ts.bank)) bad++;
       if (r.cells.some(id => !inLevel(CELLS[id], lv))) bad++;
-      if (lv !== 'easy' && lv !== 'beginner' && !r.cells.some(id => CELLS[id].level === lv)) bad++;
+      if ((lv === 'hard' || lv === 'extreme') && !r.cells.some(id => CELLS[id].level === lv)) bad++;
+      if (lv === 'beginner16' && !r.cells.some(id => has16(CELLS[id]))) bad++;
       if (!CELLS[r.cells[n - 1]].ending) bad++;
       for (let i = 2; i < n; i++) if (r.cells[i] === r.cells[i - 1] && r.cells[i] === r.cells[i - 2]) bad++;
       if (new Set(r.cells).size < 2) bad++;
@@ -2362,7 +2401,7 @@ function setZoom(z) {
 function fitScenario() {
   if (S.mode === 'challenge' && S.ch) return { tsIds: [...new Set(S.ch.rhythms.map(r => r.ts))], level: S.ch.level, measures: S.ch.measures || CONFIG.challengeMeasures };
   const st = S.settings, list = tsListFor(st.type);
-  if (st.level === 'beginner') return { tsIds: [BEGINNER.ts], level: 'beginner', measures: BEGINNER.measures };
+  if (isLocked(st.level)) return { tsIds: [BEGINNER.ts], level: st.level, measures: BEGINNER.measures };
   return { tsIds: list.includes(st.lock) ? [st.lock] : list, level: st.level, measures: st.measures };
 }
 
@@ -2849,7 +2888,7 @@ async function refreshClassInfo() {
   } catch (e) { /* offline: keep going */ }
 }
 
-const assignText = a => a.level === 'beginner' ? 'Beginner · 4/4 · 1 measure' : `${LEVEL_NAME[a.level] || 'Any level'} · ${a.type === 'simple' ? 'Simple' : a.type === 'compound' ? 'Compound' : 'Simple or Compound'}${a.lock && a.lock !== 'random' ? ` (${a.lock})` : ''} · ${a.measures || 2} measures`;
+const assignText = a => isLocked(a.level) ? `${LEVEL_NAME[a.level]} · 4/4 · 1 measure` : `${LEVEL_NAME[a.level] || 'Any level'} · ${a.type === 'simple' ? 'Simple' : a.type === 'compound' ? 'Compound' : 'Simple or Compound'}${a.lock && a.lock !== 'random' ? ` (${a.lock})` : ''} · ${a.measures || 2} measures`;
 function renderAssignment() {
   const a = S.assignment, banner = els.assignBanner;
   if (!a || S.mode !== 'practice') { banner.hidden = true; return; }
@@ -3181,6 +3220,7 @@ if (dataErrors.length) {
 }
 loadSettings();
 populateTsSelect();
+populateSounds();
 els.modeNote.textContent = Board.remote ? '' : 'Test mode (scores saved in this browser only) ·';
 showView('play');
 newPracticeRhythm();

@@ -14,13 +14,14 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 
 **Levels**
 - **Beginner:** always one measure of 4/4, using only half notes, quarters, eighths and simple rests (quarter rests and eighth rests). Great for students who find Easy too hard.
+- **Beginner + 16ths:** the Beginner pieces plus four sixteenths, eighth–two sixteenths and two sixteenths–eighth (each with a quarter), still one measure of 4/4. Every rhythm includes at least one sixteenth piece, and the slider adds them last, four sixteenths first.
 - **Easy:** quarters, eighths, basic sixteenth patterns (four sixteenths, eighth-two sixteenths, two sixteenths-eighth), dotted quarter-eighth, and eighth rests on the beat or right after a note.
 - **Hard:** everything in Easy, plus syncopations (eighth-quarter-eighth, rest-quarter-eighth), dotted eighth-sixteenth and sixteenth-eighth-sixteenth figures, off-beat eighths, and eighth rests before sixteenths. Every Hard rhythm includes several of these harder pieces.
 - **Extreme:** the Hard pieces plus eighth-note triplets, quarter-note triplets, 3+3+2 (dotted eighth, dotted eighth, eighth), sixteenth-note syncopations, and in compound meter hemiola (three quarters in 12/8) and duplets (dotted eighths). It keeps a few basic pieces so rhythms still make musical sense, but drops most of the Easy ones so the bank stays manageable.
 
 **Practice mode**
 - Choose Easy, Hard or Extreme, Simple meter (2/4, 3/4, 4/4) or Compound meter (6/8, 9/8, 12/8), and 2 measures (the default) or 4 measures for extra challenge. You can also lock one time signature.
-- **Question** plays the rhythm after a one-measure count-in.
+- **Question** plays the rhythm after a one-measure count-in. The sound changes with each new rhythm (marimba, soft piano, kalimba, flute, bells, woodblock) so it stays fresh; pick one sound in Settings → **Sound** if you prefer. **My Answer** plays the same instrument an octave lower so students can tell them apart.
 - **My Answer** plays what the student has built so far, including a partial answer, in a different sound.
 - Tap a rhythm in the answer bank to fill the outlined slot. Tap a filled slot to select it; the next bank tap replaces it, or **Delete** empties it.
 - **Check** marks each slot green or red and shows the correct rhythm. Students press **Next Rhythm** when they're ready.
@@ -32,8 +33,8 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - 3/4 and 9/8 split into one-beat slots, because those meters can't be halved on a beat.
 
 **Challenge Mode**
-- Students pick a **Beginner**, **Easy**, **Hard** or **Extreme** challenge.
-- 5 rhythms. Beginner uses one measure of 4/4; the other levels use 4 measures, mixing simple and compound meters.
+- Students pick a **Beginner**, **Beginner + 16ths**, **Easy**, **Hard** or **Extreme** challenge.
+- 5 rhythms. The Beginner levels use one measure of 4/4; the other levels use 4 measures, mixing simple and compound meters.
 - 4 regular plays of each question (blue), then 3 **extra listens** (gold). Each extra listen takes 10% off that rhythm's points. **My Answer** is unlimited.
 - Tempo is fixed at 72 so scores compare fairly.
 - The leaderboard only appears after all 5 rhythms are finished. Easy, Hard and Extreme have separate leaderboards.
