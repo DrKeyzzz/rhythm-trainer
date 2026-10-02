@@ -78,6 +78,8 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .settings{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .seg{display:inline-flex;background:var(--surface-2);border-radius:13px;padding:3px;gap:2px}
 .seg button{border:0;background:transparent;color:var(--muted);font-weight:650;padding:6px 14px;border-radius:10px;min-height:44px;cursor:pointer}
+.seg.locked{opacity:.45;pointer-events:none}
+.beg-note{font-weight:650}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .field{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);font-weight:600}
 .field select{min-height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:6px 10px;font-weight:650}
@@ -410,12 +412,13 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
           <button type="button" data-v="simple">Simple</button><button type="button" data-v="compound">Compound</button>
         </div>
         <div class="seg" id="levelSeg" role="group" aria-label="Level">
-          <button type="button" data-v="easy">Easy</button><button type="button" data-v="hard">Hard</button><button type="button" data-v="extreme">Extreme</button>
+          <button type="button" data-v="beginner">Beginner</button><button type="button" data-v="easy">Easy</button><button type="button" data-v="hard">Hard</button><button type="button" data-v="extreme">Extreme</button>
         </div>
         <div class="seg" id="lenSeg" role="group" aria-label="Length">
           <button type="button" data-v="2">2 measures</button><button type="button" data-v="4">4 measures</button>
         </div>
         <label class="field"><span>Time signature</span><select id="tsSelect" aria-label="Time signature"></select></label>
+        <span class="beg-note small muted" id="begNote" hidden>Beginner: one measure of 4/4</span>
       </div>
 
       <div class="challenge-bar" id="challengeBar" hidden>
@@ -595,7 +598,7 @@ const CONFIG = {
   challengeExtra: 3,         // extra listens after those, each one costs points
   extraPenalty: 0.10,        // each extra listen takes 10% off that rhythm's points
   dailyGoal: 20,             // rhythms per day for full effort credit on the session report
-  levelBonus: { easy: 1.0, hard: 1.1, extreme: 1.2 },  // report accuracy multiplier per level
+  levelBonus: { beginner: 0.9, easy: 1.0, hard: 1.1, extreme: 1.2 },  // report accuracy multiplier per level
   localTeacherPin: '2468',   // test mode only; with Firebase the teacher signs in with Google
   teacherEmails: ['milnesda@eht.k12.nj.us'], // built-in teachers (must match teacherEmails() in firestore.rules); others request access and the admin approves them
   adminEmails: ['milnesda@eht.k12.nj.us'],  // can manage the World board (must match firestore.rules)
@@ -628,6 +631,7 @@ const COMPOUND_TS = ['6/8', '9/8', '12/8'];
 //        sixteenth figures, off-beat rests) appear in Hard and Extreme; 'extreme'
 //        cells (triplets, 3+3+2, hemiola, duplets) appear only in Extreme.
 // core:  easy cells that Extreme keeps too, so its bank stays a manageable size.
+// beginner: the pieces used by the Beginner level (always one measure of 4/4).
 // Notes: numbers are sixteenth-note units. 't8' = eighth-note triplet note,
 //        't4' = quarter-note triplet note, 'tr8' = triplet eighth rest.
 // weight = how often the generator uses a cell (bigger = more often).
@@ -650,18 +654,22 @@ const BANKS = {
     { id: 'ssr',  name: 'Two sixteenths + eighth rest',   notes: [1, 1, -2],    weight: 2, level: 'extreme' },
   ]},
   simple2: { slotUnits: 8, cells: [
-    { id: 'h',     name: 'Half note',                         notes: [8],             weight: 4, level: 'easy', core: true, ending: true },
-    { id: 'qq',    name: 'Two quarter notes',                 notes: [4, 4],          weight: 6, level: 'easy', core: true, ending: true },
-    { id: 'qee',   name: 'Quarter + two eighths',             notes: [4, 2, 2],       weight: 4, level: 'easy', core: true },
-    { id: 'eeq',   name: 'Two eighths + quarter',             notes: [2, 2, 4],       weight: 4, level: 'easy', core: true, ending: true },
-    { id: 'eeee',  name: 'Four eighth notes',                 notes: [2, 2, 2, 2],    weight: 3, level: 'easy', core: true },
+    { id: 'h',     name: 'Half note',                         notes: [8],             weight: 4, level: 'easy', beginner: true, core: true, ending: true },
+    { id: 'qq',    name: 'Two quarter notes',                 notes: [4, 4],          weight: 6, level: 'easy', beginner: true, core: true, ending: true },
+    { id: 'qee',   name: 'Quarter + two eighths',             notes: [4, 2, 2],       weight: 4, level: 'easy', beginner: true, core: true },
+    { id: 'eeq',   name: 'Two eighths + quarter',             notes: [2, 2, 4],       weight: 4, level: 'easy', beginner: true, core: true, ending: true },
+    { id: 'eeee',  name: 'Four eighth notes',                 notes: [2, 2, 2, 2],    weight: 3, level: 'easy', beginner: true, core: true },
     { id: 'dqe',   name: 'Dotted quarter + eighth',           notes: [6, 2],          weight: 3, level: 'easy', core: true },
     { id: 'qess',  name: 'Quarter + eighth, two sixteenths',  notes: [4, 2, 1, 1],    weight: 2, level: 'easy' },
     { id: 'essq',  name: 'Eighth, two sixteenths + quarter',  notes: [2, 1, 1, 4],    weight: 2, level: 'easy', ending: true },
     { id: 'qssss', name: 'Quarter + four sixteenths',         notes: [4, 1, 1, 1, 1], weight: 2, level: 'easy' },
     { id: 'ssssq', name: 'Four sixteenths + quarter',         notes: [1, 1, 1, 1, 4], weight: 2, level: 'easy', ending: true },
-    { id: 'qer',   name: 'Quarter, eighth + eighth rest',     notes: [4, 2, -2],      weight: 2, level: 'easy' },
-    { id: 'erq',   name: 'Eighth, eighth rest + quarter',     notes: [2, -2, 4],      weight: 2, level: 'easy', ending: true },
+    { id: 'qer',   name: 'Quarter, eighth + eighth rest',     notes: [4, 2, -2],      weight: 2, level: 'easy', beginner: true },
+    { id: 'erq',   name: 'Eighth, eighth rest + quarter',     notes: [2, -2, 4],      weight: 2, level: 'easy', beginner: true, ending: true },
+    { id: 'q_r',   name: 'Quarter + quarter rest',            notes: [4, -4],         weight: 3, level: 'easy', beginner: true },
+    { id: 'r_q',   name: 'Quarter rest + quarter',            notes: [-4, 4],         weight: 3, level: 'easy', beginner: true, ending: true },
+    { id: 'r_ee',  name: 'Quarter rest + two eighths',        notes: [-4, 2, 2],      weight: 2, level: 'easy', beginner: true },
+    { id: 'ee_r',  name: 'Two eighths + quarter rest',        notes: [2, 2, -4],      weight: 2, level: 'easy', beginner: true },
     { id: 'eqe',   name: 'Eighth, quarter, eighth (syncopation)', notes: [2, 4, 2],   weight: 3, level: 'hard' },
     { id: 'qsse',  name: 'Quarter + two sixteenths, eighth',  notes: [4, 1, 1, 2],    weight: 2, level: 'hard' },
     { id: 'sseq',  name: 'Two sixteenths, eighth + quarter',  notes: [1, 1, 2, 4],    weight: 2, level: 'hard', ending: true },
@@ -717,9 +725,11 @@ const BANKS = {
   ]},
 };
 
-const LEVELS = ['easy', 'hard', 'extreme'];
-const LEVEL_NAME = { easy: 'Easy', hard: 'Hard', extreme: 'Extreme' };
+const LEVELS = ['beginner', 'easy', 'hard', 'extreme'];
+const LEVEL_NAME = { beginner: 'Beginner', easy: 'Easy', hard: 'Hard', extreme: 'Extreme' };
+const BEGINNER = { ts: '4/4', measures: 1 };     // Beginner is locked to one measure of 4/4
 function inLevel(cell, level) {
+  if (level === 'beginner') return !!cell.beginner;
   if (level === 'easy') return cell.level === 'easy';
   if (level === 'hard') return cell.level === 'easy' || cell.level === 'hard';
   return cell.level !== 'easy' || !!cell.core;
@@ -754,13 +764,13 @@ function validateData() {
   const errors = [];
   const seen = new Set();
   for (const [bankId, bank] of Object.entries(BANKS)) {
-    for (const lv of LEVELS) if (!cellsFor(bankId, lv).some(c => c.ending)) errors.push(`${bankId}: needs an "ending" cell for ${lv}`);
+    for (const lv of LEVELS) { const cs = cellsFor(bankId, lv); if (cs.length && !cs.some(c => c.ending)) errors.push(`${bankId}: needs an "ending" cell for ${lv}`); }
     for (const c of bank.cells) {
       if (seen.has(c.id)) errors.push(`Duplicate cell id "${c.id}"`);
       seen.add(c.id);
       if (seqLen(c.seq) !== bank.slotUnits) errors.push(`${bankId} → "${c.name}" adds up to ${seqLen(c.seq)}, should be ${bank.slotUnits}`);
       if (!LEVELS.includes(c.level)) errors.push(`"${c.name}" needs level 'easy', 'hard' or 'extreme'`);
-      if (c.seq.some(n => n.rest && n.w !== 2)) errors.push(`"${c.name}": only eighth rests are supported`);
+      if (c.seq.some(n => n.rest && n.w !== 2 && n.w !== 4)) errors.push(`"${c.name}": only eighth and quarter rests are supported`);
       if (c.ending && c.seq[c.seq.length - 1].rest) errors.push(`"${c.name}" ends on a rest, so it can't be an ending cell`);
     }
   }
@@ -788,7 +798,7 @@ function pickWeighted(pool, level) {
 }
 
 // Practice-mode "rhythms in play": the level's pieces ordered easiest to hardest.
-const LEVEL_RANK = { easy: 0, hard: 1, extreme: 2 };
+const LEVEL_RANK = { beginner: 0, easy: 0, hard: 1, extreme: 2 };
 function orderedCells(bankId, level) {
   return cellsFor(bankId, level).map((c, i) => ({ c, i })).sort((a, b) => LEVEL_RANK[a.c.level] - LEVEL_RANK[b.c.level] || a.i - b.i).map(x => x.c);
 }
@@ -826,7 +836,7 @@ function generateRhythm(tsId, measures, avoidCells, level = 'easy', poolCells = 
     if (avoidCells && avoidCells.join() === cells.join()) continue;              // don't repeat last question
     if (strict && cells.filter(id => CELLS[id].level === level).length < minSignature) continue; // Hard/Extreme always sound like it
     const full = cellsFor(ts.bank, level).length;
-    return { ts: tsId, measures, cells, level, poolFrac: Math.min(1, available.length / full), easier: level !== 'easy' && !hasOwn };
+    return { ts: tsId, measures, cells, level, poolFrac: Math.min(1, available.length / full), easier: (level === 'hard' || level === 'extreme') && !hasOwn };
   }
   throw new Error('Could not generate a rhythm for ' + tsId);
 }
@@ -1030,6 +1040,11 @@ function beamGroups(seq, beatU) {
 function flagPath(sx, y) {
   return `<path class="flag" d="M${r1(sx)} ${r1(y)}C${r1(sx + 0.6)} ${r1(y + 6)} ${r1(sx + 9.5)} ${r1(y + 8.5)} ${r1(sx + 8)} ${r1(y + 19)}C${r1(sx + 9.2)} ${r1(y + 11.5)} ${r1(sx + 3)} ${r1(y + 9.8)} ${r1(sx - 0.7)} ${r1(y + 8.6)}Z"/>`;
 }
+function quarterRest(cx, cy) {
+  const x = cx - 3.5, y = cy - 13;
+  const P = (dx, dy) => `${r1(x + dx)} ${r1(y + dy)}`;
+  return `<path class="rest" d="M${P(1.5, 0)}L${P(7.2, 7)}Q${P(3.6, 9.8)} ${P(4.6, 12.8)}L${P(8.2, 18.6)}Q${P(2.6, 16.6)} ${P(4.2, 23)}Q${P(-1.6, 19.6)} ${P(2.6, 15.8)}L${P(-0.4, 11.4)}Q${P(3.2, 8.4)} ${P(2.2, 5.4)}Z"/>`;
+}
 function eighthRest(cx, cy) {
   const x = cx - 3, y = cy - 6;
   return `<circle class="rest" cx="${r1(x)}" cy="${r1(y)}" r="2.7"/><path class="rest-stroke" d="M${r1(x + 0.5)} ${r1(y + 1.8)}Q${r1(x + 4.5)} ${r1(y + 2.6)} ${r1(x + 7.5)} ${r1(y - 2)}L${r1(x + 2.8)} ${r1(y + 17)}"/>`;
@@ -1063,7 +1078,7 @@ function notesSVG(seq, x0, innerW, cy, stemTop, beatU, counts = null) {
     stemX[i] = sx; headX[i] = cx;
     const pos = at; at += n.dur;
     const cnt = counts == null ? '' : (lbl => `<text class="count${n.rest ? ' rest' : ''}" x="${r1(cx)}" y="${cy + 21}">${n.rest ? `(${lbl})` : lbl}</text>`)(countLabel(pos, beatU, n.tup));
-    if (n.rest) return eighthRest(cx, cy) + cnt;
+    if (n.rest) return (n.w >= 4 ? quarterRest(cx, cy) : eighthRest(cx, cy)) + cnt;
     const w = n.w, hollow = w >= 8;
     let s = `<ellipse class="nh${hollow ? ' hollow' : ''}" cx="${r1(cx)}" cy="${cy}" rx="${hollow ? G.rx - 0.6 : G.rx}" ry="${hollow ? G.ry - 0.6 : G.ry}" transform="rotate(-20 ${r1(cx)} ${cy})"/>`;
     s += `<line class="stem" x1="${r1(sx)}" y1="${cy - 1}" x2="${r1(sx)}" y2="${stemTop}"/>`;
@@ -1263,9 +1278,11 @@ function slotStates() {
 // ---------- practice ----------
 function newPracticeRhythm() {
   Engine.stop();
-  const { type, measures, lock } = S.settings;
+  const { type, lock } = S.settings;
+  const beg = S.settings.level === 'beginner';
+  const measures = beg ? BEGINNER.measures : S.settings.measures;
   const list = tsListFor(type);
-  const tsId = list.includes(lock) ? lock : list[rand(list.length)];
+  const tsId = beg ? BEGINNER.ts : list.includes(lock) ? lock : list[rand(list.length)];
   const avoid = S.q && S.q.ts === tsId && S.q.measures === measures ? S.q.cells : null;
   loadQuestion(generateRhythm(tsId, measures, avoid, S.settings.level, poolFor(TIME_SIGS[tsId].bank, S.settings.level)));
 }
@@ -1530,19 +1547,25 @@ function updateUI() {
   els.tempo.value = tempo;
   els.tempoOut.textContent = `${tempo} BPM`;
   els.metro.checked = s.metronome;
+  const beg = s.level === 'beginner';
+  els.typeSeg.classList.toggle('locked', beg);
+  els.lenSeg.classList.toggle('locked', beg);
+  els.tsSelect.disabled = beg;
+  $('#begNote').hidden = !beg;
   els.settingsSummary.textContent = inChallenge
     ? `${tempo} BPM · Metronome ${s.metronome ? 'on' : 'off'}`
+    : beg ? `Beginner · 4/4 · 1 measure · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`
     : `${LEVEL_NAME[s.level]} · ${s.type === 'simple' ? 'Simple' : 'Compound'} · ${s.measures} measures · ${s.lock === 'random' ? 'Random' : s.lock} · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`;
   els.settingsCaret.textContent = els.controls.classList.contains('open') ? '▴' : '▾';
 
   for (const b of els.typeSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.type));
-  for (const b of els.lenSeg.children) b.setAttribute('aria-pressed', String(+b.dataset.v === s.measures));
+  for (const b of els.lenSeg.children) b.setAttribute('aria-pressed', String(!beg && +b.dataset.v === s.measures));
   for (const b of els.levelSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.level));
 
   if (!S.q) return;
   const ts = TIME_SIGS[S.q.ts];
   els.tsBadge.textContent = ts.id;
-  els.qInfo.textContent = `${LEVEL_NAME[S.q.level]}${S.q.easier ? ' (easier mix)' : ''} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${S.q.measures} measures`;
+  els.qInfo.textContent = `${LEVEL_NAME[S.q.level]}${S.q.easier ? ' (easier mix)' : ''} · ${ts.type === 'simple' ? 'Simple' : 'Compound'} · ${S.q.measures} measure${S.q.measures === 1 ? '' : 's'}`;
 
   const filled = S.answer.filter(Boolean).length;
   const full = filled === S.answer.length;
@@ -1596,8 +1619,9 @@ function populateTsSelect() {
 // ---------- challenge ----------
 function chooseChallenge() {
   openModal(`<h3>🏆 Challenge Mode</h3>
-    <p class="muted">${CONFIG.challengeRhythms} rhythms, ${CONFIG.challengeMeasures} measures each, mixing simple and compound meters. You get ${CONFIG.challengePlays} plays of each question, plus ${CONFIG.challengeExtra} gold extra listens if you need them. Each extra listen takes ${Math.round(CONFIG.extraPenalty * 100)}% off that rhythm's points. Pick your level:</p>
+    <p class="muted">${CONFIG.challengeRhythms} rhythms. Beginner uses one measure of 4/4; the other levels use ${CONFIG.challengeMeasures} measures, mixing simple and compound meters. You get ${CONFIG.challengePlays} plays of each question, plus ${CONFIG.challengeExtra} gold extra listens if you need them. Each extra listen takes ${Math.round(CONFIG.extraPenalty * 100)}% off that rhythm's points. Pick your level:</p>
     <div class="level-pick">
+      <button class="btn level-btn" type="button" data-level="beginner"><b>Beginner 🌱</b><span>One measure of 4/4: quarters, halves, eighths and simple rests</span></button>
       <button class="btn level-btn" type="button" data-level="easy"><b>Easy</b><span>Quarters, eighths, basic sixteenths, eighth rests</span></button>
       <button class="btn level-btn" type="button" data-level="hard"><b>Hard</b><span>Adds syncopation, dotted-sixteenth figures, off-beat rests</span></button>
       <button class="btn level-btn" type="button" data-level="extreme"><b>Extreme 🔥</b><span>Adds triplets, 3+3+2, hemiola and duplets</span></button>
@@ -1610,11 +1634,14 @@ function startChallenge(level) {
   Engine.stop();
   S.poolEdit = false;
   closeModal();
-  const meters = pickChallengeMeters();
+  const beg = level === 'beginner';
+  const meters = beg ? Array(CONFIG.challengeRhythms).fill(BEGINNER.ts) : pickChallengeMeters();
+  const chMeasures = beg ? BEGINNER.measures : CONFIG.challengeMeasures;
   S.mode = 'challenge';
   S.ch = {
     level,
-    rhythms: meters.map(t => generateRhythm(t, CONFIG.challengeMeasures, null, level)),
+    measures: chMeasures,
+    rhythms: meters.map(t => generateRhythm(t, chMeasures, null, level)),
     answers: [], idx: 0,
     used: meters.map(() => 0),
     start: Date.now(), end: null, submitted: false, timer: 0,
@@ -2284,7 +2311,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) Engin
 /* ---------- self-test (open with ?selftest to expose it) ---------- */
 function selfTest() {
   const out = { dataErrors: validateData(), generatorProblems: {}, challengeProblems: 0, sameTiming: null, partialAnswerClicks: null };
-  for (const lv of LEVELS) for (const tsId of Object.keys(TIME_SIGS)) for (const m of [2, 4]) {
+  for (const lv of LEVELS) for (const tsId of (lv === 'beginner' ? [BEGINNER.ts] : Object.keys(TIME_SIGS))) for (const m of (lv === 'beginner' ? [BEGINNER.measures] : [2, 4])) {
     const ts = TIME_SIGS[tsId], n = m * slotsPerMeasure(ts);
     let bad = 0;
     for (let k = 0; k < 300; k++) {
@@ -2293,7 +2320,7 @@ function selfTest() {
       if (rp(sum(r.cells.map(id => seqLen(CELLS[id].seq)))) !== m * ts.measureUnits) bad++;
       if (r.cells.some(id => CELLS[id].bank !== ts.bank)) bad++;
       if (r.cells.some(id => !inLevel(CELLS[id], lv))) bad++;
-      if (lv !== 'easy' && !r.cells.some(id => CELLS[id].level === lv)) bad++;
+      if (lv !== 'easy' && lv !== 'beginner' && !r.cells.some(id => CELLS[id].level === lv)) bad++;
       if (!CELLS[r.cells[n - 1]].ending) bad++;
       for (let i = 2; i < n; i++) if (r.cells[i] === r.cells[i - 1] && r.cells[i] === r.cells[i - 2]) bad++;
       if (new Set(r.cells).size < 2) bad++;
@@ -2333,8 +2360,9 @@ function setZoom(z) {
 }
 
 function fitScenario() {
-  if (S.mode === 'challenge' && S.ch) return { tsIds: Object.keys(TIME_SIGS), level: S.ch.level, measures: CONFIG.challengeMeasures };
+  if (S.mode === 'challenge' && S.ch) return { tsIds: [...new Set(S.ch.rhythms.map(r => r.ts))], level: S.ch.level, measures: S.ch.measures || CONFIG.challengeMeasures };
   const st = S.settings, list = tsListFor(st.type);
+  if (st.level === 'beginner') return { tsIds: [BEGINNER.ts], level: 'beginner', measures: BEGINNER.measures };
   return { tsIds: list.includes(st.lock) ? [st.lock] : list, level: st.level, measures: st.measures };
 }
 
@@ -2821,7 +2849,7 @@ async function refreshClassInfo() {
   } catch (e) { /* offline: keep going */ }
 }
 
-const assignText = a => `${LEVEL_NAME[a.level] || 'Any level'} · ${a.type === 'simple' ? 'Simple' : a.type === 'compound' ? 'Compound' : 'Simple or Compound'}${a.lock && a.lock !== 'random' ? ` (${a.lock})` : ''} · ${a.measures || 2} measures`;
+const assignText = a => a.level === 'beginner' ? 'Beginner · 4/4 · 1 measure' : `${LEVEL_NAME[a.level] || 'Any level'} · ${a.type === 'simple' ? 'Simple' : a.type === 'compound' ? 'Compound' : 'Simple or Compound'}${a.lock && a.lock !== 'random' ? ` (${a.lock})` : ''} · ${a.measures || 2} measures`;
 function renderAssignment() {
   const a = S.assignment, banner = els.assignBanner;
   if (!a || S.mode !== 'practice') { banner.hidden = true; return; }

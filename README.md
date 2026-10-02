@@ -13,6 +13,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 **Leaderboards:** **Class** (only students with that class code) and **🌎 World** (everyone), each with Easy / Hard / Extreme tabs. After a challenge, students see their rank on both, like "#2 in Period 3 · #47 in the world."
 
 **Levels**
+- **Beginner:** always one measure of 4/4, using only half notes, quarters, eighths and simple rests (quarter rests and eighth rests). Great for students who find Easy too hard.
 - **Easy:** quarters, eighths, basic sixteenth patterns (four sixteenths, eighth-two sixteenths, two sixteenths-eighth), dotted quarter-eighth, and eighth rests on the beat or right after a note.
 - **Hard:** everything in Easy, plus syncopations (eighth-quarter-eighth, rest-quarter-eighth), dotted eighth-sixteenth and sixteenth-eighth-sixteenth figures, off-beat eighths, and eighth rests before sixteenths. Every Hard rhythm includes several of these harder pieces.
 - **Extreme:** the Hard pieces plus eighth-note triplets, quarter-note triplets, 3+3+2 (dotted eighth, dotted eighth, eighth), sixteenth-note syncopations, and in compound meter hemiola (three quarters in 12/8) and duplets (dotted eighths). It keeps a few basic pieces so rhythms still make musical sense, but drops most of the Easy ones so the bank stays manageable.
@@ -31,8 +32,8 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - 3/4 and 9/8 split into one-beat slots, because those meters can't be halved on a beat.
 
 **Challenge Mode**
-- Students pick an **Easy**, **Hard** or **Extreme** challenge.
-- 5 rhythms, each 4 measures long, mixing simple and compound meters.
+- Students pick a **Beginner**, **Easy**, **Hard** or **Extreme** challenge.
+- 5 rhythms. Beginner uses one measure of 4/4; the other levels use 4 measures, mixing simple and compound meters.
 - 4 regular plays of each question (blue), then 3 **extra listens** (gold). Each extra listen takes 10% off that rhythm's points. **My Answer** is unlimited.
 - Tempo is fixed at 72 so scores compare fairly.
 - The leaderboard only appears after all 5 rhythms are finished. Easy, Hard and Extreme have separate leaderboards.
@@ -90,7 +91,7 @@ Practice progress syncs automatically for students who entered a class code: one
 
 ## Changing the answer bank
 
-All rhythms live in `const BANKS` near the top of the script in `index.html`. Each rhythm has a `level` (`'easy'` rhythms appear in both levels, `'hard'` rhythms only in Hard) and a list of durations in sixteenth-note units. A negative number is a rest; `-2` is an eighth rest. Triplets use `'t8'` (eighth-note triplet note), `'t4'` (quarter-note triplet note) and `'tr8'` (triplet eighth rest).
+All rhythms live in `const BANKS` near the top of the script in `index.html`. Each rhythm has a `level` (`'easy'` rhythms appear in both levels, `'hard'` rhythms only in Hard) and a list of durations in sixteenth-note units. A negative number is a rest; `-2` is an eighth rest and `-4` is a quarter rest. Add `beginner: true` to put a piece in the Beginner level. Triplets use `'t8'` (eighth-note triplet note), `'t4'` (quarter-note triplet note) and `'tr8'` (triplet eighth rest).
 
 | Value | Duration |
 |---|---|
