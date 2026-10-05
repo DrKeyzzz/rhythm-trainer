@@ -392,6 +392,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
   .challenge-bar{gap:6px 12px;font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+.devtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;padding:2px 6px;margin-left:6px;border-radius:999px;background:var(--accent-btn,#2563eb);color:#fff;vertical-align:middle}
 </style>
 <style>
 /* Music Theory Games home link: the same in every game, on its own row at the top left of the header */
@@ -1814,7 +1815,7 @@ function showView(which) {
    Firebase Firestore (shared class leaderboard) or localStorage (testing).
    ===================================================================== */
 const rankSort = (a, b) => (b.score - a.score) || (a.timeSec - b.timeSec) || String(a.date).localeCompare(String(b.date));
-const publicEntry = e => ({ id: e.id, name: e.name, score: e.score, correct: e.correct, total: e.total, timeSec: e.timeSec, date: e.date });
+const publicEntry = e => ({ id: e.id, dev: !!e.dev, name: e.name, score: e.score, correct: e.correct, total: e.total, timeSec: e.timeSec, date: e.date });
 function summarize(all, id, level) {
   const sorted = all.filter(e => (e.level || 'easy') === level).sort(rankSort);
   return { level, top: sorted.slice(0, 10).map(publicEntry), rank: id ? sorted.findIndex(e => e.id === id) + 1 : null, count: sorted.length, id };
@@ -1837,9 +1838,28 @@ function fb() {
 function withTimeout(promise, ms = 12000) {
   return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error('The leaderboard took too long to answer.')), ms))]);
 }
+// ---------- developer scores ----------
+// Mr. Milnes plays as "Milnes D.". When he posts while signed in with his Google account, the score is marked
+// dev: true and shows on every class's board with a DEV badge. The rules stop anyone else using that name.
+const DEV_NAME = 'Milnes D.', DEV_EMAILS = ['milnesda@eht.k12.nj.us'];
+const isDevName = n => /^\s*milnes\s*d\.?\s*$/i.test(String(n || ''));
+// true = post as the developer; asks him to sign in once if needed. Throws for anyone else using the name.
+async function devPost(name, getAuth, signIn) {
+  if (!isDevName(name)) return false;
+  const { auth } = await getAuth();
+  if (auth.authStateReady) await auth.authStateReady();
+  let email = auth.currentUser && auth.currentUser.email;
+  if (!email || !DEV_EMAILS.includes(String(email).toLowerCase())) email = await signIn();
+  if (!DEV_EMAILS.includes(String(email).toLowerCase())) throw new Error('Only the developer can post as Milnes D.');
+  return true;
+}
+// Every developer score in a collection (merged into class boards).
+async function devRowsFor(fs, db, col, extra = []) {
+  try { return (await fs.getDocs(fs.query(fs.collection(db, col), fs.where('dev', '==', true), ...extra))).docs; } catch (e) { return []; }
+}
 const fbRow = d => {
   const r = d.data();
-  return { id: d.id, name: r.name, level: r.level || 'easy', classCode: r.class_code || '', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
+  return { id: d.id, dev: !!r.dev, name: r.name, level: r.level || 'easy', classCode: r.class_code || '', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
 };
 const fbError = err => {
   const code = err && err.code;
@@ -1859,7 +1879,10 @@ const FirebaseBoard = {
     if (classCode) filters.push(fs.where('class_code', '==', classCode));
     const q = filters.length ? fs.query(fs.collection(db, 'rhythm_scores'), ...filters) : fs.collection(db, 'rhythm_scores');
     const snap = await withTimeout(fs.getDocs(q));
-    return snap.docs.map(fbRow);
+    const rows = snap.docs.map(fbRow);
+    if (!classCode) return rows;
+    const seen = new Set(rows.map(r => r.id));   // the developer's scores show on every class board
+    return rows.concat((await devRowsFor(fs, db, 'rhythm_scores', level ? [fs.where('level', '==', level)] : [])).map(fbRow).filter(r => !seen.has(r.id)));
   },
   async getClass(code) {
     try { const { fs, db } = await fb(); const d = await withTimeout(fs.getDoc(fs.doc(db, 'classes', code))); return d.exists() ? { code, ...d.data() } : null; }
@@ -1951,6 +1974,7 @@ const FirebaseBoard = {
         created_at: fs.serverTimestamp(),
       };
       if (entry.classCode) data.class_code = entry.classCode;     // left out for students not in a class
+      if (await devPost(entry.name, fb, () => this.signIn())) { data.dev = true; data.name = DEV_NAME; }
       const ref = await withTimeout(fs.addDoc(fs.collection(db, 'rhythm_scores'), data));
       return ref.id;
     } catch (err) { throw fbError(err); }
@@ -2124,7 +2148,7 @@ function renderBoard(res) {
     if (BS.ranks.world) parts.push(`<b>#${BS.ranks.world}</b> in the world`);
     note = `<p class="rank-note">You're ${parts.join(' · ')}! ${(BS.ranks.cls || BS.ranks.world) <= 10 ? '🎉' : 'Keep practicing to crack the top 10!'}</p>`;
   }
-  const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
+  const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e.name)}${e.dev ? ' <span class="devtag" title="Developer score">DEV</span>' : ''}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
   const scopes = (p && p.classCode ? [['class', p.className]] : []).concat([['world', '🌎 World']]);
   const scopeTabs = `<div class="seg board-scope" role="group" aria-label="Which leaderboard">${scopes.map(([k, label]) => `<button type="button" data-scope="${k}" aria-pressed="${k === BS.scope}">${esc(label)}</button>`).join('')}</div> `;
   const tabs = `<div class="seg board-tabs" role="group" aria-label="Leaderboard level">${LEVELS.map(lv => `<button type="button" data-board="${lv}" aria-pressed="${lv === res.level}">${LEVEL_NAME[lv]}</button>`).join('')}</div>`;
