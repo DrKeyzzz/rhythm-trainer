@@ -395,7 +395,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 </style>
 <style>
 /* Music Theory Games home link: the same in every game, on its own row at the top left of the header */
-.mtg-home { order: -1; flex: 0 0 100%; display: flex; }
+.mtg-home { order: -1; flex: 0 0 100%; display: flex; gap: 8px; flex-wrap: wrap; }
 .mtg-home a { display: inline-flex; align-items: center; gap: 7px; width: fit-content; font: 600 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: .06em; color: inherit; text-decoration: none; opacity: .82; padding: 6px 12px 6px 10px; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 999px; }
 .mtg-home a:hover, .mtg-home a:focus-visible { opacity: 1; border-color: currentColor; }
 .mtg-home svg { width: 15px; height: 15px; flex: none; }
@@ -405,7 +405,7 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="mtg-home"><a href="https://drkeyzzz.github.io/" title="All the Music Theory Games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 3l9 8"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>Music Theory Games</a></div>
+    <div class="mtg-home"><a href="https://drkeyzzz.github.io/" title="All the Music Theory Games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 3l9 8"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>Music Theory Games</a><a href="https://drkeyzzz.github.io/report/" title="See your report: what you're doing well and what to practice next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>My Report</a></div>
     <div class="brand">
       <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.5" cy="18.5" rx="3.3" ry="2.4" transform="rotate(-20 6.5 18.5)"/><ellipse cx="17" cy="16.5" rx="3.3" ry="2.4" transform="rotate(-20 17 16.5)"/><rect x="8.9" y="5.2" width="1.7" height="13"/><rect x="19.4" y="3.2" width="1.7" height="13"/><path d="M8.9 5.2 21.1 3.2v3.2L8.9 8.4z"/></svg></div>
       <h1>Rhythm Dictation Trainer<small>Listen, then rebuild the rhythm</small></h1>
@@ -1751,6 +1751,7 @@ function finishChallenge() {
     logRhythm({ m: 'c', lv: ch.level, ts: r.ts, ms: r.measures, q: r.cells, a: ch.answers[i], pl: ch.used[i], x: ch.results[i].x, t0, t1 });
   });
   logRun({ t: ch.end, lv: ch.level, score: ch.score });
+  MTG_HIST.run('rhythm', { score: ch.score, level: 0, acc: total ? correct / total * 100 : 0 });
   S.mode = 'end';
   S.q = null;
   showEndScreen();
@@ -2534,7 +2535,57 @@ function writeLog(log) {
   store.set(logKey(), JSON.stringify(log));
 }
 function todayOf(log) { const k = dayKey(); return log[k] || (log[k] = { rhythms: [], runs: [] }); }
+/* ---------- Music Theory Games: shared practice history for the student report (identical in every game) ----------
+   One localStorage key per student, 'mtg_hist_v1:<first+initial>', kept with no time limit:
+   { v: 1, name, days: { 'YYYY-MM-DD': { <game>: { plays, answers, correct, ms, best, level, bpm, caught, skills: { label: [right, total] }, last } } } }
+   The report at https://drkeyzzz.github.io/report/ reads it. Guests are not recorded. */
+const MTG_HIST = (() => {
+  const prof = () => { try { if (sessionStorage.getItem('music_guest') === '1') return null; const p = JSON.parse(localStorage.getItem('rdt_profile_v1') || 'null'); return p && p.first && p.init ? p : null; } catch { return null; } };
+  const day = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  function edit(game, fn) {
+    const p = prof(); if (!p) return;
+    const k = 'mtg_hist_v1:' + (p.first + p.init).toLowerCase().replace(/[^a-z]/g, '');
+    let h = null; try { h = JSON.parse(localStorage.getItem(k) || 'null'); } catch {}
+    if (!h || !h.days) h = { v: 1, days: {} };
+    h.name = `${p.first.charAt(0).toUpperCase()}${p.first.slice(1)} ${p.init}.`; h.classCode = p.classCode || '';
+    const d = h.days[day()] || (h.days[day()] = {});
+    const g = d[game] || (d[game] = { plays: 0, answers: 0, correct: 0, ms: 0, best: 0, level: 0, skills: {}, last: 0 });
+    fn(g);
+    try { localStorage.setItem(k, JSON.stringify(h)); } catch {}
+  }
+  return {
+    // one answered note/question/rhythm: ok = right; labels = the skills it shows (e.g. ['Eighth notes', 'F4'])
+    note(game, labels, ok) {
+      edit(game, g => {
+        const now = Date.now();
+        if (g.last && now - g.last < 600000) g.ms += now - g.last;     // gaps over 10 minutes aren't practice time
+        g.last = now; g.answers++; if (ok) g.correct++;
+        for (const lab of [].concat(labels || [])) { if (!lab) continue; const s = g.skills[lab] || (g.skills[lab] = [0, 0]); s[1]++; if (ok) s[0]++; }
+      });
+    },
+    // one finished game or round
+    run(game, r) {
+      edit(game, g => {
+        g.plays++; g.best = Math.max(g.best, Math.round(r.score || 0)); g.level = Math.max(g.level, r.level || 0);
+        if (r.bpm) g.bpm = Math.max(g.bpm || 0, r.bpm);
+        if (r.caught) g.caught = (g.caught || 0) + r.caught;
+        if (r.acc != null) g.acc = Math.max(g.acc || 0, Math.round(r.acc));
+      });
+    },
+  };
+})();
+
+// Student report: one MTG_HIST note per slot, labelled with that cell's skills + level + time signature.
+function mtgNoteRhythm(e) {
+  const tsObj = TIME_SIGS[e.ts], tsLab = tsObj ? `${tsObj.label || tsObj.id} time` : '';
+  const lvLab = LEVEL_NAME[e.lv] ? `${LEVEL_NAME[e.lv]} level` : '';
+  e.q.forEach((id, i) => {
+    const cell = CELLS[id];
+    MTG_HIST.note('rhythm', [...(cell ? skillsOf(cell) : []), lvLab, tsLab], e.a[i] === id);
+  });
+}
 function logRhythm(e) {
+  try { mtgNoteRhythm(e); } catch (err) {}
   if (isGuest()) return;
   setTimeout(() => { scheduleSync(); renderAssignment(); }, 0);
   const log = readLog();
