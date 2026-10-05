@@ -2158,6 +2158,7 @@ async function submitWelcome(e) {
   const err = $('#wError');
   if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{0,14}$/.test(first)) { err.textContent = 'Enter your first name (letters only).'; $('#wFirst').focus(); return; }
   if (!/^[A-Z]$/.test(init)) { err.textContent = 'Enter the first letter of your last name.'; $('#wInit').focus(); return; }
+  if (isDevName(first + ' ' + init)) { try { await devPost(first + ' ' + init, fb, () => Board.signIn()); } catch (ex) { err.textContent = 'That name is reserved. Use your own first name and last initial.'; return; } }
   let className = '', classOwner = '';
   if (solo) S.assignment = null;
   if (!solo) {
