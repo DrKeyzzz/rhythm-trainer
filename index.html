@@ -1868,6 +1868,16 @@ const fbError = err => {
   if (code === 'auth/unauthorized-domain') return new Error('Add this website to Firebase → Authentication → Settings → Authorized domains.');
   return err instanceof Error ? err : new Error(String(err));
 };
+// Student boards read only the top BOARD_N (Spark plan: 50k reads/day), cached for BOARD_TTL ms.
+// Server order = rankSort (score desc, time asc, date asc), so the top rows are exactly the ones shown.
+const BOARD_N = 60, BOARD_TTL = 60000, boardCache = new Map(), noIndex = {};
+let lastPost = null;   // this page's newest posted score, for its rank
+const boardKey = (level, classCode) => `rhythm_scores|${classCode ? 'class' : 'world'}|${classCode || ''}|${level}`;
+const indexMissing = (err, shape) => {
+  if (!err || err.code !== 'failed-precondition') return false;
+  if (!noIndex[shape]) { noIndex[shape] = true; console.warn('[index needed]', err.message); }
+  return true;
+};
 
 const FirebaseBoard = {
   remote: true,
@@ -1883,6 +1893,41 @@ const FirebaseBoard = {
     if (!classCode) return rows;
     const seen = new Set(rows.map(r => r.id));   // the developer's scores show on every class board
     return rows.concat((await devRowsFor(fs, db, 'rhythm_scores', level ? [fs.where('level', '==', level)] : [])).map(fbRow).filter(r => !seen.has(r.id)));
+  },
+  ranked(fs, db, level, classCode) {   // needs a composite index (logged as [index needed] if missing)
+    return fs.query(fs.collection(db, 'rhythm_scores'), fs.where('level', '==', level), ...(classCode ? [fs.where('class_code', '==', classCode)] : []),
+      fs.orderBy('score', 'desc'), fs.orderBy('time_sec', 'asc'), fs.orderBy('created_at', 'asc'));
+  },
+  async top(level, classCode) {
+    const key = boardKey(level, classCode), hit = boardCache.get(key), shape = classCode ? 'class' : 'world';
+    if (hit && Date.now() - hit.t < BOARD_TTL) return hit.rows;
+    let rows = null;
+    if (!noIndex[shape]) {
+      try {
+        const { fs, db } = await fb(); rows = (await withTimeout(fs.getDocs(fs.query(this.ranked(fs, db, level, classCode), fs.limit(BOARD_N))))).docs.map(fbRow);
+        if (classCode) {   // the developer's scores show on every class board
+          const seen = new Set(rows.map(r => r.id));
+          rows = rows.concat((await devRowsFor(fs, db, 'rhythm_scores', level ? [fs.where('level', '==', level)] : [])).map(fbRow).filter(r => !seen.has(r.id))).sort(rankSort);
+        }
+      }
+      catch (err) { if (!indexMissing(err, shape)) throw err; }
+    }
+    if (!rows) { rows = (await this.all(level, classCode)).sort(rankSort); rows.full = true; }   // fallback: old full read
+    boardCache.set(key, { t: Date.now(), rows });
+    return rows;
+  },
+  async rankOf(level, classCode, id) {   // rank of a just-posted score below the top BOARD_N: 1 counted read per 1000
+    const p = lastPost, key = boardKey(level, classCode), shape = classCode ? 'class' : 'world';
+    if (!p || p.id !== id || p.level !== level) return 0;
+    if (p.rank[key]) return p.rank[key];
+    if (!noIndex[shape]) {
+      try {
+        const { fs, db } = await fb();
+        const snap = await withTimeout(fs.getCountFromServer(fs.query(this.ranked(fs, db, level, classCode), fs.endAt(p.score, p.timeSec))));
+        return (p.rank[key] = snap.data().count);   // everything ranked at or above (score, time), this score included
+      } catch (err) { indexMissing(err, shape); }
+    }
+    return (p.rank[key] = summarize(await this.all(level, classCode), id, level).rank);   // fallback: old full read
   },
   async getClass(code) {
     try { const { fs, db } = await fb(); const d = await withTimeout(fs.getDoc(fs.doc(db, 'classes', code))); return d.exists() ? { code, ...d.data() } : null; }
@@ -1950,7 +1995,7 @@ const FirebaseBoard = {
     catch (err) { throw fbError(err); }
   },
   async deleteScore(id) {
-    try { const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, 'rhythm_scores', id))); }
+    try { const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, 'rhythm_scores', id))); boardCache.clear(); }
     catch (err) { throw fbError(err); }
   },
   async resetScores(classCode) {
@@ -1963,6 +2008,7 @@ const FirebaseBoard = {
         snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
         await withTimeout(batch.commit());
       }
+      boardCache.clear();
     } catch (err) { throw fbError(err); }
   },
   async submit(entry) {
@@ -1976,10 +2022,25 @@ const FirebaseBoard = {
       if (entry.classCode) data.class_code = entry.classCode;     // left out for students not in a class
       if (await devPost(entry.name, fb, () => this.signIn())) { data.dev = true; data.name = DEV_NAME; }
       const ref = await withTimeout(fs.addDoc(fs.collection(db, 'rhythm_scores'), data));
+      // put the new row into any cached board it belongs to, so it shows right away
+      const row = { id: ref.id, name: data.name, level: data.level, classCode: data.class_code || '', score: data.score, correct: data.correct, total: data.total, extra: data.extra_listens, timeSec: data.time_sec, date: new Date().toISOString(), email: '' };
+      lastPost = { id: ref.id, level: data.level, score: data.score, timeSec: data.time_sec, rank: {} };
+      for (const key of [boardKey(data.level, null), ...(data.class_code ? [boardKey(data.level, data.class_code)] : [])]) {
+        const hit = boardCache.get(key);
+        if (!hit) continue;
+        hit.rows.push(row); hit.rows.sort(rankSort);
+        if (!hit.rows.full && hit.rows.length > BOARD_N) hit.rows.pop();
+      }
       return ref.id;
     } catch (err) { throw fbError(err); }
   },
-  async get(level, classCode, id) { try { return summarize(await this.all(level, classCode), id || null, level); } catch (err) { throw fbError(err); } },
+  async get(level, classCode, id) {
+    try {
+      const rows = await this.top(level, classCode), res = summarize(rows, id || null, level);
+      if (id && !res.rank && !rows.full) res.rank = await this.rankOf(level, classCode, id);
+      return res;
+    } catch (err) { throw fbError(err); }
+  },
   // ----- teacher access: requests and approvals -----
   async isTeacher(email) {
     if (CONFIG.teacherEmails.includes(email)) return true;
