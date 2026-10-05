@@ -1815,7 +1815,7 @@ function showView(which) {
    Firebase Firestore (shared class leaderboard) or localStorage (testing).
    ===================================================================== */
 const rankSort = (a, b) => (b.score - a.score) || (a.timeSec - b.timeSec) || String(a.date).localeCompare(String(b.date));
-const publicEntry = e => ({ id: e.id, dev: !!e.dev, name: e.name, score: e.score, correct: e.correct, total: e.total, timeSec: e.timeSec, date: e.date });
+const publicEntry = e => ({ id: e.id, dev: !!e.dev, icon: e.icon || '', name: e.name, score: e.score, correct: e.correct, total: e.total, timeSec: e.timeSec, date: e.date });
 function summarize(all, id, level) {
   const sorted = all.filter(e => (e.level || 'easy') === level).sort(rankSort);
   return { level, top: sorted.slice(0, 10).map(publicEntry), rank: id ? sorted.findIndex(e => e.id === id) + 1 : null, count: sorted.length, id };
@@ -1859,7 +1859,7 @@ async function devRowsFor(fs, db, col, extra = []) {
 }
 const fbRow = d => {
   const r = d.data();
-  return { id: d.id, dev: !!r.dev, name: r.name, level: r.level || 'easy', classCode: r.class_code || '', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
+  return { id: d.id, dev: !!r.dev, icon: r.icon || '', name: r.name, level: r.level || 'easy', classCode: r.class_code || '', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
 };
 const fbError = err => {
   const code = err && err.code;
@@ -2020,6 +2020,7 @@ const FirebaseBoard = {
         created_at: fs.serverTimestamp(),
       };
       if (entry.classCode) data.class_code = entry.classCode;     // left out for students not in a class
+      if (iconOf(getProfile())) data.icon = iconOf(getProfile());
       if (await devPost(entry.name, fb, () => this.signIn())) { data.dev = true; data.name = DEV_NAME; }
       const ref = await withTimeout(fs.addDoc(fs.collection(db, 'rhythm_scores'), data));
       // put the new row into any cached board it belongs to, so it shows right away
@@ -2132,13 +2133,60 @@ const studentKey = p => `${(p.first + p.init).toLowerCase().replace(/[^a-z]/g, '
 
 function updateWho() {
   const p = getProfile();
-  els.whoBtn.textContent = p ? `👤 ${displayName(p)}${p.classCode ? ` · ${p.className}` : ''}` : isGuest() ? '👤 Guest (sign in)' : '';
+  els.whoBtn.textContent = p ? `${iconOf(p) || '👤'} ${displayName(p)}${p.classCode ? ` · ${p.className}` : ''}` : isGuest() ? '👤 Guest (sign in)' : '';
 }
 
+// ---------- player icons (shared by every game: saved with the sign-in, shown next to names on leaderboards) ----------
+const ICONS = ['🎹','🎸','🎺','🎷','🥁','🎻','🪕','🎤','🎧','🎼','🎵','🪘','🪗','⭐','🔥','🚀'];   // must match iconOk() in firestore.rules
+const iconOf = p => (p && ICONS.includes(p.icon) ? p.icon : '');
+let iconBox = null;
+function iconPicker() {
+  if (iconBox) return iconBox;
+  const before = document.querySelector('label[for="wCode"], label.w-code, label[for="w-code"]'); if (!before) return null;
+  const st = document.createElement('style');
+  st.textContent = '.icon-pick{display:flex;flex-direction:column;gap:6px;text-align:left}.icon-pick .ip-l{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.8}.icon-pick .ip-g{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}.icon-pick button{font-size:22px;line-height:1;padding:7px 0;border-radius:10px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.18);cursor:pointer;font-family:inherit}.icon-pick button:hover{border-color:rgba(255,255,255,.5)}.icon-pick button[aria-pressed="true"]{border-color:#ffc85c;background:rgba(255,200,92,.22);box-shadow:0 0 12px -2px #ffc85c}.nm-ic{margin-right:6px}';
+  document.head.appendChild(st);
+  iconBox = document.createElement('div'); iconBox.className = 'icon-pick';
+  iconBox.innerHTML = '<span class="ip-l">Pick your icon</span><div class="ip-g" role="group" aria-label="Your icon">' + ICONS.map(i => '<button type="button" data-icon="' + i + '" aria-pressed="false" aria-label="Icon ' + i + '">' + i + '</button>').join('') + '</div>';
+  before.parentNode.insertBefore(iconBox, before);
+  iconBox.addEventListener('click', e => { const b = e.target.closest('[data-icon]'); if (b) setPickedIcon(b.dataset.icon); });
+  return iconBox;
+}
+function setPickedIcon(ic) { const box = iconPicker(); if (!box) return; box.dataset.icon = ic || ''; box.querySelectorAll('[data-icon]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.icon === ic))); }
+// no pick = a random icon, so every name still stands out
+const pickedIcon = () => { const box = iconPicker(); return box && ICONS.includes(box.dataset.icon) ? box.dataset.icon : ICONS[Math.floor(Math.random() * ICONS.length)]; };
+
+// ---------- "practice this" links from My Report: ?focus=<skill> sets the game up for that skill ----------
+function focusToast(html) {
+  const d = document.createElement('div'); d.setAttribute('role', 'status');
+  d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;max-width:min(560px,92vw);padding:12px 18px;border-radius:14px;background:#141d2c;color:#f1ece0;border:2px solid #ffc85c;box-shadow:0 10px 30px rgba(0,0,0,.5);font:600 16px/1.35 system-ui,sans-serif;text-align:center';
+  d.innerHTML = html; document.body.appendChild(d); setTimeout(() => d.remove(), 8000);
+}
+function applyFocusFromUrl() {
+  const q = new URLSearchParams(location.search), f = q.get('focus'); if (!f) return;
+  q.delete('focus'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
+  try { applyFocus(f); } catch (e) { console.warn('focus link:', e); }
+}
+function applyFocus(label) {
+  const L = String(label);
+  const lv = LEVELS.find(l => `${LEVEL_NAME[l]} level` === L);
+  const tsId = Object.keys(TIME_SIGS).find(t => `${TIME_SIGS[t].label || t} time` === L);
+  if (lv) S.settings.level = lv;
+  else if (tsId) { S.settings.type = TIME_SIGS[tsId].type; S.settings.lock = tsId; }
+  else if (SKILLS.includes(L)) {
+    // a time signature and the easiest level that use this skill
+    const ts = Object.keys(TIME_SIGS).find(t => BANKS[TIME_SIGS[t].bank].cells.some(c => skillsOf(c).includes(L)));
+    if (ts) { const T = TIME_SIGS[ts]; S.settings.type = T.type; S.settings.lock = ts; const level = LEVELS.find(l => cellsFor(T.bank, l).some(c => skillsOf(c).includes(L))); if (level) S.settings.level = level; }
+  } else { toast('Pick your level and meter, then press Question to start.', 5000); return; }
+  S.pool = { pct: 1, custom: {} };
+  populateTsSelect(); saveSettings(); newPracticeRhythm(); updateUI(); renderAssignment();
+  toast(`🎯 Practice set up for ${L}. Press Question to listen!`, 6000);
+}
 function showWelcome(keep) {
   Engine.stop();
   closeModal();
   const p = keep ? getProfile() : null;
+  setPickedIcon(p && p.icon);
   $('#wFirst').value = p ? p.first : '';
   $('#wInit').value = p ? p.init : '';
   $('#wCode').value = p ? p.classCode || '' : '';
@@ -2172,7 +2220,7 @@ async function submitWelcome(e) {
     finally { $('#wGo').disabled = false; $('#wGo').textContent = "Let's go"; }
   }
   const before = getProfile();
-  setProfile({ first, init, classCode: solo ? '' : code, className, classOwner });
+  setProfile({ first, init, classCode: solo ? '' : code, className, classOwner, icon: pickedIcon() });
   if (!before || studentKey(before) !== studentKey(getProfile())) S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
   els.welcome.hidden = true;
   updateWho();
@@ -2210,7 +2258,7 @@ function renderBoard(res) {
     if (BS.ranks.world) parts.push(`<b>#${BS.ranks.world}</b> in the world`);
     note = `<p class="rank-note">You're ${parts.join(' · ')}! ${(BS.ranks.cls || BS.ranks.world) <= 10 ? '🎉' : 'Keep practicing to crack the top 10!'}</p>`;
   }
-  const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e.name)}${e.dev ? ' <span class="devtag" title="Developer score">DEV</span>' : ''}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
+  const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${e.icon}</span>` : ''}${esc(e.name)}${e.dev ? ' <span class="devtag" title="Developer score">DEV</span>' : ''}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
   const scopes = (p && p.classCode ? [['class', p.className]] : []).concat([['world', '🌎 World']]);
   const scopeTabs = `<div class="seg board-scope" role="group" aria-label="Which leaderboard">${scopes.map(([k, label]) => `<button type="button" data-scope="${k}" aria-pressed="${k === BS.scope}">${esc(label)}</button>`).join('')}</div> `;
   const tabs = `<div class="seg board-tabs" role="group" aria-label="Leaderboard level">${LEVELS.map(lv => `<button type="button" data-board="${lv}" aria-pressed="${lv === res.level}">${LEVEL_NAME[lv]}</button>`).join('')}</div>`;
@@ -3330,7 +3378,7 @@ async function tdScores() {
   let list = [];
   try { list = await Board.scores(world ? null : TD.scope); } catch (err) { $('#tdErr').textContent = errMsg(err); }
   const label = options.find(([k]) => k === TD.scope)[1];
-  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>${world ? `<td class="muted">${esc(e.classCode || '—')}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${e.extra || 0}</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
+  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${e.icon}</span>` : ''}${esc(e.name)}</td>${world ? `<td class="muted">${esc(e.classCode || '—')}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${e.extra || 0}</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
     <td style="text-align:right"><button class="btn btn-sm" type="button" data-del="${esc(e.id)}">Delete</button></td></tr>`).join('');
   $('#tdBody').innerHTML = `
     <div class="td-sub"><label class="small muted" for="tdScope">Leaderboard</label><select id="tdScope">${options.map(([k, n]) => `<option value="${esc(k)}" ${k === TD.scope ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
@@ -3395,6 +3443,7 @@ newPracticeRhythm();
 updateWho();
 if (!getProfile() && !isGuest()) showWelcome(false);
 else refreshClassInfo();
+applyFocusFromUrl();
 if (/[?&]selftest/.test(location.search)) window.RDT = { syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
