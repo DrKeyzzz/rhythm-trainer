@@ -1907,10 +1907,10 @@ const FirebaseBoard = {
     const { fs, db } = await fb();
     await withTimeout(fs.setDoc(fs.doc(db, 'progress', id), { ...data, updated_at: fs.serverTimestamp() }));
   },
-  async progress(code) {
+  async progress(code, day) {
     try {
       const { fs, db } = await fb(); const email = await this.me();
-      const snap = await withTimeout(fs.getDocs(fs.query(fs.collection(db, 'progress'), fs.where('owner', '==', email), fs.where('class_code', '==', code))));
+      const snap = await withTimeout(fs.getDocs(fs.query(fs.collection(db, 'progress'), fs.where('owner', '==', email), fs.where('class_code', '==', code), ...(day ? [fs.where('date', '==', day)] : []))));
       return snap.docs.map(d => d.data());
     } catch (err) { throw fbError(err); }
   },
@@ -2929,7 +2929,9 @@ const goalFor = () => (S.assignment && S.assignment.goal) || CONFIG.dailyGoal;
 const sidOf = p => (p.first + p.init).toLowerCase().replace(/[^a-z]/g, '');
 
 let syncTimer = 0;
-function scheduleSync() { clearTimeout(syncTimer); syncTimer = setTimeout(syncProgress, 1500); }
+// at most one progress save a minute per student (plus one when the page is hidden), so a busy class stays inside Firebase's free daily limit
+let lastSync = 0;
+function scheduleSync() { clearTimeout(syncTimer); syncTimer = setTimeout(() => { lastSync = Date.now(); syncProgress(); }, Math.max(1500, lastSync + 60000 - Date.now())); }
 async function syncProgress() {
   const p = getProfile();
   if (!p || !p.classCode || !Board.saveProgress) return;
@@ -3064,7 +3066,8 @@ const rangeLabel = () => ({ today: 'Today', yesterday: 'Yesterday', week: 'Last 
 async function tdProgress(keepOpen) {
   const body = $('#tdBody');
   if (!keepOpen) body.innerHTML = '<p class="muted">Loading progress…</p>';
-  try { TD.docs = await Board.progress(TD.code); $('#tdErr').textContent = ''; }
+  const keep = keepOpen, LOAD = (code, day) => Board.progress(code, day);
+  try { TD.docs = keep && TD.range === 'today' && TD.docsCode === TD.code ? TD.docs.filter(d => d.date !== dayKey()).concat((await LOAD(TD.code, dayKey())).filter(d => d.date === dayKey())) : await LOAD(TD.code); TD.docsCode = TD.code; $('#tdErr').textContent = ''; }
   catch (err) { $('#tdErr').textContent = errMsg(err); TD.docs = []; }
   const studs = mergeDocs(rangeDocs());
   const k = TD.sort.key, dir = TD.sort.dir;
