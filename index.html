@@ -2133,21 +2133,27 @@ const studentKey = p => `${(p.first + p.init).toLowerCase().replace(/[^a-z]/g, '
 
 function updateWho() {
   const p = getProfile();
-  els.whoBtn.textContent = p ? `${iconOf(p) || '👤'} ${displayName(p)}${p.classCode ? ` · ${p.className}` : ''}` : isGuest() ? '👤 Guest (sign in)' : '';
+  els.whoBtn.innerHTML = p ? `${iconHTML(iconOf(p)) || '👤'} ${esc(displayName(p))}${p.classCode ? ` · ${esc(p.className)}` : ''}` : isGuest() ? '👤 Guest (sign in)' : '';
 }
 
 // ---------- player icons (shared by every game: saved with the sign-in, shown next to names on leaderboards) ----------
-const ICONS = ['🎹','🎸','🎺','🎷','🥁','🎻','🪕','🎤','🎧','🎼','🎵','🪘','🪗','⭐','🔥','🚀'];   // must match iconOk() in firestore.rules
+const ICONS = ['🎹','🎸','🎺','🪊','🎷','🥁','🎻','🪕','🎤','🎧','🎼','𝄢','🎵','🪘','🪗','⭐','🔥','🚀'];   // must match iconOk() in firestore.rules
+// Trombone and bass clef aren't on most school devices' emoji fonts yet, so they're drawn as small pictures.
+const ICON_SVG = {
+  '🪊': '<svg class="ic-svg" width="1.15em" height="1.15em" style="vertical-align:-.2em" viewBox="0 0 24 24" role="img" aria-label="trombone"><g fill="none" stroke="#e7b23a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 13H5a2 2 0 0 0 0 4h11.5"/><path d="M15 8H6.5a2.5 2.5 0 0 0 0 5"/><path d="M11 8v5M19 17h2.5"/></g><path d="M14.5 6.6 22 3v10l-7.5-3.6z" fill="#e7b23a"/></svg>',
+  '𝄢': '<svg class="ic-svg" width="1.15em" height="1.15em" style="vertical-align:-.2em" viewBox="0 0 24 24" role="img" aria-label="bass clef"><circle cx="6.2" cy="8.6" r="2.7" fill="currentColor"/><path d="M4 8C4.3 4.6 7.3 3 10.4 3c4 0 6.8 2.7 6.8 6.6 0 5.8-5.5 10-12.2 12" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><circle cx="20.6" cy="6.6" r="1.4" fill="currentColor"/><circle cx="20.6" cy="12" r="1.4" fill="currentColor"/></svg>'
+};
+const iconHTML = ic => ICON_SVG[ic] || (ICONS.includes(ic) ? ic : '');
 const iconOf = p => (p && ICONS.includes(p.icon) ? p.icon : '');
 let iconBox = null;
 function iconPicker() {
   if (iconBox) return iconBox;
   const before = document.querySelector('label[for="wCode"], label.w-code, label[for="w-code"]'); if (!before) return null;
   const st = document.createElement('style');
-  st.textContent = '.icon-pick{display:flex;flex-direction:column;gap:6px;text-align:left}.icon-pick .ip-l{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.8}.icon-pick .ip-g{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}.icon-pick button{font-size:22px;line-height:1;padding:7px 0;border-radius:10px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.18);cursor:pointer;font-family:inherit}.icon-pick button:hover{border-color:rgba(255,255,255,.5)}.icon-pick button[aria-pressed="true"]{border-color:#ffc85c;background:rgba(255,200,92,.22);box-shadow:0 0 12px -2px #ffc85c}.nm-ic{margin-right:6px}';
+  st.textContent = '.icon-pick{display:flex;flex-direction:column;gap:6px;text-align:left}.icon-pick .ip-l{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.8}.icon-pick .ip-g{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px}.icon-pick button{font-size:20px;min-width:0;line-height:1;padding:7px 0;border-radius:10px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.18);cursor:pointer;font-family:inherit}.icon-pick button:hover{border-color:rgba(255,255,255,.5)}.icon-pick button[aria-pressed="true"]{border-color:#ffc85c;background:rgba(255,200,92,.22);box-shadow:0 0 12px -2px #ffc85c}.nm-ic{margin-right:6px}.icon-pick{margin:12px 0 4px}.ic-svg{width:1.15em;height:1.15em;vertical-align:-.2em;display:inline-block}.icon-pick button .ic-svg{color:#f3efe2}';
   document.head.appendChild(st);
   iconBox = document.createElement('div'); iconBox.className = 'icon-pick';
-  iconBox.innerHTML = '<span class="ip-l">Pick your icon</span><div class="ip-g" role="group" aria-label="Your icon">' + ICONS.map(i => '<button type="button" data-icon="' + i + '" aria-pressed="false" aria-label="Icon ' + i + '">' + i + '</button>').join('') + '</div>';
+  iconBox.innerHTML = '<span class="ip-l">Pick your icon</span><div class="ip-g" role="group" aria-label="Your icon">' + ICONS.map(i => '<button type="button" data-icon="' + i + '" aria-pressed="false" aria-label="Icon ' + i + '">' + iconHTML(i) + '</button>').join('') + '</div>';
   before.parentNode.insertBefore(iconBox, before);
   iconBox.addEventListener('click', e => { const b = e.target.closest('[data-icon]'); if (b) setPickedIcon(b.dataset.icon); });
   return iconBox;
@@ -2258,7 +2264,7 @@ function renderBoard(res) {
     if (BS.ranks.world) parts.push(`<b>#${BS.ranks.world}</b> in the world`);
     note = `<p class="rank-note">You're ${parts.join(' · ')}! ${(BS.ranks.cls || BS.ranks.world) <= 10 ? '🎉' : 'Keep practicing to crack the top 10!'}</p>`;
   }
-  const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${e.icon}</span>` : ''}${esc(e.name)}${e.dev ? ' <span class="devtag" title="Developer score">DEV</span>' : ''}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
+  const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${iconHTML(e.icon)}</span>` : ''}${esc(e.name)}${e.dev ? ' <span class="devtag" title="Developer score">DEV</span>' : ''}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
   const scopes = (p && p.classCode ? [['class', p.className]] : []).concat([['world', '🌎 World']]);
   const scopeTabs = `<div class="seg board-scope" role="group" aria-label="Which leaderboard">${scopes.map(([k, label]) => `<button type="button" data-scope="${k}" aria-pressed="${k === BS.scope}">${esc(label)}</button>`).join('')}</div> `;
   const tabs = `<div class="seg board-tabs" role="group" aria-label="Leaderboard level">${LEVELS.map(lv => `<button type="button" data-board="${lv}" aria-pressed="${lv === res.level}">${LEVEL_NAME[lv]}</button>`).join('')}</div>`;
@@ -3378,7 +3384,7 @@ async function tdScores() {
   let list = [];
   try { list = await Board.scores(world ? null : TD.scope); } catch (err) { $('#tdErr').textContent = errMsg(err); }
   const label = options.find(([k]) => k === TD.scope)[1];
-  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${e.icon}</span>` : ''}${esc(e.name)}</td>${world ? `<td class="muted">${esc(e.classCode || '—')}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${e.extra || 0}</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
+  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${iconHTML(e.icon)}</span>` : ''}${esc(e.name)}</td>${world ? `<td class="muted">${esc(e.classCode || '—')}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${e.extra || 0}</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
     <td style="text-align:right"><button class="btn btn-sm" type="button" data-del="${esc(e.id)}">Delete</button></td></tr>`).join('');
   $('#tdBody').innerHTML = `
     <div class="td-sub"><label class="small muted" for="tdScope">Leaderboard</label><select id="tdScope">${options.map(([k, n]) => `<option value="${esc(k)}" ${k === TD.scope ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
