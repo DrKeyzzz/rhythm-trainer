@@ -275,9 +275,14 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .welcome-card input:not([type=checkbox]){min-height:46px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;font-size:17px}
 .welcome-card .grow{flex:1}
 .welcome-card .initial{width:80px;text-align:center;text-transform:uppercase}
-.welcome-card #wCode{text-transform:uppercase;letter-spacing:.12em;font-weight:700}
-.welcome-card #wCode::placeholder{text-transform:none;letter-spacing:0;font-weight:400}
+.welcome-card #wCode,.welcome-card .w-code2{text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.welcome-card #wCode::placeholder,.welcome-card .w-code2::placeholder{text-transform:none;letter-spacing:0;font-weight:400}
 .w-code{margin-top:12px}
+.w-extra{display:flex;gap:8px;align-items:center;margin-top:8px}
+.w-extra input{flex:1;min-width:0}
+.w-add{background:none;border:0;padding:6px 0 0;color:var(--accent);font:inherit;font-size:14px;font-weight:650;cursor:pointer}
+.w-add[hidden]{display:none}
+.assign-banner .ab-more{flex-basis:100%;color:var(--muted)}
 .w-solo{flex-direction:row!important;align-items:center;gap:8px!important;margin-top:10px;font-weight:600!important;min-height:44px}
 .w-solo input{width:20px;height:20px;accent-color:var(--accent-btn)}
 .w-go{width:100%;margin-top:6px;min-height:50px;font-size:16px}
@@ -576,6 +581,8 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
       <label>Last initial<input id="wInit" class="initial" maxlength="1" autocapitalize="characters" spellcheck="false" enterkeyhint="next"></label>
     </div>
     <label class="w-code">Class code<input id="wCode" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="e.g. K7QMA" enterkeyhint="go"></label>
+    <div id="wMore"></div>
+    <button type="button" class="w-add" id="wAdd">+ Add another class</button>
     <label class="w-solo"><input type="checkbox" id="wSolo"> I'm not in a class (World leaderboard only)</label>
     <div class="form-error" id="wError"></div>
     <button class="btn btn-primary w-go" type="submit" id="wGo">Let's go</button>
@@ -1767,10 +1774,10 @@ function showEndScreen() {
   els.endDetail.textContent = `${ch.correct} of ${ch.total} slots correct · ${ch.extra ? `${ch.extra} extra listen${ch.extra > 1 ? 's' : ''} used (−${Math.round(CONFIG.extraPenalty * 100)}% each)` : 'no extra listens'} · ${fmtTime(ch.timeSec)}`;
   els.postArea.hidden = isGuest();
   const prof = getProfile();
-  els.postMsg.innerHTML = prof ? `Post your score as <b>${esc(displayName(prof))}</b>${prof.classCode ? ` to <b>${esc(prof.className)}</b> and the World leaderboard` : ' to the World leaderboard'}. This is optional.` : '';
+  els.postMsg.innerHTML = prof ? `Post your score as <b>${esc(displayName(prof))}</b>${prof.classCode ? ` to <b>${esc(classNames(prof))}</b> and the World leaderboard` : ' to the World leaderboard'}. This is optional.` : '';
   els.boardArea.hidden = true;
   els.boardArea.innerHTML = '';
-  BS.myId = null; BS.ranks = null; BS.level = ch.level; BS.scope = prof && prof.classCode ? 'class' : 'world';
+  BS.myId = null; BS.ranks = null; BS.level = ch.level; BS.scope = prof && prof.classCode ? 'class' : 'world'; BS.code = prof && prof.classCode || null;
   els.formError.textContent = '';
   els.submitBtn.disabled = false;
   els.testModeNote.hidden = Board.remote;
@@ -1857,6 +1864,12 @@ async function devPost(name, getAuth, signIn) {
 async function devRowsFor(fs, db, col, extra = []) {
   try { return (await fs.getDocs(fs.query(fs.collection(db, col), fs.where('dev', '==', true), ...extra))).docs; } catch (e) { return []; }
 }
+// Scores from students in 2+ classes that list this class in class_codes (no orderBy or other where, so no new index: level is filtered here).
+async function multiRowsFor(fs, db, classCode, level) {
+  try { return (await withTimeout(fs.getDocs(fs.query(fs.collection(db, 'rhythm_scores'), fs.where('class_codes', 'array-contains', classCode))))).docs.map(fbRow).filter(r => !level || r.level === level); }
+  catch (e) { console.warn('class_codes read failed:', e); return []; }
+}
+const mergeRows = (rows, more) => { const seen = new Set(rows.map(r => r.id)); return rows.concat(more.filter(r => !seen.has(r.id))); };
 const fbRow = d => {
   const r = d.data();
   return { id: d.id, dev: !!r.dev, icon: r.icon || '', name: r.name, level: r.level || 'easy', classCode: r.class_code || '', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
@@ -1889,8 +1902,9 @@ const FirebaseBoard = {
     if (classCode) filters.push(fs.where('class_code', '==', classCode));
     const q = filters.length ? fs.query(fs.collection(db, 'rhythm_scores'), ...filters) : fs.collection(db, 'rhythm_scores');
     const snap = await withTimeout(fs.getDocs(q));
-    const rows = snap.docs.map(fbRow);
+    let rows = snap.docs.map(fbRow);
     if (!classCode) return rows;
+    rows = mergeRows(rows, await multiRowsFor(fs, db, classCode, level));
     const seen = new Set(rows.map(r => r.id));   // the developer's scores show on every class board
     return rows.concat((await devRowsFor(fs, db, 'rhythm_scores', level ? [fs.where('level', '==', level)] : [])).map(fbRow).filter(r => !seen.has(r.id)));
   },
@@ -1906,6 +1920,7 @@ const FirebaseBoard = {
       try {
         const { fs, db } = await fb(); rows = (await withTimeout(fs.getDocs(fs.query(this.ranked(fs, db, level, classCode), fs.limit(BOARD_N))))).docs.map(fbRow);
         if (classCode) {   // the developer's scores show on every class board
+          rows = mergeRows(rows, await multiRowsFor(fs, db, classCode, level));
           const seen = new Set(rows.map(r => r.id));
           rows = rows.concat((await devRowsFor(fs, db, 'rhythm_scores', level ? [fs.where('level', '==', level)] : [])).map(fbRow).filter(r => !seen.has(r.id))).sort(rankSort);
         }
@@ -1924,7 +1939,9 @@ const FirebaseBoard = {
       try {
         const { fs, db } = await fb();
         const snap = await withTimeout(fs.getCountFromServer(fs.query(this.ranked(fs, db, level, classCode), fs.endAt(p.score, p.timeSec))));
-        return (p.rank[key] = snap.data().count);   // everything ranked at or above (score, time), this score included
+        // plus 2+-class scores whose main class is another class (class_codes only), ranked at or above it
+        const more = classCode ? (await multiRowsFor(fs, db, classCode, level)).filter(r => r.classCode !== classCode && (r.score > p.score || (r.score === p.score && r.timeSec <= p.timeSec))).length : 0;
+        return (p.rank[key] = snap.data().count + more);   // everything ranked at or above (score, time), this score included
       } catch (err) { indexMissing(err, shape); }
     }
     return (p.rank[key] = summarize(await this.all(level, classCode), id, level).rank);   // fallback: old full read
@@ -2020,13 +2037,14 @@ const FirebaseBoard = {
         created_at: fs.serverTimestamp(),
       };
       if (entry.classCode) data.class_code = entry.classCode;     // left out for students not in a class
+      if (entry.classCodes && entry.classCodes.length > 1) data.class_codes = entry.classCodes.slice(0, 3);   // only for students in 2+ classes
       if (iconOf(getProfile())) data.icon = iconOf(getProfile());
       if (await devPost(entry.name, fb, () => this.signIn())) { data.dev = true; data.name = DEV_NAME; }
       const ref = await withTimeout(fs.addDoc(fs.collection(db, 'rhythm_scores'), data));
       // put the new row into any cached board it belongs to, so it shows right away
       const row = { id: ref.id, name: data.name, level: data.level, classCode: data.class_code || '', score: data.score, correct: data.correct, total: data.total, extra: data.extra_listens, timeSec: data.time_sec, date: new Date().toISOString(), email: '' };
       lastPost = { id: ref.id, level: data.level, score: data.score, timeSec: data.time_sec, rank: {} };
-      for (const key of [boardKey(data.level, null), ...(data.class_code ? [boardKey(data.level, data.class_code)] : [])]) {
+      for (const key of [boardKey(data.level, null), ...(data.class_codes || (data.class_code ? [data.class_code] : [])).map(c => boardKey(data.level, c))]) {
         const hit = boardCache.get(key);
         if (!hit) continue;
         hit.rows.push(row); hit.rows.sort(rankSort);
@@ -2080,7 +2098,7 @@ const LocalBoard = {
   readClasses() { try { return JSON.parse(store.get('rdt_classes_local') || '{}'); } catch (e) { return {}; } },
   writeClasses(c) { store.set('rdt_classes_local', JSON.stringify(c)); },
   checkPin(pin) { if (String(pin) !== CONFIG.localTeacherPin) throw new Error('Wrong PIN.'); },
-  async all(level, classCode) { return this.read().filter(e => (!level || (e.level || 'easy') === level) && (!classCode || e.classCode === classCode)); },
+  async all(level, classCode) { return this.read().filter(e => (!level || (e.level || 'easy') === level) && (!classCode || e.classCode === classCode || (e.classCodes || []).includes(classCode))); },
   async submit(entry) {
     const all = this.read();
     const e = { ...entry, classCode: entry.classCode || '', id: Math.random().toString(36).slice(2, 10), date: new Date().toISOString(), email: '' };
@@ -2118,12 +2136,20 @@ const PROFILE_KEY = 'rdt_profile_v1';
 // One sign-in for all of Mr. Milnes's games on this site (Rhythm Trainer, Scale Quest, Tidal Tones): they share this key.
 function getProfile() { if (isGuest()) return null; try { const p = JSON.parse(store.get(PROFILE_KEY) || 'null'); return p && p.first && p.init ? p : null; } catch (e) { return null; } }
 function setProfile(p) { store.set(PROFILE_KEY, JSON.stringify(p)); try { sessionStorage.removeItem(GUEST_KEY); } catch (e) { /* ignore */ } }
+// Every class this student is in, main class first (max 3); [] when not in a class.
+function classesOf(p) {
+  if (!p) return [];
+  const list = Array.isArray(p.classes) && p.classes.length ? p.classes
+    : (p.classCode ? [{ code: p.classCode, name: p.className || p.classCode, owner: p.classOwner || '' }] : []);
+  return list.filter(c => c && c.code).slice(0, 3);
+}
+const classNames = p => classesOf(p).map(c => c.name || c.code).join(' · ');
 // Guests play without saving anything (no progress, no scores, no session report) until the tab closes.
 const GUEST_KEY = 'music_guest';
 function isGuest() { try { return sessionStorage.getItem(GUEST_KEY) === '1'; } catch (e) { return false; } }
 function playAsGuest() {
   try { sessionStorage.setItem(GUEST_KEY, '1'); } catch (e) { /* ignore */ }
-  S.assignment = null; S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
+  S.assignment = null; S.moreAssign = []; S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
   els.welcome.hidden = true;
   updateWho(); updateUI(); renderAssignment();
   toast('Playing as a guest. Nothing is saved.');
@@ -2133,7 +2159,7 @@ const studentKey = p => `${(p.first + p.init).toLowerCase().replace(/[^a-z]/g, '
 
 function updateWho() {
   const p = getProfile();
-  els.whoBtn.innerHTML = p ? `${iconHTML(iconOf(p)) || '👤'} ${esc(displayName(p))}${p.classCode ? ` · ${esc(p.className)}` : ''}` : isGuest() ? '👤 Guest (sign in)' : '';
+  els.whoBtn.innerHTML = p ? `${iconHTML(iconOf(p)) || '👤'} ${esc(displayName(p))}${p.classCode ? ` · ${esc(classNames(p))}` : ''}` : isGuest() ? '👤 Guest (sign in)' : '';
 }
 
 // ---------- player icons (shared by every game: saved with the sign-in, shown next to names on leaderboards) ----------
@@ -2198,9 +2224,31 @@ function showWelcome(keep) {
   $('#wCode').value = p ? p.classCode || '' : '';
   $('#wSolo').checked = !!(p && !p.classCode);
   $('#wCode').disabled = $('#wSolo').checked;
+  $('#wMore').innerHTML = '';
+  classesOf(p).slice(1).forEach(c => addCodeBox(c.code));
+  syncCodeBoxes();
   $('#wError').textContent = '';
   els.welcome.hidden = false;
   setTimeout(() => (keep ? $('#wCode') : $('#wFirst')).focus(), 50);
+}
+// "+ Add another class": extra class-code boxes under the main one (up to 3 classes in all)
+function addCodeBox(val) {
+  const more = $('#wMore');
+  if (more.children.length >= 2) return null;
+  const row = document.createElement('div'); row.className = 'w-extra';
+  row.innerHTML = '<input class="w-code2" maxlength="7" autocapitalize="characters" spellcheck="false" placeholder="Another class code" aria-label="Another class code"><button class="btn btn-sm" type="button" aria-label="Remove this class">✕</button>';
+  const input = row.querySelector('input');
+  input.value = val || '';
+  input.addEventListener('input', e => { e.target.value = cleanCode(e.target.value); });
+  row.querySelector('button').onclick = () => { row.remove(); syncCodeBoxes(); };
+  more.appendChild(row);
+  syncCodeBoxes();
+  return input;
+}
+function syncCodeBoxes() {
+  const solo = $('#wSolo').checked, boxes = $('#wMore').querySelectorAll('input');
+  boxes.forEach(i => { i.disabled = solo; if (solo) i.value = ''; });
+  $('#wAdd').hidden = solo || boxes.length >= 2;
 }
 
 async function submitWelcome(e) {
@@ -2208,48 +2256,59 @@ async function submitWelcome(e) {
   const first = $('#wFirst').value.trim().replace(/\s+/g, ' ');
   const init = $('#wInit').value.trim().toUpperCase();
   const solo = $('#wSolo').checked;
-  const code = cleanCode($('#wCode').value);
   const err = $('#wError');
   if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{0,14}$/.test(first)) { err.textContent = 'Enter your first name (letters only).'; $('#wFirst').focus(); return; }
   if (!/^[A-Z]$/.test(init)) { err.textContent = 'Enter the first letter of your last name.'; $('#wInit').focus(); return; }
   if (isDevName(first + ' ' + init)) { try { await devPost(first + ' ' + init, fb, () => Board.signIn()); } catch (ex) { err.textContent = 'That name is reserved. Use your own first name and last initial.'; return; } }
   let className = '', classOwner = '';
-  if (solo) S.assignment = null;
+  const classes = [];
+  if (solo) { S.assignment = null; S.moreAssign = []; }
   if (!solo) {
-    if (!code) { err.textContent = 'Enter the class code from your teacher, or check "I\'m not in a class."'; $('#wCode').focus(); return; }
-    $('#wGo').disabled = true; $('#wGo').textContent = 'Checking code…';
+    // every box (main first), skipping blank extra boxes and repeated codes
+    const boxes = [$('#wCode'), ...$('#wMore').querySelectorAll('input')];
+    const codes = boxes.map(b => cleanCode(b.value)).filter((c, i, all) => c && all.indexOf(c) === i);
+    if (!codes.length) { err.textContent = 'Enter the class code from your teacher, or check "I\'m not in a class."'; $('#wCode').focus(); return; }
+    $('#wGo').disabled = true; $('#wGo').textContent = codes.length > 1 ? 'Checking codes…' : 'Checking code…';
     try {
-      const cls = await Board.getClass(code);
-      if (!cls) { err.textContent = "We couldn't find that class code. Check it with your teacher."; $('#wCode').focus(); return; }
-      className = cls.name; classOwner = cls.ownerEmail || ''; S.assignment = cls.assignment || null;
+      const found = [];
+      for (const c of codes) {
+        const cls = await Board.getClass(c);
+        if (!cls) { err.textContent = codes.length > 1 ? `We couldn't find the class code ${c}. Check it with your teacher.` : "We couldn't find that class code. Check it with your teacher."; (boxes.find(b => cleanCode(b.value) === c) || $('#wCode')).focus(); return; }
+        found.push(cls);
+      }
+      found.forEach(cls => classes.push({ code: cls.code, name: cls.name, owner: cls.ownerEmail || '' }));
+      className = classes[0].name; classOwner = classes[0].owner; S.assignment = found[0].assignment || null;
+      S.moreAssign = found.slice(1).filter(cls => cls.assignment).map(cls => ({ code: cls.code, name: cls.name, a: cls.assignment }));
     } catch (ex) { err.textContent = `Couldn't check the code: ${errMsg(ex)}`; return; }
     finally { $('#wGo').disabled = false; $('#wGo').textContent = "Let's go"; }
   }
   const before = getProfile();
-  setProfile({ first, init, classCode: solo ? '' : code, className, classOwner, icon: pickedIcon() });
+  setProfile({ first, init, classCode: solo ? '' : classes[0].code, className, classOwner, classes, icon: pickedIcon() });
   if (!before || studentKey(before) !== studentKey(getProfile())) S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
   els.welcome.hidden = true;
   updateWho();
   updateUI();
   renderAssignment();
-  toast(`Hi ${first.charAt(0).toUpperCase() + first.slice(1)}!${className ? ` You're in ${className}.` : ''}`);
+  toast(`Hi ${first.charAt(0).toUpperCase() + first.slice(1)}!${className ? ` You're in ${classes.map(c => c.name).join(' · ')}.` : ''}`);
 }
 
 function whoMenu() {
   const p = getProfile();
   if (!p) { showWelcome(false); return; }
-  openModal(`<h3>${esc(displayName(p))}</h3><p class="muted">${p.classCode ? `Class: <b>${esc(p.className)}</b> (code ${esc(p.classCode)})` : 'Not in a class: posting to the World leaderboard only.'}</p>
+  openModal(`<h3>${esc(displayName(p))}</h3><p class="muted">${p.classCode ? `${classesOf(p).length > 1 ? 'Classes' : 'Class'}: ${classesOf(p).map(c => `<b>${esc(c.name)}</b> (code ${esc(c.code)})`).join(' · ')}` : 'Not in a class: posting to the World leaderboard only.'}</p>
     <div class="modal-actions"><button class="btn" type="button" data-close>Close</button><button class="btn" type="button" id="whoClass">Change class</button><button class="btn btn-primary" type="button" id="whoSwitch">Switch student</button></div>`);
   $('#whoClass').onclick = () => showWelcome(true);
   $('#whoSwitch').onclick = () => showWelcome(false);
 }
 
 // ---------- leaderboards: Class and World, each with Easy / Hard / Extreme ----------
-const BS = { scope: 'world', level: 'easy', myId: null, ranks: null };
+const BS = { scope: 'world', level: 'easy', myId: null, ranks: null, code: null };   // code = which of the student's classes the Class board shows
 async function loadBoard() {
   const p = getProfile();
-  if (BS.scope === 'class' && !(p && p.classCode)) BS.scope = 'world';
-  const code = BS.scope === 'class' ? p.classCode : null;
+  const cl = classesOf(p);
+  if (BS.scope === 'class' && !cl.length) BS.scope = 'world';
+  if (!cl.some(c => c.code === BS.code)) BS.code = cl.length ? cl[0].code : null;
+  const code = BS.scope === 'class' ? BS.code : null;
   els.formError.textContent = '';
   try { renderBoard(await Board.get(BS.level, code, BS.myId)); }
   catch (err) { els.formError.textContent = `Couldn't load the leaderboard: ${errMsg(err)}`; }
@@ -2265,8 +2324,8 @@ function renderBoard(res) {
     note = `<p class="rank-note">You're ${parts.join(' · ')}! ${(BS.ranks.cls || BS.ranks.world) <= 10 ? '🎉' : 'Keep practicing to crack the top 10!'}</p>`;
   }
   const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${iconHTML(e.icon)}</span>` : ''}${esc(e.name)}${e.dev ? ' <span class="devtag" title="Developer score">DEV</span>' : ''}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
-  const scopes = (p && p.classCode ? [['class', p.className]] : []).concat([['world', '🌎 World']]);
-  const scopeTabs = `<div class="seg board-scope" role="group" aria-label="Which leaderboard">${scopes.map(([k, label]) => `<button type="button" data-scope="${k}" aria-pressed="${k === BS.scope}">${esc(label)}</button>`).join('')}</div> `;
+  const scopes = classesOf(p).map(c => ['class', c.name, c.code]).concat([['world', '🌎 World']]);   // one button per class, then World
+  const scopeTabs = `<div class="seg board-scope" role="group" aria-label="Which leaderboard">${scopes.map(([k, label, code]) => `<button type="button" data-scope="${k}"${code ? ` data-code="${esc(code)}"` : ''} aria-pressed="${k === BS.scope && (!code || code === BS.code)}">${esc(label)}</button>`).join('')}</div> `;
   const tabs = `<div class="seg board-tabs" role="group" aria-label="Leaderboard level">${LEVELS.map(lv => `<button type="button" data-board="${lv}" aria-pressed="${lv === res.level}">${LEVEL_NAME[lv]}</button>`).join('')}</div>`;
   els.boardArea.innerHTML = scopeTabs + tabs + note + (res.top.length
     ? `<table class="board"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Time</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`
@@ -2282,14 +2341,15 @@ async function submitScore() {
   els.submitBtn.disabled = true;
   els.submitBtn.textContent = 'Posting…';
   try {
-    const id = await Board.submit({ name: displayName(p), classCode: p.classCode || '', level: ch.level, score: ch.score, correct: ch.correct, total: ch.total, extra: ch.extra, timeSec: ch.timeSec });
+    const codes = classesOf(p).map(c => c.code);
+    const id = await Board.submit({ name: displayName(p), classCode: p.classCode || '', ...(codes.length > 1 ? { classCodes: codes } : {}), level: ch.level, score: ch.score, correct: ch.correct, total: ch.total, extra: ch.extra, timeSec: ch.timeSec });
     ch.submitted = true;
     BS.myId = id; BS.level = ch.level;
     const world = await Board.get(ch.level, null, id);
     const cls = p.classCode ? await Board.get(ch.level, p.classCode, id) : null;
     BS.ranks = { level: ch.level, world: world.rank, cls: cls ? cls.rank : null };
     els.postArea.hidden = true;
-    if (cls) { BS.scope = 'class'; renderBoard(cls); } else { BS.scope = 'world'; renderBoard(world); }
+    if (cls) { BS.scope = 'class'; BS.code = p.classCode; renderBoard(cls); } else { BS.scope = 'world'; renderBoard(world); }
   } catch (err) {
     els.formError.textContent = `Couldn't reach the leaderboard: ${errMsg(err)} Try again.`;
     els.submitBtn.disabled = false;
@@ -2302,7 +2362,7 @@ async function viewBoardOnly() { BS.level = S.ch ? S.ch.level : 'easy'; await lo
 els.boardArea.addEventListener('click', async e => {
   const lv = e.target.closest('[data-board]'), sc = e.target.closest('[data-scope]');
   if (lv) BS.level = lv.dataset.board;
-  else if (sc) BS.scope = sc.dataset.scope;
+  else if (sc) { BS.scope = sc.dataset.scope; if (sc.dataset.code) BS.code = sc.dataset.code; }
   else return;
   await loadBoard();
 });
@@ -2432,7 +2492,8 @@ $('#viewBoardBtn').onclick = viewBoardOnly;
 $('#welcomeForm').addEventListener('submit', submitWelcome);
 $('#wInit').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase(); });
 $('#wCode').addEventListener('input', e => { e.target.value = cleanCode(e.target.value); });
-$('#wSolo').addEventListener('change', e => { $('#wCode').disabled = e.target.checked; if (e.target.checked) $('#wCode').value = ''; });
+$('#wSolo').addEventListener('change', e => { $('#wCode').disabled = e.target.checked; if (e.target.checked) $('#wCode').value = ''; syncCodeBoxes(); });
+$('#wAdd').onclick = () => { const i = addCodeBox(''); if (i) i.focus(); };
 els.whoBtn.onclick = whoMenu;
 $('#wGuest').onclick = playAsGuest;
 
@@ -2824,7 +2885,7 @@ const poolNote = rep => (rep.avgPool < 0.995 ? `Practiced with ${pct(rep.avgPool
 const bestText = rep => LEVELS.filter(lv => rep.best[lv] != null).map(lv => `${LEVEL_NAME[lv]} ${rep.best[lv]}%`).join(' · ') || 'none yet';
 
 function studentName() { const p = getProfile(); return p ? displayName(p) : null; }
-const studentClass = () => { const p = getProfile(); return p && p.classCode ? p.className : ''; };
+const studentClass = () => { const p = getProfile(); return p && p.classCode ? classNames(p) : ''; };
 
 let reportBackTo = 'play';
 function openReport() {
@@ -2832,7 +2893,7 @@ function openReport() {
   Engine.stop();
   reportBackTo = S.mode === 'end' ? 'end' : 'play';
   const p = getProfile();
-  $('#rpWho').innerHTML = p ? `${esc(displayName(p))} <span>${p.classCode ? `· ${esc(p.className)}` : '· no class'}</span>` : '';
+  $('#rpWho').innerHTML = p ? `${esc(displayName(p))} <span>${p.classCode ? `· ${esc(classNames(p))}` : '· no class'}</span>` : '';
   $('#rpError').textContent = '';
   renderReport();
   showView('report');
@@ -3065,6 +3126,7 @@ $('#rpFresh').onclick = startFresh;
    student per day). Only the class's teacher can read them.
    ===================================================================== */
 S.assignment = null;
+S.moreAssign = [];   // assignments from the student's other classes: [{ code, name, a }]
 const goalFor = () => (S.assignment && S.assignment.goal) || CONFIG.dailyGoal;
 const sidOf = p => (p.first + p.init).toLowerCase().replace(/[^a-z]/g, '');
 
@@ -3073,17 +3135,20 @@ let syncTimer = 0;
 let lastSync = 0;
 function scheduleSync() { clearTimeout(syncTimer); syncTimer = setTimeout(() => { lastSync = Date.now(); syncProgress(); }, Math.max(1500, lastSync + 60000 - Date.now())); }
 async function syncProgress() {
-  const p = getProfile();
-  if (!p || !p.classCode || !Board.saveProgress) return;
-  if (!p.classOwner) {
-    try { const c = await Board.getClass(p.classCode); if (!c) return; p.classOwner = c.ownerEmail || ''; p.className = c.name; setProfile(p); }
+  const p = getProfile(), list = classesOf(p);
+  if (!p || !list.length || !Board.saveProgress) return;
+  if (list.some(c => !c.owner)) {
+    try {
+      for (const c of list) if (!c.owner) { const d = await Board.getClass(c.code); if (d) { c.owner = d.ownerEmail || ''; c.name = d.name; } }
+      setProfile({ ...p, className: list[0].name, classOwner: list[0].owner, classes: list });
+    }
     catch (e) { return; }
   }
   const rep = buildReport();
   if (!rep.rhythms && !rep.runs.length) return;
   const pairs = obj => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, [v.c, v.n]]));
   const data = {
-    class_code: p.classCode, owner: p.classOwner, date: rep.date, sid: sidOf(p), student: displayName(p),
+    class_code: list[0].code, owner: list[0].owner, date: rep.date, sid: sidOf(p), student: displayName(p),
     rhythms: rep.rhythms, slots: rep.slots, correct: rep.correct, adj: Math.round(rep.adj * 1000) / 1000,
     plays: rep.plays, extra: rep.extraSum, pool: Math.round(rep.poolSum * 1000) / 1000, minutes: rep.minutes,
     first_at: rep.first || 0, last_at: rep.last || Date.now(), score: rep.score, goal: goalFor(),
@@ -3092,19 +3157,30 @@ async function syncProgress() {
     missed: Object.fromEntries(rep.missedAll.map(x => [x.id, [x.wrong, x.n, x.pick || '']])),
     challenges: rep.runs.slice(-20).map(r => ({ lv: r.lv, score: r.score, t: r.t })),
   };
-  try { await Board.saveProgress(`${p.classCode}_${rep.date}_${data.sid}`, data); }
-  catch (e) { console.warn('Progress sync failed:', e); }
+  // one daily document per class (same summary, that class's code, owner and goal)
+  for (const c of list.filter(c => c.owner)) {
+    const more = S.moreAssign.find(x => x.code === c.code);
+    const doc = { ...data, class_code: c.code, owner: c.owner, goal: c.code === list[0].code ? goalFor() : (more && more.a.goal) || CONFIG.dailyGoal };
+    try { await Board.saveProgress(`${c.code}_${rep.date}_${data.sid}`, doc); }
+    catch (e) { console.warn('Progress sync failed:', e); }
+  }
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(syncTimer); syncProgress(); } });
 
 async function refreshClassInfo() {
-  const p = getProfile();
-  if (!p || !p.classCode) { S.assignment = null; renderAssignment(); return; }
+  const p = getProfile(), list = classesOf(p);
+  if (!p || !list.length) { S.assignment = null; S.moreAssign = []; renderAssignment(); return; }
   try {
-    const c = await Board.getClass(p.classCode);
-    if (!c) { toast(`The class code ${p.classCode} no longer exists. Ask your teacher for a new one.`, 6000); setProfile({ ...p, classCode: '', className: '', classOwner: '' }); updateWho(); S.assignment = null; renderAssignment(); return; }
-    setProfile({ ...p, className: c.name, classOwner: c.ownerEmail || '' });
-    S.assignment = c.assignment || null;
+    const found = await Promise.all(list.map(c => Board.getClass(c.code)));
+    const keep = [];   // classes that still exist, main first
+    list.forEach((c, i) => {
+      if (found[i]) keep.push({ code: c.code, name: found[i].name, owner: found[i].ownerEmail || '', a: found[i].assignment || null });
+      else toast(`The class code ${c.code} no longer exists. Ask your teacher for a new one.`, 6000);
+    });
+    const main = keep[0] || { code: '', name: '', owner: '', a: null };
+    setProfile({ ...p, classCode: main.code, className: main.name, classOwner: main.owner, classes: keep.map(({ code, name, owner }) => ({ code, name, owner })) });
+    S.assignment = main.a;
+    S.moreAssign = keep.slice(1).filter(c => c.a).map(c => ({ code: c.code, name: c.name, a: c.a }));
     updateWho(); renderAssignment();
   } catch (e) { /* offline: keep going */ }
 }
@@ -3112,7 +3188,10 @@ async function refreshClassInfo() {
 const assignText = a => isLocked(a.level) ? `${LEVEL_NAME[a.level]} · 4/4 · 1 measure` : `${LEVEL_NAME[a.level] || 'Any level'} · ${a.type === 'simple' ? 'Simple' : a.type === 'compound' ? 'Compound' : 'Simple or Compound'}${a.lock && a.lock !== 'random' ? ` (${a.lock})` : ''} · ${a.measures || 2} measures`;
 function renderAssignment() {
   const a = S.assignment, banner = els.assignBanner;
-  if (!a || S.mode !== 'practice') { banner.hidden = true; return; }
+  // the student's other classes' assignments, each labeled with its class name
+  const more = (S.moreAssign || []).map(x => `<span class="ab-more">📌 <b>${esc(x.name)}</b>: ${esc(assignText(x.a))}${x.a.goal ? ` · goal ${x.a.goal} rhythms` : ''}${x.a.minutes ? ` · ${x.a.minutes} min` : ''}</span>`).join('');
+  if ((!a && !more) || S.mode !== 'practice') { banner.hidden = true; return; }
+  if (!a) { banner.innerHTML = more; banner.hidden = false; return; }
   const day = todayOf(readLog()), done = day.rhythms.length, mins = activeMinutes(day.rhythms);
   const goalBits = [a.goal ? `${Math.min(done, a.goal)}/${a.goal} rhythms` : `${done} rhythms`, a.minutes ? `${Math.min(mins, a.minutes)}/${a.minutes} min` : `${mins} min`];
   const met = (!a.goal || done >= a.goal) && (!a.minutes || mins >= a.minutes) && (a.goal || a.minutes);
@@ -3121,7 +3200,7 @@ function renderAssignment() {
   banner.innerHTML = `<span class="ab-title">📌 Assignment</span><b>${esc(assignText(a))}</b>
     <span class="ab-prog ${met ? 'done' : ''}">${met ? '✓ Goal met! ' : 'You: '}${goalBits.join(' · ')}</span>
     ${using ? '<span class="small muted">✓ Using these settings</span>' : '<button class="btn btn-sm btn-primary" type="button" id="useAssign">Use these settings</button>'}
-    ${a.note ? `<span class="ab-note">“${esc(a.note)}”</span>` : ''}`;
+    ${a.note ? `<span class="ab-note">“${esc(a.note)}”</span>` : ''}${more}`;
   banner.hidden = false;
   const btn = $('#useAssign');
   if (btn) btn.onclick = applyAssignment;
