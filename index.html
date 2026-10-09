@@ -3927,7 +3927,11 @@ function renderMelody({ m, notes, states = [], sel = null, labels = 'both', cw, 
     const a = placed[i], b = placed[i + 1];
     if (a.n.dur === 2 && b.n.dur === 2 && a.pos % 4 === 0 && b.pos === a.pos + 2 && a.mi === b.mi && beamWith[i] < 0) { beamWith[i] = i + 1; beamWith[i + 1] = i; }
   }
-  const stemUp = o => { const j = beamWith[o.i]; return (j >= 0 ? Math.max(o.st, placed[j].st) : o.st) < 34; };
+  const stemUp = o => {
+    const j = beamWith[o.i];
+    const sts = [o, j >= 0 ? placed[j] : null].filter(x => x && x.n.d != null).map(x => x.st);
+    return !sts.length || sum(sts) / sts.length < 34;           // below the middle line (or unknown pitch): stems up
+  };
   for (const o of placed) {
     const { n, x, y, st, oy } = o, up = stemUp(o), hollow = n.dur >= 8;
     let g = `<g class="${['mnote', states[o.i] || '', sel === o.i ? 'sel' : '', n.d == null ? 'ghost' : ''].join(' ')}" data-i="${o.i}"><rect class="hit" x="${r1(x - 13)}" y="${oy + 14}" width="26" height="${LH - 20}" rx="6"/>`;
@@ -3936,7 +3940,8 @@ function renderMelody({ m, notes, states = [], sel = null, labels = 'both', cw, 
     g += `<ellipse class="nhead${hollow ? ' hollow' : ''}" cx="${r1(x)}" cy="${y}" rx="${hollow ? 6 : 6.4}" ry="${hollow ? 4.3 : 4.6}" transform="rotate(-20 ${r1(x)} ${y})"/>`;
     if (n.dur < 16) {
       const j = beamWith[o.i];
-      const tip = j >= 0 ? (up ? Math.min(y, placed[j].y) - 30 : Math.max(y, placed[j].y) + 30) : (up ? y - 32 : y + 32);
+      let tip = j >= 0 ? (up ? Math.min(y, placed[j].y) - 30 : Math.max(y, placed[j].y) + 30) : (up ? y - 32 : y + 32);
+      if (!up) tip = Math.max(Math.min(tip, oy + yOfStep(30) + 24), y + 22);   // keep down-stem beams above the labels
       const sx = up ? x + 5.6 : x - 5.6;
       o.sx = sx; o.tip = tip; o.up = up;
       g += `<line class="nstem" x1="${r1(sx)}" y1="${y}" x2="${r1(sx)}" y2="${r1(tip)}"/>`;
@@ -4250,6 +4255,7 @@ function melKey(e) {
   else if (k === 'ArrowLeft' || k === 'ArrowRight') {
     e.preventDefault(); const m = S.mel; if (!m.ans.length || m.checked) return;
     m.sel = m.sel == null ? (k === 'ArrowLeft' ? m.ans.length - 1 : 0) : Math.max(0, Math.min(m.ans.length - 1, m.sel + (k === 'ArrowLeft' ? -1 : 1)));
+    if (m.ans[m.sel] && m.ans[m.sel].d != null) pianoTone(degMidi(MKEYS[m.q.key], m.ans[m.sel].d));
     renderMount(melAnsMount); melUI();
   }
   else if (/^[1-5]$/.test(k) && !ghostMode()) { const durs = mlv().durs.slice().sort((a, b) => b - a); if (durs[+k - 1]) { e.preventDefault(); melSetDur(durs[+k - 1]); } }
