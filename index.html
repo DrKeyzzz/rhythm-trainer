@@ -1486,14 +1486,38 @@ function onCheck() {
     renderMount(correctMount);
     updateUI();
   } else if (S.mode === 'challenge') {
+    const ch = S.ch;
+    if (S.checked) {                                   // Next Rhythm / See Results
+      if (Date.now() < S.nextLockUntil) return;
+      Engine.stop();
+      ch.pausedMs = (ch.pausedMs || 0) + (Date.now() - (ch.pauseStart || Date.now()));
+      ch.pauseStart = null;
+      ch.idx++;
+      if (ch.idx >= ch.rhythms.length) finishChallenge();
+      else loadQuestion(ch.rhythms[ch.idx]);
+      return;
+    }
     if (S.answer.includes(null)) return;
     Engine.stop();
-    const ch = S.ch;
     ch.answers[ch.idx] = S.answer.slice();
     (ch.times || (ch.times = []))[ch.idx] = [S.qStart, Date.now()];
-    ch.idx++;
-    if (ch.idx >= ch.rhythms.length) finishChallenge();
-    else loadQuestion(ch.rhythms[ch.idx]);
+    ch.pauseStart = Date.now();                        // looking it over doesn't count toward the time
+    S.checked = true;
+    S.selected = null;
+    S.nextLockUntil = Date.now() + 1500;
+    setTimeout(updateUI, 1550);
+    const n = S.answer.length;
+    const c = S.answer.filter((id, i) => id === S.q.cells[i]).length;
+    const x = Math.max(0, ch.used[ch.idx] - CONFIG.challengePlays);
+    els.fbMsg.textContent = (c === n ? 'Perfect! Every slot is correct 🎉' : `${c} of ${n} slots correct.`)
+      + (x ? ` (${x} extra listen${x > 1 ? 's' : ''}: −${Math.round(x * CONFIG.extraPenalty * 100)}%)` : '');
+    els.fbMsg.classList.toggle('perfect', c === n);
+    els.feedback.hidden = false;
+    els.bankWrap.hidden = true;
+    els.hint.hidden = true;
+    renderMount(mainMount);
+    renderMount(correctMount);
+    updateUI();
   }
 }
 
@@ -1509,7 +1533,7 @@ function maybeShowIosTip() {
 
 function playQuestion() {
   if (!S.q || S.mode === 'end') return;
-  if (S.mode === 'challenge') {
+  if (S.mode === 'challenge' && !S.checked) {
     const ch = S.ch;
     const used = ch.used[ch.idx];
     if (used >= CONFIG.challengePlays + CONFIG.challengeExtra) { toast('No listens left for this rhythm.'); return; }
@@ -1662,6 +1686,15 @@ function updateUI() {
     els.cbPips.innerHTML = ch.rhythms.map((_, i) => `<i class="${i < ch.idx ? 'done' : i === ch.idx ? 'now' : ''}"></i>`).join('');
     els.checkLabel.textContent = ch.idx === ch.rhythms.length - 1 ? 'Finish' : 'Submit';
     els.checkBtn.disabled = !full;
+    if (S.checked) {                                   // reviewing the answer: free replays, then move on
+      els.checkLabel.textContent = ch.idx === ch.rhythms.length - 1 ? 'See Results' : 'Next Rhythm';
+      els.checkBtn.disabled = Date.now() < S.nextLockUntil;
+      els.playQBtn.disabled = false;
+      els.playQBtn.classList.add('btn-q');
+      els.playQBtn.classList.remove('btn-extra');
+      els.playQBtn.querySelector('span').firstChild.textContent = 'Question ';
+      els.playsBadge.hidden = true;
+    }
   } else {
     els.playQBtn.disabled = false;
     els.playsBadge.hidden = true;
@@ -1725,7 +1758,8 @@ function startChallenge(level) {
 
 function updateTimer() {
   if (!S.ch) return;
-  els.cbTimer.textContent = `⏱ ${fmtTime(((S.ch.end || Date.now()) - S.ch.start) / 1000)}`;
+  const ch = S.ch, now = ch.end || Date.now();
+  els.cbTimer.textContent = `⏱ ${fmtTime((now - ch.start - (ch.pausedMs || 0) - (ch.pauseStart ? now - ch.pauseStart : 0)) / 1000)}`;
 }
 
 function quitChallenge() {
@@ -1753,7 +1787,7 @@ function finishChallenge() {
   ch.total = total;
   ch.extra = extra;
   ch.score = Math.round(credit / total * 1000) / 10;
-  ch.timeSec = Math.max(1, Math.round((ch.end - ch.start) / 1000));
+  ch.timeSec = Math.max(1, Math.round((ch.end - ch.start - (ch.pausedMs || 0)) / 1000));   // review time not counted
   ch.rhythms.forEach((r, i) => {
     const [t0, t1] = (ch.times && ch.times[i]) || [ch.start, ch.end];
     logRhythm({ m: 'c', lv: ch.level, ts: r.ts, ms: r.measures, q: r.cells, a: ch.answers[i], pl: ch.used[i], x: ch.results[i].x, t0, t1 });

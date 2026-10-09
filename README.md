@@ -35,6 +35,7 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 **Challenge Mode**
 - Students pick a **Beginner**, **Beginner + 16ths**, **Easy**, **Hard** or **Extreme** challenge.
 - 5 rhythms. The Beginner levels use one measure of 4/4; the other levels use 4 measures, mixing simple and compound meters.
+- After each **Submit**, students see right away which slots were right or wrong and the correct rhythm. They can replay it for free, then press **Next Rhythm** (or **See Results** after the last one). Time spent looking it over doesn't count toward their time.
 - 4 regular plays of each question (blue), then 3 **extra listens** (gold). Each extra listen takes 10% off that rhythm's points. **My Answer** is unlimited.
 - Tempo is fixed at 72 so scores compare fairly.
 - The leaderboard only appears after all 5 rhythms are finished. Easy, Hard and Extreme have separate leaderboards.
