@@ -2,7 +2,7 @@
 
 *Hear it. Write it. Pull off the big score.* A spy-themed rhythmic and melodic dictation game (formerly Rhythm Dictation Trainer).
 
-**The spy game:** students check in as agents and get a secret **codename**. **📡 Transmissions** are rhythm dictation and **🔐 Safecracking** is melodic dictation. Every mission earns **💰 loot**; loot raises their **rank** (Recruit → Operative → Field Agent → Secret Agent → Spymaster). Perfect answers get a **CRACKED!** stamp. Levels: 🔰 Rookie (Beginner), 🕶️ Agent (Easy), 🎖️ Special Ops (Hard), 🧠 Mastermind (Extreme); Safecracking: 🎓 Training Room, 🧪 Field Test, 🔐 Safecracker.
+**The spy game:** students check in as agents and get a secret **codename**. **📡 Transmissions** are rhythm dictation and **🔐 Safecracking** is melodic dictation. Every mission earns **💰 loot**; loot raises their **rank** (Recruit → Operative → Field Agent → Secret Agent → Spymaster). Perfect answers get a **CRACKED!** stamp. Levels: 🔰 Rookie (Beginner), 😎 Agent (Easy), 🎖️ Special Ops (Hard), 🧠 Mastermind (Extreme); Safecracking: 🎓 Training Room, 🧪 Field Test, 🔐 Safecracker.
 
 **💎 The Heist** (Challenge Mode): 5 vault layers (laser grid, guard patrol, motion sensors, the safe, vault door), one rhythm each. Extra listens raise the 🚨 alarm (−10% each). **80%+** = heist successful (big loot), **60–79%** = close call (some loot), **under 60%** = **BUSTED** and the student goes to **jail**: the Heist is locked until they finish **3 training missions at 80%+** (a jailbreak). Busted heists aren't posted to **🕵️ Most Wanted** (the leaderboards). The session report is now the **📁 Mission Debrief**. Loot, rank and jail are saved on each device for each student. Thresholds are in `CONFIG` (`heistWin`, `heistJail`, `jailbreak`).
 
