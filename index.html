@@ -507,6 +507,7 @@ h1.bs-title small{font:12px "Special Elite",monospace;letter-spacing:.06em;color
 .dur-btn[aria-pressed="true"] svg{color:#2a2014}
 /* heist bar */
 .challenge-bar{background:linear-gradient(90deg,rgba(245,197,66,.12),rgba(255,59,79,.08));border-color:rgba(245,197,66,.35)}
+#melodyView .challenge-bar{margin-bottom:10px}
 .cb-badge{color:var(--gold);font-family:"Special Elite",monospace;letter-spacing:.04em}
 .pips{gap:6px}
 .lyr{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--surface);border:1px solid var(--border);font-size:15px;opacity:.55}
@@ -1701,12 +1702,7 @@ function onCheck() {
     const ch = S.ch;
     if (S.checked) {                                   // Next Rhythm / See Results
       if (Date.now() < S.nextLockUntil) return;
-      Engine.stop();
-      ch.pausedMs = (ch.pausedMs || 0) + (Date.now() - (ch.pauseStart || Date.now()));
-      ch.pauseStart = null;
-      ch.idx++;
-      if (ch.idx >= ch.rhythms.length) finishChallenge();
-      else loadQuestion(ch.rhythms[ch.idx]);
+      heistNext();
       return;
     }
     if (S.answer.includes(null)) return;
@@ -1745,13 +1741,7 @@ function maybeShowIosTip() {
 
 function playQuestion() {
   if (!S.q || S.mode === 'end') return;
-  if (S.mode === 'challenge' && !S.checked) {
-    const ch = S.ch;
-    const used = ch.used[ch.idx];
-    if (used >= CONFIG.challengePlays + CONFIG.challengeExtra) { toast('No listens left for this rhythm.'); return; }
-    ch.used[ch.idx] = used + 1;
-    if (used === CONFIG.challengePlays) toast(`Extra listen: this rhythm is now worth ${Math.round((1 - CONFIG.extraPenalty) * 100)}% of its points.`, 3500);
-  }
+  if (S.mode === 'challenge' && !S.checked && !heistListen()) return;
   S.qPlays = (S.qPlays || 0) + 1;
   startPlayback(S.q, S.q.cells, 'question', S.checked ? correctMount : mainMount, S.checked, true);
 }
@@ -1881,33 +1871,7 @@ function updateUI() {
   els.stopBtn.disabled = !S.playing;
 
   if (inChallenge) {
-    const ch = S.ch;
-    const used = ch.used[ch.idx], P = CONFIG.challengePlays, X = CONFIG.challengeExtra;
-    const regLeft = Math.max(0, P - used), extraLeft = Math.max(0, Math.min(X, P + X - used));
-    const inReserve = regLeft === 0;
-    els.playQBtn.disabled = extraLeft === 0 && inReserve;
-    els.playQBtn.classList.toggle('btn-q', !inReserve);
-    els.playQBtn.classList.toggle('btn-extra', inReserve);
-    els.playQBtn.querySelector('span').firstChild.textContent = inReserve ? '🚨 Extra listen ' : 'Intercept ';
-    els.playsBadge.hidden = false;
-    els.playsBadge.textContent = inReserve ? `${extraLeft} · −${Math.round(CONFIG.extraPenalty * 100)}%` : regLeft;
-    const dots = (n, left) => Array.from({ length: n }, (_, k) => `<i class="${k < left ? 'left' : ''}"></i>`).join('');
-    els.cbPlays.innerHTML = `Listens <span class="listen">${dots(P, regLeft)}</span> 🚨 Alarm <span class="listen extra">${dots(X, extraLeft)}</span>`;
-    els.cbPlays.classList.toggle('out', inReserve && extraLeft === 0);
-    els.cbText.textContent = `Layer ${ch.idx + 1} of ${ch.rhythms.length}: ${HEIST_LAYERS[ch.idx % 5][1]}`;
-    $('#cbLevel').textContent = LEVEL_FUN[ch.level];
-    els.cbPips.innerHTML = ch.rhythms.map((_, i) => `<span class="lyr ${i < ch.idx ? 'done' : i === ch.idx ? 'now' : ''}" title="${HEIST_LAYERS[i % 5][1]}">${HEIST_LAYERS[i % 5][0]}</span>`).join('');
-    els.checkLabel.textContent = ch.idx === ch.rhythms.length - 1 ? 'Crack the vault' : 'Crack it';
-    els.checkBtn.disabled = !full;
-    if (S.checked) {                                   // reviewing the answer: free replays, then move on
-      els.checkLabel.textContent = ch.idx === ch.rhythms.length - 1 ? 'Escape!' : 'Next layer';
-      els.checkBtn.disabled = Date.now() < S.nextLockUntil;
-      els.playQBtn.disabled = false;
-      els.playQBtn.classList.add('btn-q');
-      els.playQBtn.classList.remove('btn-extra');
-      els.playQBtn.querySelector('span').firstChild.textContent = 'Intercept ';
-      els.playsBadge.hidden = true;
-    }
+    heistBarUI(full, S.nextLockUntil, S.checked);
   } else {
     els.playQBtn.disabled = false;
     els.playsBadge.hidden = true;
@@ -1935,39 +1899,138 @@ function populateTsSelect() {
 // ---------- challenge ----------
 function chooseChallenge() {
   openModal(`<h3>💎 The Heist</h3>
-    <p class="muted">Crack <b>5 vault layers</b> (one transmission each). Score 80% or better to escape with the diamond; under 60% and you're <b>BUSTED</b>. ${CONFIG.challengeRhythms} rhythms. Beginner levels use one measure of 4/4; the others use ${CONFIG.challengeMeasures} measures, mixing simple and compound meters. You get ${CONFIG.challengePlays} plays of each question, plus ${CONFIG.challengeExtra} gold extra listens if you need them. Each extra listen takes ${Math.round(CONFIG.extraPenalty * 100)}% off that rhythm's points. Pick your level:</p>
+    <p class="muted">Crack <b>5 vault layers</b> that alternate 📡 <b>transmissions</b> (rhythm) and 🔐 <b>safes</b> (melody), and each layer is harder than the last. Score 80% or better to escape with the diamond; under 60% and you're <b>BUSTED</b>. You get ${CONFIG.challengePlays} listens per layer, plus ${CONFIG.challengeExtra} gold extra listens if you need them. Each extra listen takes ${Math.round(CONFIG.extraPenalty * 100)}% off that layer's points. Pick your level:</p>
     <div class="level-pick">
-      <button class="btn level-btn" type="button" data-level="beginner"><b>🔰 Rookie heist</b><span>One measure of 4/4: quarters, halves, eighths and simple rests</span></button>
-      <button class="btn level-btn" type="button" data-level="beginner16"><b>🔰 Rookie + 16ths heist</b><span>Beginner, plus four sixteenths, eighth–two sixteenths and two sixteenths–eighth</span></button>
-      <button class="btn level-btn" type="button" data-level="easy"><b>😎 Agent heist</b><span>Quarters, eighths, basic sixteenths, eighth rests</span></button>
-      <button class="btn level-btn" type="button" data-level="hard"><b>🎖️ Special Ops heist</b><span>Adds syncopation, dotted-sixteenth figures, off-beat rests</span></button>
-      <button class="btn level-btn" type="button" data-level="extreme"><b>🧠 Mastermind heist</b><span>Adds triplets, 3+3+2, hemiola and duplets</span></button>
+      <button class="btn level-btn" type="button" data-level="beginner"><b>🔰 Rookie heist</b><span>Rhythm: one measure of 4/4. Melody: Training Room → Field Test</span></button>
+      <button class="btn level-btn" type="button" data-level="beginner16"><b>🔰 Rookie + 16ths heist</b><span>Rhythm: Rookie → Rookie + 16ths. Melody: Training Room → Field Test</span></button>
+      <button class="btn level-btn" type="button" data-level="easy"><b>😎 Agent heist</b><span>Rhythm: Agent, 2 → 4 measures. Melody: Field Test → Safecracker</span></button>
+      <button class="btn level-btn" type="button" data-level="hard"><b>🎖️ Special Ops heist</b><span>Rhythm: Agent → Special Ops. Melody: Field Test → Safecracker</span></button>
+      <button class="btn level-btn" type="button" data-level="extreme"><b>🧠 Mastermind heist</b><span>Rhythm: Special Ops → Mastermind. Melody: Safecracker</span></button>
     </div>
     <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button></div>`);
   els.modalBox.querySelectorAll('[data-level]').forEach(b => { b.onclick = () => startChallenge(b.dataset.level); });
+}
+
+// Each heist alternates rhythm (r) and melody (m) layers, easiest first: [kind, level, measures].
+const HEIST_PLAN = {
+  beginner:   [['r', 'beginner'], ['m', 'newbie'], ['r', 'beginner'], ['m', 'beginner'], ['r', 'beginner']],
+  beginner16: [['r', 'beginner'], ['m', 'newbie'], ['r', 'beginner16'], ['m', 'beginner'], ['r', 'beginner16']],
+  easy:       [['r', 'easy', 2], ['m', 'beginner'], ['r', 'easy'], ['m', 'five'], ['r', 'easy']],
+  hard:       [['r', 'easy'], ['m', 'beginner'], ['r', 'hard'], ['m', 'five'], ['r', 'hard']],
+  extreme:    [['r', 'hard'], ['m', 'five'], ['r', 'extreme'], ['m', 'five'], ['r', 'extreme']],
+};
+function heistMeters(n) {                              // different meters, with both simple and compound
+  const all = [...SIMPLE_TS, ...COMPOUND_TS];
+  for (let t = 0; t < 500; t++) {
+    const p = Array.from({ length: n }, () => all[rand(all.length)]);
+    if (n < 2 || (new Set(p).size === n && p.some(x => TIME_SIGS[x].type === 'simple') && p.some(x => TIME_SIGS[x].type === 'compound'))) return p;
+  }
+  return Array.from({ length: n }, () => all[rand(all.length)]);
 }
 
 function startChallenge(level) {
   Engine.stop();
   S.poolEdit = false;
   closeModal();
-  const beg = isLocked(level);
-  const meters = beg ? Array(CONFIG.challengeRhythms).fill(BEGINNER.ts) : pickChallengeMeters();
-  const chMeasures = beg ? BEGINNER.measures : CONFIG.challengeMeasures;
+  const plan = HEIST_PLAN[level] || HEIST_PLAN.easy;
+  const meters = heistMeters(plan.filter(([k, lv]) => k === 'r' && !isLocked(lv)).length);
+  let mi = 0;
+  const layers = plan.map(([kind, lv, ms]) => kind === 'm' ? { ...generateMelody(lv, 'both'), mel: true }
+    : isLocked(lv) ? generateRhythm(BEGINNER.ts, BEGINNER.measures, null, lv)
+    : generateRhythm(meters[mi++], ms || CONFIG.challengeMeasures, null, lv));
+  const home = (S.ch && S.ch.home) || S.app;
   S.mode = 'challenge';
   S.ch = {
-    level,
-    measures: chMeasures,
-    rhythms: meters.map(t => generateRhythm(t, chMeasures, null, level)),
-    answers: [], idx: 0,
-    used: meters.map(() => 0),
+    level, home,
+    measures: isLocked(level) ? BEGINNER.measures : CONFIG.challengeMeasures,
+    rhythms: layers,
+    answers: [], grades: [], times: [], idx: 0,
+    used: layers.map(() => 0),
     start: Date.now(), end: null, submitted: false, timer: 0,
   };
   S.ch.timer = setInterval(updateTimer, 500);
   updateTimer();
-  showView('play');
-  loadQuestion(S.ch.rhythms[0]);
+  heistLoad(0);
   window.scrollTo({ top: 0 });
+}
+
+const BAR_HOME = () => $('#controls').insertBefore(els.challengeBar, $('#controls > .audio'));
+function heistLoad(i) {
+  const L = S.ch.rhythms[i];
+  if (L.mel) {
+    S.app = 'melody';
+    $('#melodyView').prepend(els.challengeBar);
+    Object.assign(S.mel, { q: L, heistLv: L.level, ans: MLEVELS[L.level].rhythm ? L.notes.map(n => ({ d: null, dur: n.dur })) : [], sel: null, checked: false, states: null, t0: Date.now(), plays: 0 });
+    if (!mlv().durs.includes(S.mel.dur)) S.mel.dur = 4;
+    $('#melFeedback').hidden = true;
+    showView('melody');
+    fitScreen(true);                                   // size first so the staff is drawn at the right width
+    melRenderAll();
+  } else {
+    S.app = 'rhythm';
+    S.mel.heistLv = null;
+    BAR_HOME();
+    showView('play');
+    loadQuestion(L);
+  }
+  for (const b of $('#appTabs').children) b.setAttribute('aria-pressed', String(b.dataset.app === S.app));
+  fitScreen(true);
+}
+function heistNext() {
+  const ch = S.ch;
+  Engine.stop();
+  ch.pausedMs = (ch.pausedMs || 0) + (Date.now() - (ch.pauseStart || Date.now()));
+  ch.pauseStart = null;
+  ch.idx++;
+  if (ch.idx >= ch.rhythms.length) finishChallenge();
+  else { heistLoad(ch.idx); window.scrollTo({ top: 0 }); }
+}
+function heistListen() {                               // counts a listen; false when the layer is out of listens
+  const ch = S.ch, used = ch.used[ch.idx];
+  if (used >= CONFIG.challengePlays + CONFIG.challengeExtra) { toast('No listens left for this layer.'); return false; }
+  ch.used[ch.idx] = used + 1;
+  if (used === CONFIG.challengePlays) toast(`Extra listen: this layer is now worth ${Math.round((1 - CONFIG.extraPenalty) * 100)}% of its points.`, 3500);
+  return true;
+}
+function heistExit(to) {                               // leave the heist (or its results) for practice
+  Engine.stop();
+  endChallengeTimer();
+  const home = to || (S.ch && S.ch.home) || 'rhythm';
+  S.ch = null; S.mode = 'practice'; S.mel.heistLv = null; S.mel.q = null;
+  BAR_HOME();
+  S.app = 'rhythm';
+  showView('play');
+  newPracticeRhythm();
+  setApp(home);
+}
+function heistBarUI(ready, lockUntil, reviewing) {
+  const ch = S.ch, mel = S.app === 'melody', word = mel ? 'Listen ' : 'Intercept ', last = ch.idx === ch.rhythms.length - 1;
+  const used = ch.used[ch.idx], P = CONFIG.challengePlays, X = CONFIG.challengeExtra;
+  const regLeft = Math.max(0, P - used), extraLeft = Math.max(0, Math.min(X, P + X - used));
+  const inReserve = regLeft === 0;
+  els.playQBtn.disabled = extraLeft === 0 && inReserve;
+  els.playQBtn.classList.toggle('btn-q', !inReserve);
+  els.playQBtn.classList.toggle('btn-extra', inReserve);
+  els.playQBtn.querySelector('span').firstChild.textContent = inReserve ? '🚨 Extra listen ' : word;
+  els.playsBadge.hidden = false;
+  els.playsBadge.textContent = inReserve ? `${extraLeft} · −${Math.round(CONFIG.extraPenalty * 100)}%` : regLeft;
+  const dots = (n, left) => Array.from({ length: n }, (_, k) => `<i class="${k < left ? 'left' : ''}"></i>`).join('');
+  els.cbPlays.innerHTML = `Listens <span class="listen">${dots(P, regLeft)}</span> 🚨 Alarm <span class="listen extra">${dots(X, extraLeft)}</span>`;
+  els.cbPlays.classList.toggle('out', inReserve && extraLeft === 0);
+  els.cbText.textContent = `Layer ${ch.idx + 1} of ${ch.rhythms.length}: ${HEIST_LAYERS[ch.idx % 5][1]} · ${mel ? '🔐 Safe' : '📡 Transmission'}`;
+  $('#cbLevel').textContent = LEVEL_FUN[ch.level];
+  els.cbPips.innerHTML = ch.rhythms.map((r, i) => `<span class="lyr ${i < ch.idx ? 'done' : i === ch.idx ? 'now' : ''}" title="${HEIST_LAYERS[i % 5][1]}: ${r.mel ? 'melody' : 'rhythm'}">${HEIST_LAYERS[i % 5][0]}</span>`).join('');
+  els.checkLabel.textContent = last ? 'Crack the vault' : 'Crack it';
+  els.checkBtn.disabled = !ready;
+  if (reviewing) {                                     // looking over the answer: free replays, then move on
+    els.checkLabel.textContent = last ? 'Escape!' : 'Next layer';
+    els.checkBtn.disabled = Date.now() < lockUntil;
+    els.playQBtn.disabled = false;
+    els.playQBtn.classList.add('btn-q');
+    els.playQBtn.classList.remove('btn-extra');
+    els.playQBtn.querySelector('span').firstChild.textContent = word;
+    els.playsBadge.hidden = true;
+  }
 }
 
 function updateTimer() {
@@ -1979,7 +2042,7 @@ function updateTimer() {
 function quitChallenge() {
   openModal(`<h3>Quit the challenge?</h3><p>Your progress won't be scored or saved.</p>
     <div class="modal-actions"><button class="btn" data-close type="button">Keep going</button><button class="btn btn-danger" id="confirmQuit" type="button">Quit challenge</button></div>`);
-  $('#confirmQuit').onclick = () => { closeModal(); endChallengeTimer(); S.ch = null; S.mode = 'practice'; newPracticeRhythm(); };
+  $('#confirmQuit').onclick = () => { closeModal(); heistExit(); };
 }
 
 function endChallengeTimer() { if (S.ch) clearInterval(S.ch.timer); }
@@ -1989,20 +2052,28 @@ function finishChallenge() {
   ch.end = Date.now();
   endChallengeTimer();
   let correct = 0, total = 0, credit = 0, extra = 0;
-  ch.results = ch.rhythms.map((r, i) => {
-    const a = ch.answers[i];
-    const c = a.filter((id, k) => id === r.cells[k]).length;
+  ch.results = ch.rhythms.map((r, i) => {             // every layer counts the same; a melody note scores pitch + rhythm
+    const a = ch.answers[i], g = ch.grades[i];
+    const c = r.mel ? g.pc + g.rc : a.filter((id, k) => id === r.cells[k]).length;
+    const n = r.mel ? 2 * g.n : a.length;
     const x = Math.max(0, ch.used[i] - CONFIG.challengePlays);
-    correct += c; total += a.length; extra += x;
-    credit += c * (1 - CONFIG.extraPenalty * x);
-    return { c, n: a.length, x };
+    correct += c; total += n; extra += x;
+    credit += c / n * (1 - CONFIG.extraPenalty * x);
+    return r.mel ? { c, n, x, pc: g.pc, rc: g.rc, mn: g.n } : { c, n, x };
   });
   ch.correct = correct;
   ch.total = total;
   ch.extra = extra;
-  ch.score = Math.round(credit / total * 1000) / 10;
+  ch.score = Math.round(credit / ch.rhythms.length * 1000) / 10;
   ch.timeSec = Math.max(1, Math.round((ch.end - ch.start - (ch.pausedMs || 0)) / 1000));   // review time not counted
+  const log = readLog(), day = todayOf(log);
   ch.rhythms.forEach((r, i) => {
+    const [t0, t1] = (ch.times && ch.times[i]) || [ch.start, ch.end];
+    if (r.mel) { const g = ch.grades[i]; (day.melodies || (day.melodies = [])).push({ lv: r.level, key: r.key, mode: MKEYS[r.key].mode, pc: g.pc, pn: g.n, rc: g.rc, rn: g.n, pl: ch.used[i], h: 1, t0, t1 }); }
+  });
+  writeLog(log);
+  ch.rhythms.forEach((r, i) => {
+    if (r.mel) return;
     const [t0, t1] = (ch.times && ch.times[i]) || [ch.start, ch.end];
     logRhythm({ m: 'c', lv: ch.level, ts: r.ts, ms: r.measures, q: r.cells, a: ch.answers[i], pl: ch.used[i], x: ch.results[i].x, t0, t1 });
   });
@@ -2020,7 +2091,7 @@ function showEndScreen() {
   showView('end');
   els.endScore.textContent = `${ch.score}%`;
   $('#endTitle').textContent = `${LEVEL_NAME[ch.level]} Challenge complete!`;
-  els.endDetail.textContent = `${ch.correct} of ${ch.total} slots correct · ${ch.extra ? `${ch.extra} extra listen${ch.extra > 1 ? 's' : ''} used (−${Math.round(CONFIG.extraPenalty * 100)}% each)` : 'no extra listens'} · ${fmtTime(ch.timeSec)}`;
+  els.endDetail.textContent = `${ch.correct} of ${ch.total} correct · ${ch.extra ? `${ch.extra} extra listen${ch.extra > 1 ? 's' : ''} used (−${Math.round(CONFIG.extraPenalty * 100)}% each)` : 'no extra listens'} · ${fmtTime(ch.timeSec)}`;
   els.postArea.hidden = isGuest() || ch.outcome === 'busted';
   heistScreen(ch);
   const prof = getProfile();
@@ -2035,10 +2106,19 @@ function showEndScreen() {
 
   reviewMounts.forEach(destroyMount);
   reviewMounts = [];
+  const xNote = res => res.x ? ` <span class="ri-extra">· ${res.x} extra listen${res.x > 1 ? 's' : ''} (−${Math.round(res.x * CONFIG.extraPenalty * 100)}%)</span>` : '';
   els.review.innerHTML = ch.rhythms.map((r, i) => {
     const res = ch.results[i];
+    if (r.mel) return `<div class="review-item">
+      <div class="ri-head"><b>Layer ${i + 1} · 🔐 Safe</b><span class="ts-badge">${MKEYS[r.key].name}</span>
+        <span class="ri-score ${res.c === res.n ? 'perfect' : ''}">Pitches ${res.pc}/${res.mn} · Rhythm ${res.rc}/${res.mn}${res.c === res.n ? ' ✓' : ''}${xNote(res)}</span>
+        <button class="btn btn-sm btn-q" type="button" data-play="q" data-i="${i}">▶ Melody</button>
+        <button class="btn btn-sm btn-a" type="button" data-play="a" data-i="${i}">▶ Your combo</button></div>
+      <div class="ri-label">Your combination</div><div class="staff" data-staff="a${i}"></div>
+      <div class="ri-label">Correct melody</div><div class="staff" data-staff="q${i}"></div>
+    </div>`;
     return `<div class="review-item">
-      <div class="ri-head"><b>Rhythm ${i + 1}</b><span class="ts-badge">${tsLabel(r.ts)}</span>
+      <div class="ri-head"><b>Layer ${i + 1} · 📡 Transmission</b><span class="ts-badge">${tsLabel(r.ts)}</span>
         <span class="ri-score ${res.c === res.n ? 'perfect' : ''}">${res.c}/${res.n} correct${res.c === res.n ? ' ✓' : ''}${res.x ? ` <span class="ri-extra">· ${res.x} extra listen${res.x > 1 ? 's' : ''} (−${Math.round(res.x * CONFIG.extraPenalty * 100)}%)</span>` : ''}</span>
         <button class="btn btn-sm btn-q" type="button" data-play="q" data-i="${i}">▶ Question</button>
         <button class="btn btn-sm btn-a" type="button" data-play="a" data-i="${i}">▶ Your answer</button></div>
@@ -2048,6 +2128,13 @@ function showEndScreen() {
   }).join('');
   ch.rhythms.forEach((r, i) => {
     const a = ch.answers[i];
+    if (r.mel) {
+      const mA = createMount(els.review.querySelector(`[data-staff="a${i}"]`), () => ({ render: renderMelody, m: r, notes: a, states: ch.grades[i].states, labels: 'both' }));
+      const mQ = createMount(els.review.querySelector(`[data-staff="q${i}"]`), () => ({ render: renderMelody, m: r, notes: r.notes, labels: 'both' }));
+      reviewMounts.push(mA, mQ);
+      renderMount(mA); renderMount(mQ);
+      return;
+    }
     const mA = createMount(els.review.querySelector(`[data-staff="a${i}"]`), () => ({ ts: r.ts, measures: r.measures, cells: a, states: a.map((id, k) => id === r.cells[k] ? 'correct' : 'wrong'), label: 'Your answer' }));
     const mQ = createMount(els.review.querySelector(`[data-staff="q${i}"]`), () => ({ ts: r.ts, measures: r.measures, cells: r.cells, label: 'Correct rhythm' }));
     reviewMounts.push(mA, mQ);
@@ -2739,7 +2826,7 @@ $('#challengeBtn').onclick = () => {
 };
 $('#quitBtn').onclick = quitChallenge;
 $('#againBtn').onclick = () => (spyState().jail ? showJail() : chooseChallenge());
-$('#backBtn').onclick = () => { Engine.stop(); S.ch = null; S.mode = 'practice'; showView('play'); newPracticeRhythm(); };
+$('#backBtn').onclick = () => heistExit();
 $('#teacherBtn').onclick = teacherLogin;
 els.submitBtn.onclick = submitScore;
 $('#viewBoardBtn').onclick = viewBoardOnly;
@@ -2755,6 +2842,7 @@ els.review.addEventListener('click', e => {
   const b = e.target.closest('[data-play]');
   if (!b) return;
   const i = +b.dataset.i, ch = S.ch, r = ch.rhythms[i];
+  if (r.mel) { Engine.stop(); Engine.play(buildMelSchedule(r, b.dataset.play === 'q' ? r.notes : ch.answers[i], b.dataset.play === 'q' ? 'question' : 'answer', S.settings.tempo, S.settings.metronome), {}); return; }
   const mount = reviewMounts[i * 2 + (b.dataset.play === 'q' ? 1 : 0)];
   startPlayback(r, b.dataset.play === 'q' ? r.cells : ch.answers[i], b.dataset.play === 'q' ? 'question' : 'answer', mount, true, false);
 });
@@ -2884,7 +2972,7 @@ function setZoom(z) {
 }
 
 function fitScenario() {
-  if (S.mode === 'challenge' && S.ch) return { tsIds: [...new Set(S.ch.rhythms.map(r => r.ts))], level: S.ch.level, measures: S.ch.measures || CONFIG.challengeMeasures };
+  if (S.mode === 'challenge' && S.ch && S.q) return { tsIds: [S.q.ts], level: S.q.level, measures: S.q.measures };
   const st = S.settings, list = tsListFor(st.type);
   if (isLocked(st.level)) return { tsIds: [BEGINNER.ts], level: st.level, measures: BEGINNER.measures };
   return { tsIds: list.includes(st.lock) ? [st.lock] : list, level: st.level, measures: st.measures };
@@ -3813,8 +3901,8 @@ function degLabel(k, d, style) {
   return `${sol} · ${i + 1}`;
 }
 const midiToDeg = (k, midi) => { for (let d = -7; d <= 14; d++) if (degMidi(k, d) === midi) return d; return null; };
-const mlv = () => MLEVELS[S.settings.mel.level] || MLEVELS.newbie;
-const ghostMode = () => (S.settings.mel.showRhythm == null ? mlv().rhythm : S.settings.mel.showRhythm);
+const mlv = () => MLEVELS[S.mel.heistLv || S.settings.mel.level] || MLEVELS.newbie;
+const ghostMode = () => (S.mel.heistLv || S.settings.mel.showRhythm == null ? mlv().rhythm : S.settings.mel.showRhythm);
 
 // ---------- generator ----------
 function melRhythm(lv, mu) {
@@ -3992,11 +4080,12 @@ function melUI() {
   for (const b of $('#melModeSeg').children) b.setAttribute('aria-pressed', String(b.dataset.v === st.mode));
   $('#melLabels').value = st.labels;
   $('#melShowRhythm').checked = ghostMode();
-  $('#challengeBtn').hidden = true;
+  const heist = S.mode === 'challenge' && !!S.ch;
+  $('#melLevelSeg').hidden = $('#melModeSeg').hidden = $('#melShowRhythm').closest('label').hidden = heist;
   if (!q) return;
   const k = MKEYS[q.key];
   $('#melKeyBadge').textContent = k.name;
-  $('#melInfo').textContent = `${MEL_FUN[S.settings.mel.level] || lv.name} · ${q.mu / 4}/4 · ${q.measures} measures`;
+  $('#melInfo').textContent = `${MEL_FUN[q.level] || lv.name} · ${q.mu / 4}/4 · ${q.measures} measures`;
   $('#melStart').innerHTML = `Starts on <b>${esc(degLabel(k, q.notes[0].d, 'both'))}</b> (${esc(degLabel(k, q.notes[0].d, 'letters'))}) · ⭐ on the piano`;
   const total = m.ans.reduce((a, n) => a + n.dur, 0), cap = q.mu * q.measures;
   const complete = total === cap && m.ans.every(n => n.d != null);
@@ -4017,6 +4106,8 @@ function melUI() {
   $('#playALabel').textContent = 'My combo';
   els.playQBtn.querySelector('span').firstChild.textContent = 'Listen ';
   els.checkBtn.disabled = m.checked ? Date.now() < m.lockUntil : !complete;
+  $('#melFeedback .fb-next').innerHTML = `Replay the safe or your combination, then press <b>${heist ? 'Next layer' : 'Next safe'}</b> when you're ready.`;
+  if (heist) heistBarUI(complete, m.lockUntil, m.checked);
 }
 
 // ---------- palette + piano ----------
@@ -4140,6 +4231,7 @@ function melGrade(q, ans) {
 }
 function melCheck() {
   const m = S.mel; if (!m.q) return;
+  if (S.mode === 'challenge' && S.ch) { heistMelCheck(); return; }
   if (m.checked) { if (Date.now() < m.lockUntil) return; melNew(); return; }
   if (els.checkBtn.disabled) return;
   Engine.stop();
@@ -4154,6 +4246,26 @@ function melCheck() {
   setTimeout(() => spyAfterPractice((g.pc + g.rc) / (2 * g.n), perfect, (MEL_LOOT[m.q.level] || 1) * (g.pc + g.rc + (perfect ? 5 : 0)), $('#melFeedback')), 0);
   (day.melodies || (day.melodies = [])).push({ lv: m.q.level, key: m.q.key, mode: MKEYS[m.q.key].mode, pc: g.pc, pn: g.n, rc: g.rc, rn: g.n, pl: m.plays, t0: m.t0, t1: Date.now() });
   writeLog(log);
+  renderMount(melAnsMount); renderMount(melCorrectMount); melUI();
+}
+
+function heistMelCheck() {
+  const m = S.mel, ch = S.ch;
+  if (m.checked) { if (Date.now() < m.lockUntil) return; heistNext(); return; }
+  if (els.checkBtn.disabled) return;
+  Engine.stop();
+  const g = melGrade(m.q, m.ans);
+  ch.answers[ch.idx] = m.ans.map(n => ({ ...n }));
+  ch.grades[ch.idx] = g;
+  ch.times[ch.idx] = [m.t0, Date.now()];
+  ch.pauseStart = Date.now();                          // looking it over doesn't count toward the time
+  m.checked = true; m.sel = null; m.states = g.states;
+  m.lockUntil = Date.now() + 1500; setTimeout(melUI, 1550);
+  const perfect = g.pc === g.n && g.rc === g.n, x = Math.max(0, ch.used[ch.idx] - CONFIG.challengePlays);
+  $('#melFbMsg').textContent = (perfect ? 'Safe cracked! Every note is right 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green = right, orange = right rhythm but wrong pitch, red = wrong rhythm.`)
+    + (x ? ` (${x} extra listen${x > 1 ? 's' : ''}: −${Math.round(x * CONFIG.extraPenalty * 100)}%)` : '');
+  $('#melFbMsg').classList.toggle('perfect', perfect);
+  $('#melFeedback').hidden = false;
   renderMount(melAnsMount); renderMount(melCorrectMount); melUI();
 }
 
@@ -4187,6 +4299,7 @@ function melPlay(who) {
   const m = S.mel; if (!m.q) return;
   const notes = who === 'question' ? m.q.notes : m.ans;
   if (who === 'answer' && !notes.some(n => n.d != null)) return;
+  if (who === 'question' && S.mode === 'challenge' && S.ch && !m.checked && !heistListen()) return;
   Engine.stop();
   maybeShowIosTip();
   if (who === 'question') m.plays++;
@@ -4216,12 +4329,17 @@ function melPlay(who) {
 function setApp(app) {
   Engine.stop();
   S.app = app; S.settings.app = app; saveSettings();
-  if (app === 'melody') { if (!S.mel.q) melNew(); showView('melody'); melRenderAll(); }
+  if (app === 'melody') { showView('melody'); fitScreen(true); if (!S.mel.q) melNew(); melRenderAll(); }
   else { $('#challengeBtn').hidden = false; showView('play'); updateUI(); }
   for (const b of $('#appTabs').children) b.setAttribute('aria-pressed', String(b.dataset.app === S.app));
   fitScreen(true);
 }
-$('#appTabs').addEventListener('click', e => { const b = e.target.closest('[data-app]'); if (b && b.dataset.app !== S.app) setApp(b.dataset.app); });
+$('#appTabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-app]'); if (!b) return;
+  if (S.mode === 'challenge') { toast('Finish the heist first, or press Quit.'); return; }
+  if (S.mode === 'end') { heistExit(b.dataset.app); return; }
+  if (b.dataset.app !== S.app) setApp(b.dataset.app);
+});
 $('#melLevelSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; S.settings.mel.level = b.dataset.v; S.settings.mel.showRhythm = null; saveSettings(); melNew(); });
 $('#melModeSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; S.settings.mel.mode = b.dataset.v; saveSettings(); melNew(); });
 $('#melLabels').addEventListener('change', e => { S.settings.mel.labels = e.target.value; saveSettings(); melRenderAll(); if (S.mel.checked) renderMount(melCorrectMount); });
@@ -4403,7 +4521,7 @@ else refreshClassInfo();
 applyFocusFromUrl();
 spyUI();
 if (S.settings.app === 'melody') setApp('melody');
-if (/[?&]selftest/.test(location.search)) window.RDT = { generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+if (/[?&]selftest/.test(location.search)) window.RDT = { HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
 </body>
