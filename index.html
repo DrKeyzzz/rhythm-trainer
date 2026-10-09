@@ -624,6 +624,7 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
     </div>
     <div class="top-actions">
       <button class="btn btn-challenge" id="challengeBtn" type="button" title="Challenge Mode">💎 The Heist</button>
+      <button class="btn btn-sm mw-btn" id="mwBtn" type="button" title="See the leaderboards">🕵️ Most Wanted</button>
       <button class="btn btn-sm teacher-top" id="teacherBtn" type="button">Teacher Dashboard</button>
     </div>
   </header>
@@ -2692,15 +2693,18 @@ function whoMenu() {
 
 // ---------- leaderboards: Class and World, each with Easy / Hard / Extreme ----------
 const BS = { scope: 'world', level: 'easy', myId: null, ranks: null, code: null };   // code = which of the student's classes the Class board shows
+let boardModal = null;                                   // the 🕵️ Most Wanted popup, while it's open
+const boardTarget = () => (boardModal && boardModal.isConnected ? boardModal : els.boardArea);
+const boardErr = () => (boardModal && boardModal.isConnected ? $('#mwErr') : els.formError);
 async function loadBoard() {
   const p = getProfile();
   const cl = classesOf(p);
   if (BS.scope === 'class' && !cl.length) BS.scope = 'world';
   if (!cl.some(c => c.code === BS.code)) BS.code = cl.length ? cl[0].code : null;
   const code = BS.scope === 'class' ? BS.code : null;
-  els.formError.textContent = '';
+  boardErr().textContent = '';
   try { renderBoard(await Board.get(BS.level, code, BS.myId)); }
-  catch (err) { els.formError.textContent = `Couldn't load the leaderboard: ${errMsg(err)}`; }
+  catch (err) { boardErr().textContent = `Couldn't load the leaderboard: ${errMsg(err)}`; }
 }
 
 function renderBoard(res) {
@@ -2716,17 +2720,17 @@ function renderBoard(res) {
   const scopes = classesOf(p).map(c => ['class', c.name, c.code]).concat([['world', '🌎 World']]);   // one button per class, then World
   const scopeTabs = `<div class="seg board-scope" role="group" aria-label="Which leaderboard">${scopes.map(([k, label, code]) => `<button type="button" data-scope="${k}"${code ? ` data-code="${esc(code)}"` : ''} aria-pressed="${k === BS.scope && (!code || code === BS.code)}">${esc(label)}</button>`).join('')}</div> `;
   const tabs = `<div class="seg board-tabs" role="group" aria-label="Leaderboard level">${LEVELS.map(lv => `<button type="button" data-board="${lv}" aria-pressed="${lv === res.level}">${LEVEL_FUN[lv]}</button>`).join('')}</div>`;
-  els.boardArea.innerHTML = scopeTabs + tabs + note + (res.top.length
+  boardTarget().innerHTML = scopeTabs + tabs + note + (res.top.length
     ? `<table class="board"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Time</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`
     : '<p class="muted">No scores yet. Be the first!</p>');
-  els.boardArea.hidden = false;
+  boardTarget().hidden = false;
 }
 
 async function submitScore() {
   const ch = S.ch, p = getProfile();
   if (!ch || ch.submitted) return;
   if (!p) { showWelcome(false); return; }
-  els.formError.textContent = '';
+  boardErr().textContent = '';
   els.submitBtn.disabled = true;
   els.submitBtn.textContent = 'Posting…';
   els.postArea.hidden = false;
@@ -2741,7 +2745,7 @@ async function submitScore() {
     els.postArea.hidden = true;
     if (cls) { BS.scope = 'class'; BS.code = p.classCode; renderBoard(cls); } else { BS.scope = 'world'; renderBoard(world); }
   } catch (err) {
-    els.formError.textContent = `Couldn't post your score: ${errMsg(err)}`;
+    boardErr().textContent = `Couldn't post your score: ${errMsg(err)}`;
     els.submitBtn.disabled = false;
     els.submitBtn.hidden = false;
   } finally {
@@ -2749,14 +2753,26 @@ async function submitScore() {
   }
 }
 
+async function openMostWanted() {
+  openModal(`<h3>🕵️ Most Wanted</h3><div id="mwBoard"><p class="muted">Loading the leaderboards…</p></div><div class="form-error" id="mwErr"></div>
+    <div class="modal-actions"><button class="btn" type="button" data-close>Close</button></div>`, true);
+  boardModal = $('#mwBoard');
+  boardModal.addEventListener('click', boardClick);
+  const p = getProfile();
+  if (S.mode !== 'end') { BS.myId = null; BS.ranks = null; BS.level = S.ch ? S.ch.level : S.settings.level; }
+  BS.scope = p && p.classCode ? 'class' : 'world'; BS.code = (p && p.classCode) || null;
+  await loadBoard();
+}
 async function viewBoardOnly() { BS.level = S.ch ? S.ch.level : 'easy'; await loadBoard(); }
-els.boardArea.addEventListener('click', async e => {
+async function boardClick(e) {
   const lv = e.target.closest('[data-board]'), sc = e.target.closest('[data-scope]');
   if (lv) BS.level = lv.dataset.board;
   else if (sc) { BS.scope = sc.dataset.scope; if (sc.dataset.code) BS.code = sc.dataset.code; }
   else return;
   await loadBoard();
-});
+}
+els.boardArea.addEventListener('click', boardClick);
+$('#mwBtn').onclick = openMostWanted;
 
 // ---------- teacher panel ----------
 function teacherLogin() {
@@ -2828,6 +2844,7 @@ function closeModal() {
   if (els.modal.hidden) return;
   els.modal.hidden = true;
   els.modalBox.innerHTML = '';
+  boardModal = null;
   if (lastFocus && lastFocus.focus) lastFocus.focus();
 }
 els.modal.addEventListener('click', e => { if (e.target === els.modal || e.target.closest('[data-close]')) closeModal(); });
