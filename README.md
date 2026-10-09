@@ -19,6 +19,15 @@ A rhythmic dictation trainer for music students. Students listen to a rhythm, th
 - **Hard:** everything in Easy, plus syncopations (eighth-quarter-eighth, rest-quarter-eighth), dotted eighth-sixteenth and sixteenth-eighth-sixteenth figures, off-beat eighths, and eighth rests before sixteenths. Every Hard rhythm includes several of these harder pieces.
 - **Extreme:** the Hard pieces plus eighth-note triplets, quarter-note triplets, 3+3+2 (dotted eighth, dotted eighth, eighth), sixteenth-note syncopations, and in compound meter hemiola (three quarters in 12/8) and duplets (dotted eighths). It keeps a few basic pieces so rhythms still make musical sense, but drops most of the Easy ones so the bank stays manageable.
 
+**🎹 Melody tab (melodic dictation, new)**
+- Switch between **🥁 Rhythm** and **🎹 Melody** at the top. Each question first plays the key (I–IV–V–I and the tonic), then a count-in, then the melody. The starting note is given (⭐ on the piano), like the AP exam.
+- Students pick a note length, then tap a piano key. Tap a note on the staff to change its pitch (or use ↑/↓). **My Answer** plays it back; **Check** grades **pitch and rhythm separately** (green = right, orange = right rhythm but wrong pitch, red = wrong rhythm) and shows the correct melody.
+- Major or minor is random, or lock **Major** / **Minor**. Minor uses do-based solfège (do re me fa sol le te). Key and staff labels: **do · 1** (both), solfège, numbers, letters or none.
+- **🌱 Newbie:** do–re–mi only, half/quarter/two eighths, 2 measures of 4/4, C major or A minor. The scale is lit up on the piano and the rhythm is shown, so students only choose pitches.
+- **Beginner:** the same notes, but nothing is lit and the rhythm isn't shown. Keys C, G, F major and A, E, D minor.
+- **Five-finger:** do through sol, with skips inside do–mi–sol; adds dotted half and whole notes, and 3/4.
+- Coming next: Full-scale and AP Exam levels (bass clef, 6/8, harmonic minor), Melody challenges, and Melody in the Teacher Dashboard. Melody practice already counts in the session report.
+
 **Practice mode**
 - Choose Easy, Hard or Extreme, Simple meter (2/4, 3/4, 4/4) or Compound meter (6/8, 9/8, 12/8), and 2 measures (the default) or 4 measures for extra challenge. You can also lock one time signature.
 - **Question** plays the rhythm after a one-measure count-in. The sound changes with each new rhythm (marimba, soft piano, kalimba, flute, bells, woodblock) so it stays fresh; pick one sound in Settings → **Sound** if you prefer. **My Answer** plays the same instrument an octave lower so students can tell them apart.

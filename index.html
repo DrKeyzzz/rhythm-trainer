@@ -337,6 +337,49 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .teacher-top{font-size:13px}
 @media (max-width:600px){.teacher-top{font-size:12px;padding:6px 10px}}
+.app-tabs{margin:0 auto 0 12px}
+.app-tabs button{font-size:15px}
+@media (max-width:600px){.app-tabs{order:3;margin:6px 0 0;width:100%}.app-tabs button{flex:1}}
+.mel-controls{justify-content:flex-start}
+.mel-start{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.mel-start b{color:var(--text)}
+.mstaff{display:block;color:var(--text);user-select:none;-webkit-user-select:none}
+.mstaff .sline{stroke:var(--muted);stroke-width:1.2}
+.mstaff .ledger{stroke:var(--text);stroke-width:1.4}
+.mstaff .bar{stroke:var(--text);stroke-width:1.5}
+.mstaff .bar-thick{fill:var(--text)}
+.mstaff .clef{font:62px "Noto Music","Bravura","Apple Symbols","Segoe UI Symbol",serif;fill:var(--text)}
+.mstaff .acc{font:700 24px Georgia,"Times New Roman",serif;fill:var(--text)}
+.mstaff .tsig{font:800 23px Georgia,"Times New Roman",serif;text-anchor:middle;fill:var(--text)}
+.mstaff .mlabel{font:700 12px system-ui,sans-serif;text-anchor:middle;fill:var(--muted)}
+.mstaff .mlabel.num{font-weight:600;font-size:11px;opacity:.8}
+.mstaff .mnote{cursor:pointer;color:var(--text)}
+.mstaff .mnote .hit{fill:transparent}
+.mstaff .mnote.sel{color:var(--accent)} .mstaff .mnote.sel .hit{fill:var(--accent-soft)}
+.mstaff .mnote.ok{color:var(--ok)} .mstaff .mnote.pitch{color:var(--play)} .mstaff .mnote.bad{color:var(--bad)}
+.mstaff .mnote.ghost{color:var(--muted);opacity:.55}
+.mstaff .mnote.play .hit{fill:var(--play-soft)}
+.mstaff .mnote.play{color:var(--a)}
+.mstaff .nhead{fill:currentColor} .mstaff .nhead.hollow{fill:none;stroke:currentColor;stroke-width:1.9}
+.mstaff .nstem{stroke:currentColor;stroke-width:1.5} .mstaff .nbeam,.mstaff .nflag,.mstaff .ndot{fill:currentColor}
+.mstaff .caret{fill:var(--accent);opacity:.35}
+.mel-palette{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.mel-palette .lbl{font-size:13px;font-weight:650;color:var(--muted);margin-right:4px}
+.dur-btn{min-height:52px;min-width:64px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 10px;font-size:11px;font-weight:650}
+.dur-btn svg{width:34px;height:30px;color:var(--text)}
+.dur-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.dur-btn[aria-pressed="true"] svg{color:var(--accent)}
+.piano{position:relative;height:150px;margin-top:12px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.piano .key{position:absolute;top:0;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:6px;font:700 11px system-ui,sans-serif;transition:background .1s,transform .05s}
+.piano .wkey{bottom:0;background:#fdfdfd;border:1px solid #9aa0ae;border-radius:0 0 9px 9px;color:#2a2f3a;z-index:1}
+.piano .bkey{height:60%;background:#22252e;border:1px solid #111;border-radius:0 0 6px 6px;color:#fff;z-index:2;font-size:10px;padding-bottom:4px}
+.piano .wkey.lit{background:#fff1b8} .piano .bkey.lit{background:#7a5b00}
+.piano .wkey.litmain{background:#ffd54a;box-shadow:inset 0 -6px 0 #f0a500} .piano .bkey.litmain{background:#c98a00}
+.piano .key.down{filter:brightness(.82);transform:translateY(1px)}
+.piano .key .star{position:absolute;top:6px;font-size:13px}
+.piano .key .kl{line-height:1.15;text-align:center;white-space:nowrap}
+.piano .key .kl small{display:block;font-weight:600;opacity:.75}
+@media (max-width:600px){.piano{height:130px}.piano .key{font-size:9px}.piano .bkey{font-size:8px}.dur-btn{min-width:54px}}
 .testmode{background:var(--play-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin:0 0 10px}
 
 /* ---------- modal & toast ---------- */
@@ -407,6 +450,8 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .mtg-home svg { width: 15px; height: 15px; flex: none; }
 header:has(> .mtg-home) { flex-wrap: wrap; }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Music&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="app">
@@ -415,6 +460,9 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
     <div class="brand">
       <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6.5" cy="18.5" rx="3.3" ry="2.4" transform="rotate(-20 6.5 18.5)"/><ellipse cx="17" cy="16.5" rx="3.3" ry="2.4" transform="rotate(-20 17 16.5)"/><rect x="8.9" y="5.2" width="1.7" height="13"/><rect x="19.4" y="3.2" width="1.7" height="13"/><path d="M8.9 5.2 21.1 3.2v3.2L8.9 8.4z"/></svg></div>
       <h1>Rhythm Dictation Trainer<small>Listen, then rebuild the rhythm</small></h1>
+    </div>
+    <div class="seg app-tabs" id="appTabs" role="group" aria-label="Game">
+      <button type="button" data-app="rhythm">🥁 Rhythm</button><button type="button" data-app="melody">🎹 Melody</button>
     </div>
     <div class="top-actions">
       <button class="btn btn-challenge" id="challengeBtn" type="button">🏆 Challenge<span class="only-wide">&nbsp;Mode</span></button>
@@ -496,6 +544,41 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
       <div id="statsLine"></div>
       <div><span class="size-ctl" role="group" aria-label="Screen size"><span>Size</span><button type="button" id="zoomOut" title="Smaller" aria-label="Smaller">A−</button><button type="button" id="zoomReset" title="Back to automatic size">Auto</button><button type="button" id="zoomIn" title="Bigger" aria-label="Bigger">A+</button></span><span class="small" id="modeNote"></span> <button class="linkbtn who" id="whoBtn" type="button" title="Switch student or class"></button> <button class="btn btn-sm" id="reportBtn" type="button">📋 Report Session</button></div>
     </footer>
+  </div>
+
+  <!-- ===== Melody view ===== -->
+  <div id="melodyView" hidden>
+    <div class="controls mel-controls">
+      <div class="seg" id="melLevelSeg" role="group" aria-label="Melody level">
+        <button type="button" data-v="newbie">🌱 Newbie</button><button type="button" data-v="beginner">Beginner</button><button type="button" data-v="five">Five-finger</button>
+      </div>
+      <div class="seg" id="melModeSeg" role="group" aria-label="Major or minor">
+        <button type="button" data-v="both">Major &amp; minor</button><button type="button" data-v="major">Major</button><button type="button" data-v="minor">Minor</button>
+      </div>
+      <label class="field"><span>Labels</span><select id="melLabels"><option value="both">do · 1</option><option value="solfege">do re mi</option><option value="numbers">1 2 3</option><option value="letters">C D E</option><option value="none">None</option></select></label>
+      <label class="switch"><input type="checkbox" id="melShowRhythm"><span class="track"></span><span>Show rhythm</span></label>
+    </div>
+    <section class="card" id="melCard" aria-label="Melody question">
+      <div class="card-head">
+        <div class="qmeta"><span class="ts-badge" id="melKeyBadge">C major</span><span class="muted" id="melInfo"></span></div>
+        <div class="status" id="melStatus" aria-live="polite"></div>
+        <div class="edit-tools">
+          <button class="btn btn-sm" id="melDelete" type="button" title="Delete the selected note (Delete key)">⌫<span class="only-wide">&nbsp;Delete</span></button>
+          <button class="btn btn-sm" id="melClear" type="button">Clear All</button>
+        </div>
+      </div>
+      <p class="mel-start" id="melStart"></p>
+      <div class="staff" id="melStaff"></div>
+      <p class="hint" id="melHint"></p>
+      <div class="feedback" id="melFeedback" hidden>
+        <div class="fb-msg" id="melFbMsg"></div>
+        <p class="fb-next muted">Replay the question or your answer, then press <b>Next Melody</b> when you're ready.</p>
+        <div class="fb-label">Correct melody</div>
+        <div class="staff" id="melCorrect"></div>
+      </div>
+      <div class="mel-palette" id="melPalette" role="group" aria-label="Note length"></div>
+      <div class="piano" id="piano" aria-label="Piano"></div>
+    </section>
   </div>
 
   <!-- ===== Challenge end screen ===== -->
@@ -1029,7 +1112,7 @@ const Engine = {
       const t0 = ctx.currentTime + 0.12;
       for (const ev of sched.events) {
         if (ev.kind === 'click') this.click(bus, t0 + ev.t, ev.accent, token.nodes);
-        else { const snd = SOUNDS[sched.sound] || SOUNDS[0]; this.tone(bus, t0 + ev.t, ev.dur, ev.voice === 'answer' ? snd.a : snd.q, token.nodes); }
+        else { const snd = SOUNDS[sched.sound] || SOUNDS[0]; this.tone(bus, t0 + ev.t, ev.dur, ev.v || (ev.voice === 'answer' ? snd.a : snd.q), token.nodes); }
       }
       const end = t0 + sched.total;
       const loop = () => {
@@ -1243,7 +1326,7 @@ function renderMount(m) {
   const props = m.getProps();
   if (!props) { m.el.innerHTML = ''; return; }
   m.lastW = w;
-  m.el.innerHTML = renderRhythm({ ...props, cw: w });
+  m.el.innerHTML = (props.render || renderRhythm)({ ...props, cw: w });
 }
 
 /* =====================================================================
@@ -1273,7 +1356,7 @@ const store = {
 
 const S = {
   mode: 'practice',                // 'practice' | 'challenge' | 'end'
-  settings: { type: 'simple', level: 'easy', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false, sound: 'cycle' },
+  settings: { type: 'simple', level: 'easy', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false, sound: 'cycle', app: 'rhythm', mel: { level: 'newbie', mode: 'both', labels: 'both', showRhythm: null } },
   q: null, answer: [], selected: null, checked: false, nextLockUntil: 0,
   pool: { pct: 1, custom: {} }, poolEdit: false,      // practice "rhythms in play" (resets every visit)
   stats: { rhythms: 0, correct: 0, total: 0, streak: 0 },
@@ -1297,6 +1380,8 @@ function loadSettings() {
     if (saved.tempo >= 50 && saved.tempo <= 120) S.settings.tempo = saved.tempo;
     if (saved.sound === 'cycle' || SOUNDS[saved.sound]) S.settings.sound = saved.sound;
     S.settings.metronome = !!saved.metronome;
+    if (saved.mel && typeof saved.mel === 'object') Object.assign(S.settings.mel, saved.mel);
+    if (saved.app === 'melody' || saved.app === 'rhythm') S.settings.app = saved.app;
   } catch (e) { /* ignore bad saved settings */ }
 }
 const saveSettings = () => store.set('rdt_settings', JSON.stringify(S.settings));
@@ -1625,6 +1710,7 @@ function populateSounds() {
 
 // ---------- UI refresh ----------
 function updateUI() {
+  if (S.app === 'melody') { melUI(); return; }
   const inChallenge = S.mode === 'challenge';
   const s = S.settings;
 
@@ -1842,12 +1928,14 @@ function showEndScreen() {
 
 function showView(which) {
   fitKey = '';
+  if (which === 'play' && S.app === 'melody') which = 'melody';
+  if (els.melodyView) els.melodyView.hidden = which !== 'melody';
   els.playView.hidden = which !== 'play';
   els.endScreen.hidden = which !== 'end';
   els.reportView.hidden = which !== 'report';
   els.teacherView.hidden = which !== 'teacher';
   if (which !== 'teacher') clearInterval(TD.timer);
-  els.actionbar.hidden = which !== 'play';
+  els.actionbar.hidden = which !== 'play' && which !== 'melody';
   if (which === 'play') { reviewMounts.forEach(destroyMount); reviewMounts = []; }
 }
 
@@ -2507,10 +2595,10 @@ els.poolEdit.addEventListener('click', () => {
   if (S.poolEdit) renderBank();
   else newPracticeRhythm();                         // Done: new rhythm from the picked set
 });
-els.playQBtn.onclick = playQuestion;
-els.playABtn.onclick = playAnswer;
+els.playQBtn.onclick = () => (S.app === 'melody' ? melPlay('question') : playQuestion());
+els.playABtn.onclick = () => (S.app === 'melody' ? melPlay('answer') : playAnswer());
 els.stopBtn.onclick = () => Engine.stop();
-els.checkBtn.onclick = onCheck;
+els.checkBtn.onclick = () => (S.app === 'melody' ? melCheck() : onCheck());
 els.deleteBtn.onclick = deleteSlot;
 els.clearBtn.onclick = clearAll;
 $('#challengeBtn').onclick = () => {
@@ -2598,6 +2686,7 @@ document.addEventListener('keydown', e => {
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
   if (S.mode === 'end' || !els.reportView.hidden || !els.teacherView.hidden) { if (e.key === 'Escape') Engine.stop(); return; }
   const k = e.key;
+  if (S.app === 'melody') { melKey(e); return; }
   if (k === ' ') { e.preventDefault(); spaceHandled = true; if (!e.repeat) playQuestion(); }
   else if (k === 'a' || k === 'A') { e.preventDefault(); if (!e.repeat) playAnswer(); }
   else if (k === 'Escape') { if (Engine.isPlaying) Engine.stop(); else if (S.selected != null) selectSlot(S.selected); }
@@ -2689,6 +2778,11 @@ function worstSwapAreas(scn, staffW, bankW, cellH, extra = 0) {
 }
 
 function fitScreen(force) {
+  if (S.app === 'melody') {
+    const big = innerWidth >= 1500 && innerHeight >= 850;
+    setZoom(innerWidth <= 700 ? 1 : Math.max(0.6, Math.min(2.2, (big ? Math.min(innerWidth / 1160, innerHeight / 820) : 1) * zoomAdj)));
+    updateZoomLabel(); return;
+  }
   if (S.mode === 'end' || !S.q) { setZoom(Math.max(0.6, Math.min(2.5, zoomNow))); return; }
   const scn = fitScenario();
   const key = [innerWidth, innerHeight, zoomAdj, S.mode, scn.level, scn.measures, scn.tsIds.join()].join('|');
@@ -2879,9 +2973,13 @@ function buildReport() {
       }
     });
   }
+  const mel = day.melodies || [];
+  let melP = 0, melPn = 0, melR = 0, melRn = 0;
+  for (const m of mel) { melP += m.pc; melPn += m.pn; melR += m.rc; melRn += m.rn; }
+  slots += melPn + melRn; correct += melP + melR; adj += melP + melR;   // each melody note counts for pitch and rhythm
   const accuracy = slots ? correct / slots : 0;
   const adjAcc = slots ? Math.min(1, adj / slots) : 0;
-  const effort = Math.min(1, rh.length / goalFor());
+  const effort = Math.min(1, (rh.length + mel.length) / goalFor());
   const accPts = Math.round(75 * adjAcc), effPts = Math.round(25 * effort);
   const rated = SKILLS.filter(k => skills[k] && skills[k].n >= 4).map(k => ({ k, acc: skills[k].c / skills[k].n, n: skills[k].n }));
   const strengths = rated.filter(x => x.acc >= 0.85).sort((a, b) => b.acc - a.acc || b.n - a.n).slice(0, 2);
@@ -2896,7 +2994,8 @@ function buildReport() {
   for (const run of day.runs) if (!best[run.lv] || run.score > best[run.lv]) best[run.lv] = run.score;
   return {
     date: dayKey(), rhythms: rh.length, slots, correct, accuracy, adjAcc, effort, accPts, effPts,
-    score: rh.length ? accPts + effPts : 0, minutes: activeMinutes(rh),
+    score: rh.length || mel.length ? accPts + effPts : 0, minutes: activeMinutes(rh.concat(mel)),
+    melodies: mel.length, melPitch: melPn ? melP / melPn : 0, melRhythm: melRn ? melR / melRn : 0,
     avgPlays: rh.length ? plays / rh.length : 0, avgPool: rh.length ? poolSum / rh.length : 1, missed, missedAll, adj, poolSum, plays, runs: day.runs, extraSum: sum(rh.map(r => r.x || 0)), skills, meters, byTs, levels, strengths, work, rated, best,
     challenges: day.runs.length, first: rh.length ? Math.min(...rh.map(r => r.t0 || r.t1)) : null, last: rh.length ? Math.max(...rh.map(r => r.t1)) : null,
   };
@@ -2915,6 +3014,7 @@ const pct = x => `${Math.round(x * 100)}%`;
 const tone = x => (x >= 0.85 ? 'hi' : x >= 0.65 ? 'mid' : 'lo');
 const fmtClock = t => new Date(t).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 const fmtLongDate = key => { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); };
+const melNote = rep => (rep.melodies ? `Melody: ${rep.melodies} melod${rep.melodies === 1 ? 'y' : 'ies'}, pitches ${pct(rep.melPitch)}, rhythm ${pct(rep.melRhythm)}. ` : '');
 const poolNote = rep => (rep.avgPool < 0.995 ? `Practiced with ${pct(rep.avgPool)} of the rhythms on average (smaller sets count a little less). ` : '');
 const bestText = rep => LEVELS.filter(lv => rep.best[lv] != null).map(lv => `${LEVEL_NAME[lv]} ${rep.best[lv]}%`).join(' · ') || 'none yet';
 
@@ -2938,7 +3038,7 @@ function renderReport() {
   const rep = buildReport();
   $('#rpDate').textContent = fmtLongDate(rep.date) + (rep.first ? ` · ${fmtClock(rep.first)} – ${fmtClock(rep.last)}` : '');
   $('#rpScore').textContent = rep.score;
-  if (!rep.rhythms) {
+  if (!rep.rhythms && !rep.melodies) {
     $('#rpBody').innerHTML = `<p class="rp-break" style="margin-top:14px">No rhythms yet today. Check a few practice rhythms or finish a challenge, then come back here.</p>`;
     return;
   }
@@ -2959,7 +3059,7 @@ function renderReport() {
       <div class="rp-tile"><span>Practice time</span><b>${rep.minutes} min</b></div>
       <div class="rp-tile"><span>Avg. listens</span><b>${rep.avgPlays.toFixed(1)}</b></div>
     </div>
-    <p class="rp-break">Score = accuracy <b>${rep.accPts}/75</b> (Hard and Extreme count a little extra) + effort <b>${rep.effPts}/25</b> (${Math.min(rep.rhythms, goalFor())} of ${goalFor()} rhythms). ${poolNote(rep)}Best challenge: ${bestText(rep)}.</p>
+    <p class="rp-break">Score = accuracy <b>${rep.accPts}/75</b> (Hard and Extreme count a little extra) + effort <b>${rep.effPts}/25</b> (${Math.min(rep.rhythms, goalFor())} of ${goalFor()} rhythms). ${poolNote(rep)}${melNote(rep)}Best challenge: ${bestText(rep)}.</p>
     <div class="rp-cols">
       <div class="rp-box good"><h3>✅ Doing well</h3><ul>${goodHtml}</ul></div>
       <div class="rp-box work"><h3>🎯 Needs work</h3><ul>${workHtml}</ul></div>
@@ -3024,7 +3124,7 @@ async function drawReport(rep, name, noPictures = false) {
 
   y += 150;
   ctx.font = `400 22px ${FONT}`;
-  const breakdown = `Score = accuracy ${rep.accPts}/75 + effort ${rep.effPts}/25 (${Math.min(rep.rhythms, goalFor())} of ${goalFor()} rhythms). ${poolNote(rep)}Best challenge: ${bestText(rep)}.`;
+  const breakdown = `Score = accuracy ${rep.accPts}/75 + effort ${rep.effPts}/25 (${Math.min(rep.rhythms, goalFor())} of ${goalFor()} rhythms). ${poolNote(rep)}${melNote(rep)}Best challenge: ${bestText(rep)}.`;
   const bl = wrapLines(ctx, breakdown, W - 2 * P);
   bl.forEach((l, i) => text(l, P, y + i * 30, 22, '#5d6477'));
   y += bl.length * 30 + 30;
@@ -3096,7 +3196,7 @@ async function exportReport() {
   const name = studentName();
   if (!name) { showWelcome(false); return; }
   const rep = buildReport();
-  if (!rep.rhythms) { $('#rpError').textContent = 'There is nothing to save yet. Do a few rhythms first.'; return; }
+  if (!rep.rhythms && !rep.melodies) { $('#rpError').textContent = 'There is nothing to save yet. Do a few rhythms first.'; return; }
   $('#rpError').textContent = '';
   const toJpeg = c => new Promise((res, rej) => { try { c.toBlob(res, 'image/jpeg', 0.92); } catch (err) { rej(err); } });
   let blob;
@@ -3545,6 +3645,481 @@ $('#tdClass').onchange = () => { TD.code = $('#tdClass').value; TD.scope = TD.co
 $('#tdBack').onclick = () => { showView(TD.backTo || 'play'); if ((TD.backTo || 'play') === 'play') { fitScreen(true); refreshClassInfo(); } };
 $('#tdSignOut').onclick = async () => { try { await Board.signOut(); } catch (e) { /* ignore */ } TD.email = null; showView('play'); fitScreen(true); toast('Signed out.'); };
 
+/* =====================================================================
+   10. MELODIC DICTATION  (Stage 1: Newbie, Beginner, Five-finger)
+   A melody is a list of { d: scale degree (0 = do, 7 = high do, negative = below), dur }.
+   Minor uses do-based solfège (do re me fa sol le te).
+   ===================================================================== */
+const MKEYS = {
+  C:  { name: 'C major', mode: 'major', letter: 0, tonic: 60, sig: 0 },
+  G:  { name: 'G major', mode: 'major', letter: 4, tonic: 67, sig: 1 },
+  F:  { name: 'F major', mode: 'major', letter: 3, tonic: 65, sig: -1 },
+  Am: { name: 'A minor', mode: 'minor', letter: 5, tonic: 69, sig: 0 },
+  Em: { name: 'E minor', mode: 'minor', letter: 2, tonic: 64, sig: 1 },
+  Dm: { name: 'D minor', mode: 'minor', letter: 1, tonic: 62, sig: -1 },
+};
+const MLEVELS = {
+  newbie:   { name: 'Newbie',      degs: [0, 1, 2],       starts: [0, 2],    lit: true,  rhythm: true,  durs: [8, 4, 2],          meters: [16],     measures: 2, keys: ['C', 'Am'], skips: false },
+  beginner: { name: 'Beginner',    degs: [0, 1, 2],       starts: [0, 2],    lit: false, rhythm: false, durs: [8, 4, 2],          meters: [16],     measures: 2, keys: ['C', 'G', 'F', 'Am', 'Em', 'Dm'], skips: false },
+  five:     { name: 'Five-finger', degs: [0, 1, 2, 3, 4], starts: [0, 2, 4], lit: false, rhythm: false, durs: [16, 12, 8, 4, 2], meters: [16, 12], measures: 2, keys: ['C', 'G', 'F', 'Am', 'Em', 'Dm'], skips: true },
+};
+const SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] };
+const SOLF = { major: ['do', 're', 'mi', 'fa', 'sol', 'la', 'ti'], minor: ['do', 're', 'me', 'fa', 'sol', 'le', 'te'] };
+const LETTERS = 'CDEFGAB';
+const SHARP_ORDER = [3, 0, 4, 1, 5, 2, 6], FLAT_ORDER = [6, 2, 5, 1, 4, 0, 3];
+const DUR_NAME = { 16: 'Whole', 12: 'Dotted half', 8: 'Half', 4: 'Quarter', 2: 'Eighth' };
+const mod = (a, n) => ((a % n) + n) % n;
+const degMidi = (k, d) => k.tonic + 12 * Math.floor(d / 7) + SCALES[k.mode][mod(d, 7)];
+const degStep = (k, d) => (Math.floor(k.tonic / 12) - 1) * 7 + k.letter + d;        // diatonic step: C4 = 28, E4 = 30
+const keyAcc = (k, li) => (k.sig > 0 && SHARP_ORDER.slice(0, k.sig).includes(li) ? '♯' : k.sig < 0 && FLAT_ORDER.slice(0, -k.sig).includes(li) ? '♭' : '');
+function degLabel(k, d, style) {
+  const i = mod(d, 7), sol = SOLF[k.mode][i], li = mod(k.letter + d, 7);
+  if (style === 'solfege') return sol;
+  if (style === 'numbers') return String(i + 1);
+  if (style === 'letters') return LETTERS[li] + keyAcc(k, li);
+  if (style === 'none') return '';
+  return `${sol} · ${i + 1}`;
+}
+const midiToDeg = (k, midi) => { for (let d = -7; d <= 14; d++) if (degMidi(k, d) === midi) return d; return null; };
+const mlv = () => MLEVELS[S.settings.mel.level] || MLEVELS.newbie;
+const ghostMode = () => (S.settings.mel.showRhythm == null ? mlv().rhythm : S.settings.mel.showRhythm);
+
+// ---------- generator ----------
+function melRhythm(lv, mu) {
+  const W = { 16: 1, 12: 1.2, 8: 2.5, 4: 4, 2: 3 };
+  for (let tries = 0; tries < 300; tries++) {
+    const out = [];
+    for (let m = 0; m < lv.measures; m++) {
+      let pos = 0;
+      while (pos < mu) {
+        const opts = lv.durs.filter(d => {
+          const len = d === 2 ? 4 : d;                       // eighths come in pairs on the beat
+          if (pos + len > mu) return false;
+          if (d === 2 && pos % 4) return false;
+          if ((d === 16 || d === 12) && pos !== 0) return false;
+          if (d === 8 && mu === 16 && pos % 8) return false;
+          return true;
+        });
+        let r = Math.random() * sum(opts.map(d => W[d])), d = opts[0];
+        for (const o of opts) { r -= W[o]; if (r < 0) { d = o; break; } }
+        if (d === 2) { out.push(2, 2); pos += 4; } else { out.push(d); pos += d; }
+      }
+    }
+    if (out.length < 4 || out[out.length - 1] < 4) continue;   // at least 4 notes; end on a quarter or longer
+    return out;
+  }
+  return [4, 4, 4, 4, 4, 4, 8].slice(0, 0).concat(mu === 12 ? [4, 4, 4, 4, 4, 4] : [4, 4, 4, 4, 4, 4, 8]);
+}
+function melPitches(lv, n) {
+  const A = lv.degs, chord = [0, 2, 4].filter(d => A.includes(d));
+  const legal = (a, b) => Math.abs(a - b) <= 1 || (lv.skips && chord.includes(a) && chord.includes(b) && Math.abs(a - b) === 2);
+  for (let tries = 0; tries < 800; tries++) {
+    const p = [lv.starts[rand(lv.starts.length)]];
+    let ok = true, lastLeap = false;
+    for (let i = 1; i < n; i++) {
+      const prev = p[i - 1];
+      if (i === n - 1) { if (prev !== 1) ok = false; p.push(0); break; }
+      if (i === n - 2) {                                   // approach the final do by step from re
+        if (!legal(prev, 1) || (prev === 1 && p[i - 2] === 1)) { ok = false; break; }
+        p.push(1); continue;
+      }
+      const cands = [];
+      for (const d of A) {
+        const diff = Math.abs(d - prev);
+        if (diff === 0) { if (i >= 2 && p[i - 2] === prev) continue; cands.push([d, 1]); }
+        else if (diff === 1) cands.push([d, 4]);
+        else if (!lastLeap && legal(prev, d)) cands.push([d, 1.5]);
+      }
+      if (!cands.length) { ok = false; break; }
+      let r = Math.random() * sum(cands.map(c => c[1])), pick = cands[0][0];
+      for (const [d, w] of cands) { r -= w; if (r < 0) { pick = d; break; } }
+      lastLeap = Math.abs(pick - prev) > 1;
+      p.push(pick);
+    }
+    if (ok && p.length === n) return p;
+  }
+  return Array.from({ length: n }, (_, i) => (i === n - 1 ? 0 : i === n - 2 ? 1 : i % 2 ? 1 : 0));
+}
+function generateMelody(levelId, modeSetting, avoid) {
+  const lv = MLEVELS[levelId];
+  const keys = lv.keys.filter(k => modeSetting === 'both' || MKEYS[k].mode === modeSetting);
+  for (let t = 0; t < 30; t++) {
+    const key = keys[rand(keys.length)], mu = lv.meters[rand(lv.meters.length)];
+    const durs = melRhythm(lv, mu), degs = melPitches(lv, durs.length);
+    const m = { level: levelId, key, mu, measures: lv.measures, notes: durs.map((dur, i) => ({ d: degs[i], dur })) };
+    if (!avoid || JSON.stringify(avoid.notes) !== JSON.stringify(m.notes) || avoid.key !== m.key) return m;
+  }
+}
+
+// ---------- notation (five-line staff) ----------
+const MY = { bottom: 96, half: 5 };                     // bottom line (E4, step 30) and half a staff space
+const yOfStep = st => MY.bottom - (st - 30) * MY.half;
+function renderMelody({ m, notes, states = [], sel = null, labels = 'both', cw, caret = false }) {
+  const k = MKEYS[m.key], W = Math.max(280, Math.floor(cw)), LH = 156;
+  const perLine = W < 560 ? 1 : m.measures;                       // phones: one measure per line
+  const lines = Math.ceil(m.measures / perLine), H = LH * lines;
+  const nw = d => 1 + 0.36 * d, beatsW = (m.mu / 4) * nw(4);
+  // where each note falls
+  let pos = 0;
+  const info = notes.map((n, i) => { const mi = Math.min(m.measures - 1, Math.floor(pos / m.mu)); const o = { i, n, mi, pos }; pos += n.dur; return o; });
+  const mWt = Array.from({ length: m.measures }, (_, mi) => Math.max(beatsW, sum(info.filter(o => o.mi === mi).map(o => nw(o.n.dur)))));
+  const accSteps = k.sig > 0 ? [38, 35, 39, 36, 33, 37, 34] : [34, 37, 33, 36, 32, 35, 31];
+  const mX = [], mW = [], lineOf = [];
+  let out = `<svg class="mstaff" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Melody staff">`;
+  for (let L = 0; L < lines; L++) {
+    const oy = L * LH, first = L * perLine, last = Math.min(m.measures, first + perLine) - 1;
+    const header = 52 + Math.abs(k.sig) * 13 + (L === 0 ? 30 : 6);
+    const usable = W - header - 14, lw = sum(mWt.slice(first, last + 1));
+    let x0 = header;
+    for (let mi = first; mi <= last; mi++) { mX[mi] = x0; mW[mi] = usable * mWt[mi] / lw; lineOf[mi] = L; x0 += mW[mi]; }
+    for (let st = 30; st <= 38; st += 2) out += `<line class="sline" x1="4" y1="${oy + yOfStep(st)}" x2="${r1(header + usable)}" y2="${oy + yOfStep(st)}"/>`;
+    out += `<text class="clef" x="6" y="${oy + yOfStep(30) + 15}">𝄞</text>`;
+    for (let i = 0; i < Math.abs(k.sig); i++) out += `<text class="acc" x="${50 + i * 13}" y="${oy + yOfStep(accSteps[i]) + (k.sig > 0 ? 8 : 5)}">${k.sig > 0 ? '♯' : '♭'}</text>`;
+    if (L === 0) { const tx = header - 18; out += `<text class="tsig" x="${tx}" y="${yOfStep(34) - 2}">${m.mu / 4}</text><text class="tsig" x="${tx}" y="${yOfStep(30) - 2}">4</text>`; }
+    else out += `<text class="mlabel" x="10" y="${oy + 22}" style="text-anchor:start">${first + 1}</text>`;
+    for (let mi = first; mi <= last; mi++) {
+      const bx = mX[mi] + mW[mi];
+      out += mi === m.measures - 1 ? `<line class="bar" x1="${r1(bx - 6)}" y1="${oy + yOfStep(38)}" x2="${r1(bx - 6)}" y2="${oy + yOfStep(30)}"/><rect class="bar-thick" x="${r1(bx - 3)}" y="${oy + yOfStep(38)}" width="4" height="${MY.half * 8}"/>`
+        : `<line class="bar" x1="${r1(bx)}" y1="${oy + yOfStep(38)}" x2="${r1(bx)}" y2="${oy + yOfStep(30)}"/>`;
+    }
+  }
+  // note positions
+  const accW = {};
+  const placed = info.map(o => {
+    const a = accW[o.mi] || 0; accW[o.mi] = a + nw(o.n.dur);
+    const oy = lineOf[o.mi] * LH, st = o.n.d == null ? 34 : degStep(k, o.n.d);
+    return { ...o, oy, st, x: mX[o.mi] + 16 + (a / mWt[o.mi]) * (mW[o.mi] - 30), y: oy + yOfStep(st) };
+  });
+  const beamWith = new Array(placed.length).fill(-1);
+  for (let i = 0; i + 1 < placed.length; i++) {
+    const a = placed[i], b = placed[i + 1];
+    if (a.n.dur === 2 && b.n.dur === 2 && a.pos % 4 === 0 && b.pos === a.pos + 2 && a.mi === b.mi && beamWith[i] < 0) { beamWith[i] = i + 1; beamWith[i + 1] = i; }
+  }
+  const stemUp = o => { const j = beamWith[o.i]; return (j >= 0 ? Math.max(o.st, placed[j].st) : o.st) < 34; };
+  for (const o of placed) {
+    const { n, x, y, st, oy } = o, up = stemUp(o), hollow = n.dur >= 8;
+    let g = `<g class="${['mnote', states[o.i] || '', sel === o.i ? 'sel' : '', n.d == null ? 'ghost' : ''].join(' ')}" data-i="${o.i}"><rect class="hit" x="${r1(x - 13)}" y="${oy + 14}" width="26" height="${LH - 20}" rx="6"/>`;
+    for (let s2 = 28; s2 >= st; s2 -= 2) g += `<line class="ledger" x1="${r1(x - 10)}" y1="${oy + yOfStep(s2)}" x2="${r1(x + 10)}" y2="${oy + yOfStep(s2)}"/>`;
+    for (let s2 = 40; s2 <= st; s2 += 2) g += `<line class="ledger" x1="${r1(x - 10)}" y1="${oy + yOfStep(s2)}" x2="${r1(x + 10)}" y2="${oy + yOfStep(s2)}"/>`;
+    g += `<ellipse class="nhead${hollow ? ' hollow' : ''}" cx="${r1(x)}" cy="${y}" rx="${hollow ? 6 : 6.4}" ry="${hollow ? 4.3 : 4.6}" transform="rotate(-20 ${r1(x)} ${y})"/>`;
+    if (n.dur < 16) {
+      const j = beamWith[o.i];
+      const tip = j >= 0 ? (up ? Math.min(y, placed[j].y) - 30 : Math.max(y, placed[j].y) + 30) : (up ? y - 32 : y + 32);
+      const sx = up ? x + 5.6 : x - 5.6;
+      o.sx = sx; o.tip = tip; o.up = up;
+      g += `<line class="nstem" x1="${r1(sx)}" y1="${y}" x2="${r1(sx)}" y2="${r1(tip)}"/>`;
+      if (n.dur === 2 && j < 0) g += up ? `<path class="nflag" d="M${r1(sx)} ${r1(tip)}c1 7 10 9 8 19c1-8-3-11-8-12z"/>` : `<path class="nflag" d="M${r1(sx)} ${r1(tip)}c1-7 10-9 8-19c1 8-3 11-8 12z"/>`;
+    }
+    if (n.dur === 12) g += `<circle class="ndot" cx="${r1(x + 11)}" cy="${st % 2 === 0 ? y - 4 : y}" r="2.2"/>`;
+    const ly = oy + LH;
+    if (n.d == null) g += `<text class="mlabel" x="${r1(x)}" y="${ly - 14}">?</text>`;
+    else if (labels === 'both') g += `<text class="mlabel" x="${r1(x)}" y="${ly - 18}">${esc(degLabel(k, n.d, 'solfege'))}</text><text class="mlabel num" x="${r1(x)}" y="${ly - 5}">${esc(degLabel(k, n.d, 'numbers'))}</text>`;
+    else if (labels !== 'none') g += `<text class="mlabel" x="${r1(x)}" y="${ly - 14}">${esc(degLabel(k, n.d, labels))}</text>`;
+    out += g + '</g>';
+  }
+  for (const o of placed) {
+    const j = beamWith[o.i];
+    if (j > o.i && o.sx != null && placed[j].sx != null) out += `<rect class="nbeam" x="${r1(o.sx - 0.75)}" y="${r1(o.up ? o.tip : o.tip - 4.5)}" width="${r1(placed[j].sx - o.sx + 1.5)}" height="4.5" style="color:var(--text)"/>`;
+  }
+  if (caret) {
+    const total = sum(notes.map(n => n.dur));
+    if (total < m.mu * m.measures) {
+      const mi = Math.floor(total / m.mu), a = accW[mi] || 0, oy = lineOf[mi] * LH;
+      out += `<rect class="caret" x="${r1(mX[mi] + 10 + (a / mWt[mi]) * (mW[mi] - 30))}" y="${oy + yOfStep(38) - 4}" width="12" height="${MY.half * 8 + 8}" rx="4"/>`;
+    }
+  }
+  return out + '</svg>';
+}
+
+// ---------- state ----------
+S.app = 'rhythm';
+els.melodyView = $('#melodyView');
+S.mel = { q: null, ans: [], sel: null, dur: 4, checked: false, lockUntil: 0, t0: 0, plays: 0, playing: null };
+const melAnsMount = createMount($('#melStaff'), () => S.mel.q && ({ render: renderMelody, m: S.mel.q, notes: S.mel.ans, states: S.mel.states || [], sel: S.mel.sel, labels: S.settings.mel.labels, caret: !S.mel.checked && !ghostMode() }));
+const melCorrectMount = createMount($('#melCorrect'), () => S.mel.q && S.mel.checked && ({ render: renderMelody, m: S.mel.q, notes: S.mel.q.notes, labels: S.settings.mel.labels === 'none' ? 'both' : S.settings.mel.labels }));
+
+function melNew() {
+  Engine.stop();
+  const q = generateMelody(S.settings.mel.level, S.settings.mel.mode, S.mel.q);
+  Object.assign(S.mel, { q, ans: ghostMode() ? q.notes.map(n => ({ d: null, dur: n.dur })) : [], sel: null, checked: false, states: null, t0: Date.now(), plays: 0 });
+  if (!mlv().durs.includes(S.mel.dur)) S.mel.dur = 4;
+  $('#melFeedback').hidden = true;
+  melRenderAll();
+}
+function melRenderAll() { renderMount(melAnsMount); renderPalette(); renderPiano(); melUI(); }
+
+function melUI() {
+  const m = S.mel, q = m.q, st = S.settings.mel, lv = mlv();
+  for (const b of $('#appTabs').children) b.setAttribute('aria-pressed', String(b.dataset.app === S.app));
+  for (const b of $('#melLevelSeg').children) b.setAttribute('aria-pressed', String(b.dataset.v === st.level));
+  for (const b of $('#melModeSeg').children) b.setAttribute('aria-pressed', String(b.dataset.v === st.mode));
+  $('#melLabels').value = st.labels;
+  $('#melShowRhythm').checked = ghostMode();
+  $('#challengeBtn').hidden = true;
+  if (!q) return;
+  const k = MKEYS[q.key];
+  $('#melKeyBadge').textContent = k.name;
+  $('#melInfo').textContent = `${lv.name} · ${q.mu / 4}/4 · ${q.measures} measures`;
+  $('#melStart').innerHTML = `Starts on <b>${esc(degLabel(k, q.notes[0].d, 'both'))}</b> (${esc(degLabel(k, q.notes[0].d, 'letters'))}) · ⭐ on the piano`;
+  const total = m.ans.reduce((a, n) => a + n.dur, 0), cap = q.mu * q.measures;
+  const complete = total === cap && m.ans.every(n => n.d != null);
+  $('#melHint').hidden = m.checked;
+  $('#melHint').textContent = ghostMode()
+    ? 'Tap a piano key for each note. Tap a note on the staff to change it.'
+    : 'Pick a note length, then tap a piano key. Tap a note on the staff to change its pitch or length.';
+  $('#melPalette').hidden = m.checked || ghostMode();
+  $('#melDelete').disabled = m.checked || !m.ans.some(n => n.d != null);
+  $('#melClear').disabled = $('#melDelete').disabled;
+  els.playQBtn.disabled = false;
+  els.playQBtn.classList.add('btn-q'); els.playQBtn.classList.remove('btn-extra');
+  els.playQBtn.querySelector('span').firstChild.textContent = 'Question ';
+  els.playsBadge.hidden = true;
+  els.playABtn.disabled = !m.ans.some(n => n.d != null);
+  els.stopBtn.disabled = !m.playing;
+  els.checkLabel.textContent = m.checked ? 'Next Melody' : 'Check';
+  els.checkBtn.disabled = m.checked ? Date.now() < m.lockUntil : !complete;
+}
+
+// ---------- palette + piano ----------
+function durIcon(d) {
+  const hollow = d >= 8, stem = d < 16;
+  return `<svg viewBox="0 0 34 30" aria-hidden="true"><ellipse cx="13" cy="22" rx="${hollow ? 5.4 : 5.8}" ry="${hollow ? 3.9 : 4.2}" transform="rotate(-20 13 22)" ${hollow ? 'fill="none" stroke="currentColor" stroke-width="1.8"' : 'fill="currentColor"'}/>${stem ? '<line x1="18.2" y1="21" x2="18.2" y2="3" stroke="currentColor" stroke-width="1.5"/>' : ''}${d === 2 ? '<path d="M18.2 3c1 6 9 8 7 17c1-7-3-10-7-11z" fill="currentColor"/>' : ''}${d === 12 ? '<circle cx="24" cy="20" r="2" fill="currentColor"/>' : ''}</svg>`;
+}
+function renderPalette() {
+  const lv = mlv();
+  $('#melPalette').innerHTML = `<span class="lbl">Note length</span>` + lv.durs.slice().sort((a, b) => b - a).map((d, i) => `<button type="button" class="dur-btn" data-dur="${d}" aria-pressed="${S.mel.dur === d}" title="${DUR_NAME[d]} (key ${i + 1})">${durIcon(d)}${DUR_NAME[d]}</button>`).join('');
+}
+function renderPiano() {
+  const q = S.mel.q; if (!q) return;
+  const k = MKEYS[q.key], lv = mlv(), labels = S.settings.mel.labels;
+  let lo = degMidi(k, -3), hi = degMidi(k, 7);
+  const isBlack = n => [1, 3, 6, 8, 10].includes(mod(n, 12));
+  if (isBlack(lo)) lo--; if (isBlack(hi)) hi++;
+  const whites = []; for (let n = lo; n <= hi; n++) if (!isBlack(n)) whites.push(n);
+  const ww = 100 / whites.length;
+  let html = '';
+  const keyHtml = (n, cls, style) => {
+    const d = midiToDeg(k, n), inScale = d != null;
+    let c = `key ${cls}`;
+    if (lv.lit && inScale) c += lv.degs.includes(d) ? ' litmain' : ' lit';
+    const star = q.notes[0].d === d && inScale ? '<span class="star">⭐</span>' : '';
+    let lab = '';
+    if (inScale && labels !== 'none') {
+      const i = mod(d, 7), sol = SOLF[k.mode][i], li = mod(k.letter + d, 7), let_ = LETTERS[li] + keyAcc(k, li);
+      lab = labels === 'both' ? `${sol}<small>${i + 1}</small>` : labels === 'solfege' ? sol : labels === 'numbers' ? String(i + 1) : let_;
+    }
+    return `<div class="${c}" data-midi="${n}" style="${style}" role="button" aria-label="${inScale ? esc(degLabel(k, d, 'both')) : 'not in this key'}">${star}<span class="kl">${lab}</span></div>`;
+  };
+  whites.forEach((n, i) => { html += keyHtml(n, 'wkey', `left:${i * ww}%;width:${ww}%`); });
+  for (let n = lo; n <= hi; n++) if (isBlack(n)) {
+    const i = whites.indexOf(n - 1);
+    if (i >= 0) html += keyHtml(n, 'bkey', `left:${(i + 1) * ww - ww * 0.3}%;width:${ww * 0.6}%`);
+  }
+  $('#piano').innerHTML = html;
+}
+function melVoice(midi, who) { const base = (who === 'answer' ? SOUNDS[0] : SOUNDS[1]).q; return { ...base, freq: 440 * Math.pow(2, (midi - 69) / 12) }; }
+function pianoTone(midi) {
+  Engine.ensure();
+  const ctx = Engine.ctx; if (!ctx) return;
+  Engine.tone(Engine.master, ctx.currentTime + 0.01, 0.7, melVoice(midi, 'question'), []);
+}
+
+// ---------- editing ----------
+function fitsAt(notes) {                               // no note may cross a barline
+  let pos = 0; const q = S.mel.q;
+  for (const n of notes) { const end = pos + n.dur; if (Math.floor(pos / q.mu) !== Math.floor((end - 1) / q.mu) || end > q.mu * q.measures) return false; pos = end; }
+  return true;
+}
+function melPlace(d) {
+  const m = S.mel;
+  if (!m.q || m.checked) return;
+  if (d == null) { toast("That note isn't in this key."); return; }
+  if (m.sel != null) {
+    m.ans[m.sel].d = d;
+    m.sel = ghostMode() ? (m.ans.findIndex(n => n.d == null) >= 0 ? m.ans.findIndex(n => n.d == null) : null) : null;
+  } else if (ghostMode()) {
+    const i = m.ans.findIndex(n => n.d == null);
+    if (i < 0) { toast('Every note has a pitch. Tap a note on the staff to change it.'); return; }
+    m.ans[i].d = d;
+  } else {
+    const next = m.ans.concat([{ d, dur: m.dur }]);
+    const total = m.ans.reduce((a, n) => a + n.dur, 0);
+    if (total >= m.q.mu * m.q.measures) { toast('The melody is full. Tap a note to change it, or press Check.'); return; }
+    if (!fitsAt(next)) { toast("That note won't fit in this measure. Pick a shorter note."); return; }
+    m.ans = next;
+  }
+  renderMount(melAnsMount); melUI();
+}
+function melSetDur(d) {
+  const m = S.mel;
+  if (m.sel != null && !ghostMode()) {
+    const next = m.ans.map((n, i) => (i === m.sel ? { ...n, dur: d } : n));
+    if (!fitsAt(next)) { toast("That length doesn't fit there."); return; }
+    m.ans = next; renderMount(melAnsMount);
+  }
+  m.dur = d; renderPalette(); melUI();
+}
+function melDelete() {
+  const m = S.mel; if (m.checked) return;
+  if (ghostMode()) {
+    let i = m.sel != null ? m.sel : -1;
+    if (i < 0) for (let j = m.ans.length - 1; j >= 0; j--) if (m.ans[j].d != null) { i = j; break; }
+    if (i >= 0) m.ans[i].d = null;
+    m.sel = i >= 0 ? i : null;
+  } else if (m.sel != null) { m.ans.splice(m.sel, 1); m.sel = null; }
+  else m.ans.pop();
+  renderMount(melAnsMount); melUI();
+}
+function melClear() {
+  const m = S.mel; if (m.checked) return;
+  m.ans = ghostMode() ? m.ans.map(n => ({ d: null, dur: n.dur })) : []; m.sel = null;
+  renderMount(melAnsMount); melUI();
+}
+function melNudge(step) {
+  const m = S.mel; if (m.checked) return;
+  let i = m.sel != null ? m.sel : -1;
+  if (i < 0) for (let j = m.ans.length - 1; j >= 0; j--) if (m.ans[j].d != null) { i = j; break; }
+  if (i < 0 || m.ans[i].d == null) return;
+  const d = Math.max(-3, Math.min(7, m.ans[i].d + step));
+  m.ans[i].d = d; m.sel = i;
+  pianoTone(degMidi(MKEYS[m.q.key], d));
+  renderMount(melAnsMount); melUI();
+}
+
+// ---------- grading ----------
+function melGrade(q, ans) {
+  const onsets = arr => { let p = 0; return arr.map(n => { const o = p; p += n.dur; return o; }); };
+  const qo = onsets(q.notes), ao = onsets(ans);
+  const states = ans.map((n, i) => {
+    const j = qo.indexOf(ao[i]);
+    const rOk = j >= 0 && q.notes[j].dur === n.dur, pOk = j >= 0 && q.notes[j].d === n.d;
+    return rOk && pOk ? 'ok' : rOk ? 'pitch' : 'bad';
+  });
+  let pc = 0, rc = 0;
+  q.notes.forEach((n, j) => { const i = ao.indexOf(qo[j]); if (i >= 0 && ans[i].d === n.d) pc++; if (i >= 0 && ans[i].dur === n.dur) rc++; });
+  return { states, pc, rc, n: q.notes.length };
+}
+function melCheck() {
+  const m = S.mel; if (!m.q) return;
+  if (m.checked) { if (Date.now() < m.lockUntil) return; melNew(); return; }
+  if (els.checkBtn.disabled) return;
+  Engine.stop();
+  const g = melGrade(m.q, m.ans);
+  m.checked = true; m.sel = null; m.states = g.states;
+  m.lockUntil = Date.now() + 1500; setTimeout(melUI, 1550);
+  const perfect = g.pc === g.n && g.rc === g.n;
+  $('#melFbMsg').textContent = perfect ? 'Perfect melody! 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green = right, orange = right rhythm but wrong pitch, red = wrong rhythm.`;
+  $('#melFbMsg').classList.toggle('perfect', perfect);
+  $('#melFeedback').hidden = false;
+  const log = readLog(), day = todayOf(log);
+  (day.melodies || (day.melodies = [])).push({ lv: m.q.level, key: m.q.key, mode: MKEYS[m.q.key].mode, pc: g.pc, pn: g.n, rc: g.rc, rn: g.n, pl: m.plays, t0: m.t0, t1: Date.now() });
+  writeLog(log);
+  renderMount(melAnsMount); renderMount(melCorrectMount); melUI();
+}
+
+// ---------- playback ----------
+function buildMelSchedule(q, notes, who, bpm, metro) {
+  const k = MKEYS[q.key], beat = 60 / bpm, u = beat / 4, ev = [], hl = [];
+  let t = 0;
+  if (who === 'question') {                                // set the key: I–IV–V–I, then do
+    for (const c of [[0, 2, 4], [3, 5, 7], [4, 6, 8], [0, 2, 4]]) {
+      for (const d of c) ev.push({ kind: 'tone', t, dur: beat * 0.92, v: { ...melVoice(degMidi(k, d - 7), 'question'), peak: 0.16 } });
+      t += beat;
+    }
+    t += beat * 0.25;
+    ev.push({ kind: 'tone', t, dur: beat * 1.3, v: melVoice(degMidi(k, 0), 'question') });
+    t += beat * 2;
+  }
+  const countStart = t, bpmM = q.mu / 4;
+  for (let b = 0; b < bpmM; b++) ev.push({ kind: 'click', t: t + b * beat, accent: b === 0 });
+  const start = t + q.mu * u;
+  let pos = 0;
+  notes.forEach((n, i) => {
+    const tt = start + pos * u;
+    if (n.d != null) ev.push({ kind: 'tone', t: tt, dur: n.dur * u, v: melVoice(degMidi(k, n.d), who) });
+    hl.push({ i, start: tt, end: tt + n.dur * u });
+    pos += n.dur;
+  });
+  if (metro) for (let b = 0; b < pos / 4; b++) ev.push({ kind: 'click', t: start + b * beat, accent: (b * 4) % q.mu === 0 });
+  return { events: ev, notes: hl, countStart, countIn: start, beatSec: beat, beatsPerMeasure: bpmM, sound: 0, total: start + pos * u + 0.4 };
+}
+function melPlay(who) {
+  const m = S.mel; if (!m.q) return;
+  const notes = who === 'question' ? m.q.notes : m.ans;
+  if (who === 'answer' && !notes.some(n => n.d != null)) return;
+  Engine.stop();
+  maybeShowIosTip();
+  if (who === 'question') m.plays++;
+  const sched = buildMelSchedule(m.q, notes, who, S.settings.tempo, S.settings.metronome);
+  const el = who === 'question' && m.checked ? $('#melCorrect') : $('#melStaff');
+  const status = $('#melStatus');
+  m.playing = who; melUI();
+  let phase = '';
+  Engine.play(sched, {
+    onFrame(t) {
+      if (t < sched.countStart) { if (phase !== 'key') { phase = 'key'; status.innerHTML = '<span class="pill question">🎹 Setting the key…</span>'; } return; }
+      if (t < sched.countIn) {
+        const b = Math.max(0, Math.floor((t - sched.countStart) / sched.beatSec));
+        if (phase !== 'c' + b) { phase = 'c' + b; let dots = ''; for (let i = 0; i < sched.beatsPerMeasure; i++) dots += `<i class="${i <= b ? 'on' : ''}"></i>`; status.innerHTML = `<span>Count-in</span><span class="countin">${dots}</span>`; }
+        return;
+      }
+      if (phase !== 'p') { phase = 'p'; status.innerHTML = `<span class="pill ${who}">♪ Playing ${who === 'question' ? 'question' : 'your answer'}</span>`; }
+      const h = sched.notes.find(x => t >= x.start && t < x.end);
+      el.querySelectorAll('.mnote.play').forEach(x => { if (!h || +x.dataset.i !== h.i) x.classList.remove('play'); });
+      if (h) { const g = el.querySelector(`.mnote[data-i="${h.i}"]`); if (g) g.classList.add('play'); }
+    },
+    onEnd() { el.querySelectorAll('.mnote.play').forEach(x => x.classList.remove('play')); status.innerHTML = ''; m.playing = null; melUI(); },
+  });
+}
+
+// ---------- events ----------
+function setApp(app) {
+  Engine.stop();
+  S.app = app; S.settings.app = app; saveSettings();
+  if (app === 'melody') { if (!S.mel.q) melNew(); showView('melody'); melRenderAll(); }
+  else { $('#challengeBtn').hidden = false; showView('play'); updateUI(); }
+  for (const b of $('#appTabs').children) b.setAttribute('aria-pressed', String(b.dataset.app === S.app));
+  fitScreen(true);
+}
+$('#appTabs').addEventListener('click', e => { const b = e.target.closest('[data-app]'); if (b && b.dataset.app !== S.app) setApp(b.dataset.app); });
+$('#melLevelSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; S.settings.mel.level = b.dataset.v; S.settings.mel.showRhythm = null; saveSettings(); melNew(); });
+$('#melModeSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; S.settings.mel.mode = b.dataset.v; saveSettings(); melNew(); });
+$('#melLabels').addEventListener('change', e => { S.settings.mel.labels = e.target.value; saveSettings(); melRenderAll(); if (S.mel.checked) renderMount(melCorrectMount); });
+$('#melShowRhythm').addEventListener('change', e => { S.settings.mel.showRhythm = e.target.checked; saveSettings(); melNew(); });
+$('#melPalette').addEventListener('click', e => { const b = e.target.closest('[data-dur]'); if (b) melSetDur(+b.dataset.dur); });
+$('#melDelete').onclick = melDelete;
+$('#melClear').onclick = melClear;
+$('#melStaff').addEventListener('click', e => {
+  const g = e.target.closest('.mnote'); const m = S.mel;
+  if (m.checked) return;
+  if (!g) { m.sel = null; } else { const i = +g.dataset.i; m.sel = m.sel === i ? null : i; if (m.ans[i] && m.ans[i].d != null) pianoTone(degMidi(MKEYS[m.q.key], m.ans[i].d)); }
+  renderMount(melAnsMount); melUI();
+});
+$('#piano').addEventListener('pointerdown', e => {
+  const key = e.target.closest('.key'); if (!key) return;
+  e.preventDefault();
+  const midi = +key.dataset.midi;
+  key.classList.add('down'); setTimeout(() => key.classList.remove('down'), 160);
+  pianoTone(midi);
+  melPlace(midiToDeg(MKEYS[S.mel.q.key], midi));
+});
+function melKey(e) {
+  const k = e.key;
+  if (k === ' ') { e.preventDefault(); spaceHandled = true; if (!e.repeat) melPlay('question'); }
+  else if (k === 'a' || k === 'A') { e.preventDefault(); if (!e.repeat) melPlay('answer'); }
+  else if (k === 'Escape') { if (Engine.isPlaying) Engine.stop(); else { S.mel.sel = null; renderMount(melAnsMount); } }
+  else if (k === 'Enter') { e.preventDefault(); if (!e.repeat && !els.checkBtn.disabled) melCheck(); }
+  else if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); melDelete(); }
+  else if (k === 'ArrowUp') { e.preventDefault(); melNudge(1); }
+  else if (k === 'ArrowDown') { e.preventDefault(); melNudge(-1); }
+  else if (k === 'ArrowLeft' || k === 'ArrowRight') {
+    e.preventDefault(); const m = S.mel; if (!m.ans.length || m.checked) return;
+    m.sel = m.sel == null ? (k === 'ArrowLeft' ? m.ans.length - 1 : 0) : Math.max(0, Math.min(m.ans.length - 1, m.sel + (k === 'ArrowLeft' ? -1 : 1)));
+    renderMount(melAnsMount); melUI();
+  }
+  else if (/^[1-5]$/.test(k) && !ghostMode()) { const durs = mlv().durs.slice().sort((a, b) => b - a); if (durs[+k - 1]) { e.preventDefault(); melSetDur(durs[+k - 1]); } }
+}
+
 /* ---------- start ---------- */
 const dataErrors = validateData();
 if (dataErrors.length) {
@@ -3563,7 +4138,8 @@ updateWho();
 if (!getProfile() && !isGuest()) showWelcome(false);
 else refreshClassInfo();
 applyFocusFromUrl();
-if (/[?&]selftest/.test(location.search)) window.RDT = { syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+if (S.settings.app === 'melody') setApp('melody');
+if (/[?&]selftest/.test(location.search)) window.RDT = { generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
 </body>
