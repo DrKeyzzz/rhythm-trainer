@@ -532,7 +532,7 @@ h1.bs-title small{font:12px "Special Elite",monospace;letter-spacing:.06em;color
 .heist-fx .siren.r{left:-80px;background:var(--red)} .heist-fx .siren.b{right:-80px;background:#3d8bff;animation-delay:.5s}
 @keyframes flash{50%{opacity:.12}}
 .heist-fx .bars{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 56px,#3a4255 56px 66px,#5a6378 66px 69px,#2a3142 69px 76px,transparent 76px 124px);opacity:.75}
-.end-hero > :not(.heist-fx){position:relative;z-index:1}
+.end-hero > :not(.heist-fx):not(.loot-fly):not(.bust-stamp){position:relative;z-index:1}
 .end-hero.busted h2,.bust{font:56px/1 "Black Ops One";color:var(--red);letter-spacing:.04em;text-shadow:0 0 30px rgba(255,59,79,.5),0 4px 0 #5a0d16;transform:rotate(-3deg)}
 .end-hero.win h2{font:40px/1.1 "Black Ops One";color:var(--gold);letter-spacing:.04em}
 .end-hero.close h2{font:40px/1.1 "Black Ops One";color:#ffb35c;letter-spacing:.04em}
@@ -554,6 +554,50 @@ h1.bs-title small{font:12px "Special Elite",monospace;letter-spacing:.06em;color
 .welcome{background:radial-gradient(circle at 20% 0,rgba(61,139,255,.2),transparent 50%),var(--bg)}
 .welcome-card{border-color:rgba(245,197,66,.35)}
 .piano{filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
+/* the vault: 5 bolts, a dial, a door that swings open */
+.lyr.x{border-color:var(--red);opacity:1;background:rgba(255,59,79,.14)}
+.vault{position:relative;width:220px;height:180px;margin:0 auto;perspective:700px;font-size:16px;line-height:1}
+.v-frame{position:absolute;inset:0;border-radius:18px;background:linear-gradient(145deg,#3a4566,#1f2740);border:2px solid #5a6a92;box-shadow:inset 0 0 0 6px #283252,0 10px 30px rgba(0,0,0,.45)}
+.v-inside{position:absolute;left:20px;top:20px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,#fff3c4 0,#f5c542 22%,#8a6514 52%,#140e02 74%);box-shadow:inset 0 0 26px #000;display:grid;place-items:center;font-size:46px}
+.v-keep{position:absolute;right:5px;width:15px;height:15px;border-radius:4px;background:#0b1020;border:2px solid #5a6a92;transition:box-shadow .25s,border-color .25s}
+.v-keep.on{border-color:var(--green);box-shadow:0 0 10px var(--green)} .v-keep.bad{border-color:var(--red);box-shadow:0 0 10px var(--red)}
+.v-bolt{position:absolute;left:130px;width:76px;height:11px;border-radius:3px;background:linear-gradient(180deg,#e7ecf7,#8f9bb8 60%,#5d6884);box-shadow:0 1px 0 #000;transition:transform .4s cubic-bezier(.5,-.5,.3,1.4)}
+.v-bolt.open{transform:translateX(-26px);background:linear-gradient(180deg,#c8ffe2,#35e08a 60%,#1e9c5b)}
+.v-bolt.bad{background:linear-gradient(180deg,#ffc2c8,#ff3b4f 60%,#a3202f)}
+.v-door{position:absolute;left:20px;top:20px;width:140px;height:140px;box-sizing:border-box;border-radius:50%;z-index:2;transform-origin:left center;background:radial-gradient(circle at 35% 30%,#62719c,#2b3556 70%);border:4px solid #f5c542;box-shadow:inset 0 0 0 9px #2a3352,inset 0 0 0 11px #6f7ea6,0 6px 14px rgba(0,0,0,.5)}
+.v-door::before{content:"";position:absolute;inset:4px;border-radius:50%;background:repeating-conic-gradient(#c8d0e6 0 4deg,transparent 4deg 30deg);-webkit-mask:radial-gradient(circle,transparent 86%,#000 87%,#000 93%,transparent 94%);mask:radial-gradient(circle,transparent 86%,#000 87%,#000 93%,transparent 94%)}
+.v-wheel{position:absolute;left:50%;top:50%;width:0;height:0}
+.v-wheel i{position:absolute;left:-52px;top:-3.5px;width:104px;height:7px;border-radius:4px;background:linear-gradient(#e7ecf7,#7b87a6)}
+.v-wheel i:nth-child(2){transform:rotate(60deg)} .v-wheel i:nth-child(3){transform:rotate(120deg)}
+.v-wheel i::before,.v-wheel i::after{content:"";position:absolute;top:-4px;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3c4,#f5c542 55%,#8a6514)}
+.v-wheel i::before{left:-7px} .v-wheel i::after{right:-7px}
+.v-dial{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle,#2b3556 0 38%,#141b31 39%);border:3px solid #f5c542;box-shadow:0 3px 8px rgba(0,0,0,.6)}
+.v-dial::before{content:"";position:absolute;inset:2px;border-radius:50%;background:repeating-conic-gradient(#f5c542 0 2.5deg,transparent 2.5deg 18deg);-webkit-mask:radial-gradient(circle,transparent 70%,#000 71%);mask:radial-gradient(circle,transparent 70%,#000 71%)}
+.v-dial::after{content:"";position:absolute;left:50%;top:3px;width:4px;height:13px;margin-left:-2px;border-radius:2px;background:#ff3b4f}
+.v-mark{position:absolute;left:90px;top:47px;margin-left:-6px;border:6px solid transparent;border-top:9px solid #ff3b4f;z-index:3}
+.key-btn{margin-left:8px;padding:3px 10px;font-size:13px;vertical-align:middle}
+.vault-ov{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:rgba(5,8,18,.62);animation:vfade .2s}
+.vault-ov.out{opacity:0;transition:opacity .25s}
+@keyframes vfade{from{opacity:0}}
+.vault-card{background:#131a2c;border:1px solid rgba(245,197,66,.45);border-radius:18px;padding:18px 26px 14px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);max-width:calc(100vw - 32px)}
+.vault-cap{margin-top:12px;font:18px "Special Elite",monospace;color:#fff;min-height:24px}
+.vault-cap.ok{color:var(--green)} .vault-cap.bad{color:var(--red)}
+.vault-skip{margin-top:6px;font:12px system-ui,sans-serif;color:var(--muted)}
+.trophy .vault{margin:2px auto 8px}
+.end-hero.win .v-inside,.end-hero.close .v-inside{animation:vglow 1.2s ease-in-out infinite alternate}
+@keyframes vglow{to{filter:brightness(1.25)}}
+.loot-fly{position:absolute;z-index:6;pointer-events:none;font-size:26px;line-height:1;will-change:transform}
+.loot-fly.bar{width:30px;height:13px;border-radius:2px;background:linear-gradient(180deg,#fff3c4,#f5c542 45%,#a87a16);clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);box-shadow:0 2px 0 #6b4c0c}
+.end-title-pop{animation:titlepop .5s cubic-bezier(.2,1.6,.5,1) both}
+@keyframes titlepop{from{transform:scale(.3);opacity:0}}
+.bust-stamp{position:absolute;left:50%;top:120px;z-index:7;width:max-content;white-space:nowrap;box-sizing:border-box;font:60px/1 "Black Ops One",Impact,sans-serif;color:var(--red);letter-spacing:.05em;border:6px solid currentColor;border-radius:12px;padding:6px 18px;background:rgba(11,16,32,.82);pointer-events:none;text-shadow:0 0 24px rgba(255,59,79,.6);transform:translate(-50%,-50%) rotate(-12deg)}
+.police-fx{position:fixed;inset:0;z-index:150;pointer-events:none;animation:polout 4.5s forwards}
+.police-fx::before,.police-fx::after{content:"";position:absolute;inset:0}
+.police-fx::before{background:radial-gradient(circle at 0 0,rgba(255,40,60,.8),transparent 55%),radial-gradient(circle at 100% 100%,rgba(255,40,60,.55),transparent 50%);animation:pol .5s steps(2) infinite}
+.police-fx::after{background:radial-gradient(circle at 100% 0,rgba(61,139,255,.8),transparent 55%),radial-gradient(circle at 0 100%,rgba(61,139,255,.55),transparent 50%);animation:pol .5s steps(2) infinite reverse}
+@keyframes pol{50%{opacity:0}}
+@keyframes polout{0%,80%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.police-fx::before,.police-fx::after{animation:none;opacity:.5}}
 @media (prefers-reduced-motion:reduce){.spy-stamp{animation:none;opacity:.95;transform:rotate(-10deg)}.heist-fx .siren,.btn-extra{animation:none}}
 </style>
 <style>
@@ -719,8 +763,8 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
       <div id="postArea">
         <p class="muted" style="margin:0 0 10px" id="postMsg"></p>
         <div class="form-row">
-          <button class="btn btn-primary" type="button" id="submitBtn">Post my score</button>
-          <button type="button" class="linkbtn" id="viewBoardBtn">Just show the leaderboards</button>
+          <button class="btn btn-primary" type="button" id="submitBtn" hidden>Try again</button>
+          <button type="button" class="linkbtn" id="viewBoardBtn" hidden>Just show the leaderboards</button>
         </div>
         <div class="form-error" id="formError"></div>
       </div>
@@ -1712,11 +1756,12 @@ function onCheck() {
     ch.pauseStart = Date.now();                        // looking it over doesn't count toward the time
     S.checked = true;
     S.selected = null;
-    S.nextLockUntil = Date.now() + 1500;
-    setTimeout(updateUI, 1550);
+    S.nextLockUntil = Date.now() + VAULT_MS;
+    setTimeout(updateUI, VAULT_MS + 50);
     const n = S.answer.length;
     const c = S.answer.filter((id, i) => id === S.q.cells[i]).length;
     const x = Math.max(0, ch.used[ch.idx] - CONFIG.challengePlays);
+    heistBoltFx(ch.idx, c / n >= 0.6);
     els.fbMsg.textContent = (c === n ? 'Perfect! Every slot is correct 🎉' : `${c} of ${n} slots correct.`)
       + (x ? ` (${x} extra listen${x > 1 ? 's' : ''}: −${Math.round(x * CONFIG.extraPenalty * 100)}%)` : '');
     els.fbMsg.classList.toggle('perfect', c === n);
@@ -1944,7 +1989,7 @@ function startChallenge(level) {
     level, home,
     measures: isLocked(level) ? BEGINNER.measures : CONFIG.challengeMeasures,
     rhythms: layers,
-    answers: [], grades: [], times: [], idx: 0,
+    answers: [], grades: [], times: [], bolts: [], idx: 0,
     used: layers.map(() => 0),
     start: Date.now(), end: null, submitted: false, timer: 0,
   };
@@ -1981,6 +2026,7 @@ function heistNext() {
   Engine.stop();
   ch.pausedMs = (ch.pausedMs || 0) + (Date.now() - (ch.pauseStart || Date.now()));
   ch.pauseStart = null;
+  document.querySelectorAll('.vault-ov').forEach(x => x.remove());
   ch.idx++;
   if (ch.idx >= ch.rhythms.length) finishChallenge();
   else { heistLoad(ch.idx); window.scrollTo({ top: 0 }); }
@@ -2019,7 +2065,7 @@ function heistBarUI(ready, lockUntil, reviewing) {
   els.cbPlays.classList.toggle('out', inReserve && extraLeft === 0);
   els.cbText.textContent = `Layer ${ch.idx + 1} of ${ch.rhythms.length}: ${HEIST_LAYERS[ch.idx % 5][1]} · ${mel ? '🔐 Safe' : '📡 Transmission'}`;
   $('#cbLevel').textContent = LEVEL_FUN[ch.level];
-  els.cbPips.innerHTML = ch.rhythms.map((r, i) => `<span class="lyr ${i < ch.idx ? 'done' : i === ch.idx ? 'now' : ''}" title="${HEIST_LAYERS[i % 5][1]}: ${r.mel ? 'melody' : 'rhythm'}">${HEIST_LAYERS[i % 5][0]}</span>`).join('');
+  els.cbPips.innerHTML = ch.rhythms.map((r, i) => `<span class="lyr ${ch.bolts[i] === false ? 'x' : ch.bolts[i] ? 'done' : i === ch.idx ? 'now' : ''}" title="${HEIST_LAYERS[i % 5][1]}: ${r.mel ? 'melody' : 'rhythm'}">${HEIST_LAYERS[i % 5][0]}</span>`).join('');
   els.checkLabel.textContent = last ? 'Crack the vault' : 'Crack it';
   els.checkBtn.disabled = !ready;
   if (reviewing) {                                     // looking over the answer: free replays, then move on
@@ -2095,12 +2141,13 @@ function showEndScreen() {
   els.postArea.hidden = isGuest() || ch.outcome === 'busted';
   heistScreen(ch);
   const prof = getProfile();
-  els.postMsg.innerHTML = prof ? `Post your score as <b>${esc(displayName(prof))}</b>${prof.classCode ? ` to <b>${esc(classNames(prof))}</b> and the World leaderboard` : ' to the World leaderboard'}. This is optional.` : '';
+  els.postMsg.innerHTML = prof ? `Posting your score as <b>${esc(displayName(prof))}</b>${prof.classCode ? ` to <b>${esc(classNames(prof))}</b> and the World leaderboard` : ' to the World leaderboard'}…` : '';
   els.boardArea.hidden = true;
   els.boardArea.innerHTML = '';
   BS.myId = null; BS.ranks = null; BS.level = ch.level; BS.scope = prof && prof.classCode ? 'class' : 'world'; BS.code = prof && prof.classCode || null;
   els.formError.textContent = '';
   els.submitBtn.disabled = false;
+  els.submitBtn.hidden = true;
   els.testModeNote.hidden = Board.remote;
   if (isGuest()) els.formError.textContent = 'Guest game: this score isn\'t saved. Tap 👤 Guest at the bottom to sign in for next time.';
 
@@ -2141,6 +2188,8 @@ function showEndScreen() {
     renderMount(mA); renderMount(mQ);
   });
   window.scrollTo({ top: 0 });
+  if (!els.postArea.hidden && prof && !/[?&]selftest/.test(location.search)) submitScore();   // scores post automatically (not in self-test)
+  else viewBoardOnly();
 }
 
 function showView(which) {
@@ -2680,6 +2729,7 @@ async function submitScore() {
   els.formError.textContent = '';
   els.submitBtn.disabled = true;
   els.submitBtn.textContent = 'Posting…';
+  els.postArea.hidden = false;
   try {
     const codes = classesOf(p).map(c => c.code);
     const id = await Board.submit({ name: displayName(p), classCode: p.classCode || '', ...(codes.length > 1 ? { classCodes: codes } : {}), level: ch.level, score: ch.score, correct: ch.correct, total: ch.total, extra: ch.extra, timeSec: ch.timeSec });
@@ -2691,10 +2741,11 @@ async function submitScore() {
     els.postArea.hidden = true;
     if (cls) { BS.scope = 'class'; BS.code = p.classCode; renderBoard(cls); } else { BS.scope = 'world'; renderBoard(world); }
   } catch (err) {
-    els.formError.textContent = `Couldn't reach the leaderboard: ${errMsg(err)} Try again.`;
+    els.formError.textContent = `Couldn't post your score: ${errMsg(err)}`;
     els.submitBtn.disabled = false;
+    els.submitBtn.hidden = false;
   } finally {
-    els.submitBtn.textContent = 'Post my score';
+    els.submitBtn.textContent = 'Try again';
   }
 }
 
@@ -2842,7 +2893,7 @@ els.review.addEventListener('click', e => {
   const b = e.target.closest('[data-play]');
   if (!b) return;
   const i = +b.dataset.i, ch = S.ch, r = ch.rhythms[i];
-  if (r.mel) { Engine.stop(); Engine.play(buildMelSchedule(r, b.dataset.play === 'q' ? r.notes : ch.answers[i], b.dataset.play === 'q' ? 'question' : 'answer', S.settings.tempo, S.settings.metronome), {}); return; }
+  if (r.mel) { Engine.stop(); Engine.play(buildMelSchedule(r, b.dataset.play === 'q' ? r.notes : ch.answers[i], b.dataset.play === 'q' ? 'question' : 'answer', S.settings.tempo, S.settings.metronome), { onFrame() {}, onEnd() {} }); return; }
   const mount = reviewMounts[i * 2 + (b.dataset.play === 'q' ? 1 : 0)];
   startPlayback(r, b.dataset.play === 'q' ? r.cells : ch.answers[i], b.dataset.play === 'q' ? 'question' : 'answer', mount, true, false);
 });
@@ -4086,7 +4137,7 @@ function melUI() {
   const k = MKEYS[q.key];
   $('#melKeyBadge').textContent = k.name;
   $('#melInfo').textContent = `${MEL_FUN[q.level] || lv.name} · ${q.mu / 4}/4 · ${q.measures} measures`;
-  $('#melStart').innerHTML = `Starts on <b>${esc(degLabel(k, q.notes[0].d, 'both'))}</b> (${esc(degLabel(k, q.notes[0].d, 'letters'))}) · ⭐ on the piano`;
+  $('#melStart').innerHTML = `Starts on <b>${esc(degLabel(k, q.notes[0].d, 'both'))}</b> (${esc(degLabel(k, q.notes[0].d, 'letters'))}) · ⭐ on the piano <button class="btn btn-sm key-btn" type="button" data-key title="Hear the I–IV–V–I chords again (K key)">🎹 Hear the key</button>`;
   const total = m.ans.reduce((a, n) => a + n.dur, 0), cap = q.mu * q.measures;
   const complete = total === cap && m.ans.every(n => n.d != null);
   $('#melHint').hidden = m.checked;
@@ -4260,8 +4311,9 @@ function heistMelCheck() {
   ch.times[ch.idx] = [m.t0, Date.now()];
   ch.pauseStart = Date.now();                          // looking it over doesn't count toward the time
   m.checked = true; m.sel = null; m.states = g.states;
-  m.lockUntil = Date.now() + 1500; setTimeout(melUI, 1550);
+  m.lockUntil = Date.now() + VAULT_MS; setTimeout(melUI, VAULT_MS + 50);
   const perfect = g.pc === g.n && g.rc === g.n, x = Math.max(0, ch.used[ch.idx] - CONFIG.challengePlays);
+  heistBoltFx(ch.idx, (g.pc + g.rc) / (2 * g.n) >= 0.6);
   $('#melFbMsg').textContent = (perfect ? 'Safe cracked! Every note is right 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green = right, orange = right rhythm but wrong pitch, red = wrong rhythm.`)
     + (x ? ` (${x} extra listen${x > 1 ? 's' : ''}: −${Math.round(x * CONFIG.extraPenalty * 100)}%)` : '');
   $('#melFbMsg').classList.toggle('perfect', perfect);
@@ -4270,18 +4322,21 @@ function heistMelCheck() {
 }
 
 // ---------- playback ----------
-function buildMelSchedule(q, notes, who, bpm, metro) {
-  const k = MKEYS[q.key], beat = 60 / bpm, u = beat / 4, ev = [], hl = [];
+function cadenceEvents(k, beat) {                         // set the key: I–IV–V–I, then do
+  const ev = [];
   let t = 0;
-  if (who === 'question') {                                // set the key: I–IV–V–I, then do
-    for (const c of [[0, 2, 4], [3, 5, 7], [4, 6, 8], [0, 2, 4]]) {
-      for (const d of c) ev.push({ kind: 'tone', t, dur: beat * 0.92, v: { ...melVoice(degMidi(k, d - 7), 'question'), peak: 0.16 } });
-      t += beat;
-    }
-    t += beat * 0.25;
-    ev.push({ kind: 'tone', t, dur: beat * 1.3, v: melVoice(degMidi(k, 0), 'question') });
-    t += beat * 2;
+  for (const c of [[0, 2, 4], [3, 5, 7], [4, 6, 8], [0, 2, 4]]) {
+    for (const d of c) ev.push({ kind: 'tone', t, dur: beat * 0.92, v: { ...melVoice(degMidi(k, d - 7), 'question'), peak: 0.16 } });
+    t += beat;
   }
+  t += beat * 0.25;
+  ev.push({ kind: 'tone', t, dur: beat * 1.3, v: melVoice(degMidi(k, 0), 'question') });
+  return { ev, t: t + beat * 2 };
+}
+function buildMelSchedule(q, notes, who, bpm, metro, withKey = false) {
+  const k = MKEYS[q.key], beat = 60 / bpm, u = beat / 4, hl = [];
+  let ev = [], t = 0;
+  if (withKey) ({ ev, t } = cadenceEvents(k, beat));      // only on the first listen; 🎹 replays it
   const countStart = t, bpmM = q.mu / 4;
   for (let b = 0; b < bpmM; b++) ev.push({ kind: 'click', t: t + b * beat, accent: b === 0 });
   const start = t + q.mu * u;
@@ -4302,8 +4357,9 @@ function melPlay(who) {
   if (who === 'question' && S.mode === 'challenge' && S.ch && !m.checked && !heistListen()) return;
   Engine.stop();
   maybeShowIosTip();
+  const withKey = who === 'question' && !m.plays;
   if (who === 'question') m.plays++;
-  const sched = buildMelSchedule(m.q, notes, who, S.settings.tempo, S.settings.metronome);
+  const sched = buildMelSchedule(m.q, notes, who, S.settings.tempo, S.settings.metronome, withKey);
   const el = who === 'question' && m.checked ? $('#melCorrect') : $('#melStaff');
   const status = $('#melStatus');
   m.playing = who; melUI();
@@ -4323,6 +4379,16 @@ function melPlay(who) {
     },
     onEnd() { el.querySelectorAll('.mnote.play').forEach(x => x.classList.remove('play')); status.innerHTML = ''; m.playing = null; melUI(); },
   });
+}
+
+function melPlayKey() {                                  // just the I–IV–V–I and do; never counts as a listen
+  const m = S.mel; if (!m.q) return;
+  Engine.stop();
+  maybeShowIosTip();
+  const beat = 60 / S.settings.tempo, { ev, t } = cadenceEvents(MKEYS[m.q.key], beat), status = $('#melStatus');
+  status.innerHTML = '<span class="pill question">🎹 Setting the key…</span>';
+  Engine.play({ events: ev, notes: [], countStart: t, countIn: t, beatSec: beat, beatsPerMeasure: 4, sound: 0, total: t - beat * 0.5 },
+    { onFrame() {}, onEnd() { status.innerHTML = ''; } });
 }
 
 // ---------- events ----------
@@ -4346,6 +4412,7 @@ $('#melLabels').addEventListener('change', e => { S.settings.mel.labels = e.targ
 $('#melShowRhythm').addEventListener('change', e => { S.settings.mel.showRhythm = e.target.checked; saveSettings(); melNew(); });
 $('#melPalette').addEventListener('click', e => { const b = e.target.closest('[data-dur]'); if (b) melSetDur(+b.dataset.dur); });
 $('#melDelete').onclick = melDelete;
+$('#melStart').addEventListener('click', e => { if (e.target.closest('[data-key]')) melPlayKey(); });
 $('#melClear').onclick = melClear;
 $('#melStaff').addEventListener('click', e => {
   const g = e.target.closest('.mnote'); const m = S.mel;
@@ -4365,6 +4432,7 @@ function melKey(e) {
   const k = e.key;
   if (k === ' ') { e.preventDefault(); spaceHandled = true; if (!e.repeat) melPlay('question'); }
   else if (k === 'a' || k === 'A') { e.preventDefault(); if (!e.repeat) melPlay('answer'); }
+  else if (k === 'k' || k === 'K') { e.preventDefault(); if (!e.repeat) melPlayKey(); }
   else if (k === 'Escape') { if (Engine.isPlaying) Engine.stop(); else { S.mel.sel = null; renderMount(melAnsMount); } }
   else if (k === 'Enter') { e.preventDefault(); if (!e.repeat && !els.checkBtn.disabled) melCheck(); }
   else if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); melDelete(); }
@@ -4473,8 +4541,9 @@ function heistScreen(ch) {
   hero.classList.remove('win', 'close', 'busted');
   hero.classList.add(ch.outcome);
   const where = HEIST_LAYERS[ch.tripped < 0 ? 4 : ch.tripped][1].toLowerCase();
-  $('#endIcon').textContent = ch.outcome === 'win' ? '💎' : ch.outcome === 'close' ? '🏃' : '🚔';
-  $('#endTitle').textContent = ch.outcome === 'win' ? 'HEIST SUCCESSFUL!' : ch.outcome === 'close' ? 'CLOSE CALL!' : 'BUSTED!';
+  $('#endIcon').innerHTML = vaultHTML(ch.layers);
+  $('#endTitle').textContent = ch.outcome === 'win' ? 'HEIST SUCCESSFUL!' : ch.outcome === 'close' ? 'CLOSE CALL!' : 'CAUGHT!';
+  setTimeout(() => heistEndFx(ch), 250);
   $('#heistLayers').innerHTML = layersHTML(ch.layers, ch.tripped);
   let bn = $('#bustNote');
   if (!bn) { bn = document.createElement('p'); bn.id = 'bustNote'; bn.className = 'muted'; $('#lbCard h3').after(bn); }
@@ -4485,6 +4554,137 @@ function heistScreen(ch) {
     : `The alarm tripped at the ${where}. You needed ${CONFIG.heistJail}% to get away. Finish ${CONFIG.jailbreak} training missions at 80%+ to break out of jail.`;
   els.endDetail.textContent = `${els.endDetail.textContent} · ${extra}`;
 }
+// ---------- vault animations + sound effects ----------
+const VAULT_MS = 2600;                                  // how long the bolt animation runs after each layer
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SFX = {
+  ctx() { if (!Engine.ctx) { try { Engine.ensure().catch(() => {}); } catch (e) { /* no audio */ } } else Engine.resumeIfNeeded(); return Engine.ctx; },
+  now() { const c = this.ctx(); return c ? c.currentTime + 0.03 : 0; },
+  noise(t, dur, f, g, type = 'bandpass', q = 4) {
+    const c = this.ctx(); if (!c) return;
+    if (!this.buf) { const b = c.createBuffer(1, c.sampleRate * 0.6, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; this.buf = b; }
+    const src = c.createBufferSource(), fl = c.createBiquadFilter(), gn = c.createGain();
+    src.buffer = this.buf; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+    gn.gain.setValueAtTime(g, t); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(fl); fl.connect(gn); gn.connect(Engine.master); src.start(t); src.stop(t + dur + 0.02);
+  },
+  osc(t, dur, f, g, type = 'sine', f2) {
+    const c = this.ctx(); if (!c) return;
+    const o = c.createOscillator(), gn = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(g, t + 0.005); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(gn); gn.connect(Engine.master); o.start(t); o.stop(t + dur + 0.02);
+  },
+  click(at, loud) { const t = this.now() + at; this.noise(t, 0.03, loud ? 2400 : 3600, loud ? 0.9 : 0.55, 'bandpass', 5); this.osc(t, 0.025, loud ? 900 : 1700, loud ? 0.12 : 0.06, 'square'); },
+  clunk(at = 0) { const t = this.now() + at; this.osc(t, 0.3, 150, 0.7, 'sine', 50); this.noise(t, 0.14, 700, 0.6, 'lowpass', 1); this.noise(t + 0.06, 0.05, 3000, 0.35, 'bandpass', 3); },
+  buzz(at = 0) { const t = this.now() + at; this.osc(t, 0.5, 96, 0.22, 'square'); this.osc(t, 0.5, 101, 0.18, 'sawtooth'); },
+  creak(at = 0) { const t = this.now() + at; this.osc(t, 0.9, 70, 0.12, 'sawtooth', 120); this.noise(t, 0.9, 400, 0.25, 'lowpass', 2); },
+  chaChing(at = 0, n = 16) {
+    const t = this.now() + at;
+    this.noise(t, 0.09, 5000, 0.45, 'highpass', 1);
+    [1568, 2093, 2637].forEach((f, i) => this.osc(t + 0.08 + i * 0.07, 1, f, 0.16, 'triangle'));
+    for (let i = 0; i < n; i++) this.osc(t + 0.35 + i * 0.07 + Math.random() * 0.04, 0.2, 2400 + Math.random() * 2600, 0.05, 'triangle');
+  },
+  siren(dur = 3.6, at = 0) {
+    const c = this.ctx(); if (!c) return;
+    const t = this.now() + at, o = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain();
+    o.type = 'sawtooth'; lp.type = 'lowpass'; lp.frequency.value = 2400;
+    o.frequency.setValueAtTime(650, t);
+    for (let k = 0.6; k < dur; k += 0.6) o.frequency.linearRampToValueAtTime(Math.round(k / 0.6) % 2 ? 1050 : 650, t + k);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.11, t + 0.15); g.gain.setValueAtTime(0.11, t + dur - 0.4); g.gain.linearRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp); lp.connect(g); g.connect(Engine.master); o.start(t); o.stop(t + dur + 0.05);
+  },
+  thud(at = 0) { const t = this.now() + at; this.osc(t, 0.4, 95, 0.8, 'sine', 38); this.noise(t, 0.22, 260, 0.7, 'lowpass', 1); },
+};
+const BOLT_TOP = [34, 59, 84, 109, 134];
+function vaultHTML(bolts = []) {
+  const st = i => bolts[i] === true ? 'open' : bolts[i] === false ? 'bad' : '';
+  return `<div class="vault" aria-hidden="true"><div class="v-frame"></div><div class="v-inside">💎</div>
+    ${BOLT_TOP.map((y, i) => `<i class="v-keep ${st(i) === 'open' ? 'on' : st(i)}" style="top:${y - 2}px"></i><i class="v-bolt ${st(i)}" style="top:${y}px"></i>`).join('')}
+    <div class="v-door"><div class="v-wheel"><i></i><i></i><i></i></div><div class="v-dial"></div></div><div class="v-mark"></div></div>`;
+}
+function spinDial(vault, ms = 1300) {                    // right, back left, right again, clicking as it turns
+  const dial = vault.querySelector('.v-dial');
+  if (!reducedMotion()) dial.animate([
+    { transform: 'rotate(0deg)', easing: 'ease-in-out' }, { transform: 'rotate(420deg)', offset: 0.45, easing: 'ease-in-out' },
+    { transform: 'rotate(150deg)', offset: 0.8, easing: 'ease-in-out' }, { transform: 'rotate(270deg)' }], { duration: ms, fill: 'forwards' });
+  const segs = [[0, 0.45, 14], [0.45, 0.8, 9], [0.8, 1, 4]];
+  segs.forEach(([a, b, n]) => { for (let k = 1; k <= n; k++) SFX.click((a + (b - a) * k / n) * ms / 1000, k === n); });
+}
+function heistBoltFx(i, ok) {
+  const ch = S.ch; ch.bolts[i] = ok;
+  document.querySelectorAll('.vault-ov').forEach(x => x.remove());
+  const ov = document.createElement('div');
+  ov.className = 'vault-ov';
+  const prev = ch.bolts.slice(); prev[i] = undefined;
+  ov.innerHTML = `<div class="vault-card">${vaultHTML(prev)}<div class="vault-cap">🔐 Cracking bolt ${i + 1} of 5…</div><div class="vault-skip">Tap to skip</div></div>`;
+  document.body.appendChild(ov);
+  const v = ov.querySelector('.vault'), cap = ov.querySelector('.vault-cap');
+  spinDial(v);
+  const t1 = setTimeout(() => {
+    v.querySelectorAll('.v-bolt')[i].classList.add(ok ? 'open' : 'bad');
+    v.querySelectorAll('.v-keep')[i].classList.add(ok ? 'on' : 'bad');
+    cap.className = `vault-cap ${ok ? 'ok' : 'bad'}`;
+    const open = ch.bolts.filter(Boolean).length;
+    cap.textContent = ok ? `🔓 Bolt ${i + 1} unlocked! ${open} of 5 open` : `🚨 Bolt ${i + 1} jammed! The alarm is warming up`;
+    if (ok) SFX.clunk(); else { SFX.buzz(); v.classList.remove('shake'); void v.offsetWidth; v.classList.add('shake'); }
+  }, 1350);
+  const close = () => { clearTimeout(t1); clearTimeout(t2); ov.classList.add('out'); setTimeout(() => ov.remove(), 260); };
+  const t2 = setTimeout(close, VAULT_MS);
+  ov.onclick = close;
+}
+function pourLoot(host, origin, n) {
+  const hr = host.getBoundingClientRect(), o = origin.getBoundingClientRect();
+  const x0 = o.left + o.width / 2 - hr.left, y0 = o.top + o.height / 2 - hr.top;
+  for (let i = 0; i < n; i++) {
+    const e = document.createElement('span'), r = Math.random();
+    if (r < 0.3) e.className = 'loot-fly bar'; else { e.className = 'loot-fly'; e.textContent = r < 0.75 ? '🪙' : r < 0.9 ? '💰' : '💵'; }
+    e.style.left = `${x0}px`; e.style.top = `${y0}px`;
+    host.appendChild(e);
+    const dx = (Math.random() * 2 - 1) * hr.width * 0.48, up = -(50 + Math.random() * 110), fall = hr.height - y0 + 30, rot = (Math.random() * 2 - 1) * 600;
+    const a = e.animate([
+      { transform: 'translate(-50%,-50%) scale(.3)', opacity: 0 },
+      { transform: `translate(calc(-50% + ${dx * 0.35}px),calc(-50% + ${up}px)) scale(1) rotate(${rot * 0.3}deg)`, opacity: 1, offset: 0.3 },
+      { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${fall}px)) scale(1) rotate(${rot}deg)`, opacity: 1 }],
+      { duration: 1500 + Math.random() * 900, delay: i * 45, easing: 'cubic-bezier(.3,.1,.65,1)', fill: 'forwards' });
+    a.onfinish = () => e.remove();
+  }
+}
+function heistEndFx(ch) {
+  const hero = document.querySelector('.end-hero'), v = hero.querySelector('.vault'), title = $('#endTitle');
+  if (!v) return;
+  hero.querySelectorAll('.loot-fly,.bust-stamp').forEach(x => x.remove());
+  const pop = at => { title.classList.remove('end-title-pop'); title.style.animationDelay = `${at}ms`; void title.offsetWidth; title.classList.add('end-title-pop'); };
+  const rm = reducedMotion();
+  if (ch.outcome === 'busted') {
+    pop(700);
+    SFX.siren(); SFX.thud(0.45);
+    const pol = document.createElement('div'); pol.className = 'police-fx'; document.body.appendChild(pol);
+    setTimeout(() => pol.remove(), 4600);
+    const st = document.createElement('div'); st.className = 'bust-stamp'; st.textContent = 'BUSTED';
+    hero.appendChild(st);
+    if (!rm) st.animate([{ transform: 'translate(-50%,-50%) rotate(-40deg) scale(5)', opacity: 0 }, { transform: 'translate(-50%,-50%) rotate(-12deg) scale(1)', opacity: 1 }],
+      { duration: 450, easing: 'cubic-bezier(.2,1.3,.4,1)', fill: 'both' });
+    setTimeout(() => { hero.classList.remove('shake'); void hero.offsetWidth; hero.classList.add('shake'); }, 450);
+    return;
+  }
+  const win = ch.outcome === 'win';
+  pop(win ? 2300 : 1900);
+  spinDial(v, 1100);
+  const door = v.querySelector('.v-door'), wheel = v.querySelector('.v-wheel');
+  setTimeout(() => {
+    SFX.clunk();
+    if (!rm) wheel.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(90deg)' }], { duration: 350, easing: 'ease-out', fill: 'forwards' });
+  }, 1150);
+  setTimeout(() => {
+    SFX.creak();
+    const to = win ? -112 : -48;
+    if (rm) door.style.transform = `rotateY(${to}deg)`;
+    else door.animate([{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${to}deg)` }], { duration: 900, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+  }, 1500);
+  setTimeout(() => { SFX.chaChing(0, win ? 18 : 6); if (!rm) pourLoot(hero, v.querySelector('.v-inside'), win ? 42 : 10); }, win ? 2100 : 1950);
+}
+
 function showJail() {
   const st = spyState(), j = st.jail; if (!j) return;
   const bars = Array.from({ length: CONFIG.jailbreak }, (_, i) => `<i class="${i < j.sawn ? 'cut' : ''}"></i>`).join('');
@@ -4521,7 +4721,7 @@ else refreshClassInfo();
 applyFocusFromUrl();
 spyUI();
 if (S.settings.app === 'melody') setApp('melody');
-if (/[?&]selftest/.test(location.search)) window.RDT = { HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+if (/[?&]selftest/.test(location.search)) window.RDT = { heistEndFx, heistBoltFx, SFX, HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
 </body>
