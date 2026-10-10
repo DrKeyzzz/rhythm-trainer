@@ -85,7 +85,6 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .field{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);font-weight:600}
 .field select{min-height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:6px 10px;font-weight:650}
 .audio{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.settings-toggle{display:none}
 .audio-settings{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .tempo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted)}
 .tempo input{width:140px;accent-color:var(--accent-btn);min-height:44px}
@@ -399,9 +398,6 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .only-wide{display:inline}
 @media (max-width:700px){
   .staff-wrap{max-height:36vh;max-height:36dvh}
-  .settings-toggle{display:flex;width:100%;justify-content:flex-start}
-  .settings-toggle #settingsSummary{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
-  .controls:not(.open) .settings,.controls:not(.open) .audio{display:none!important}
   .challenge-bar{order:-1;width:100%}
   .audio{width:100%}
   .audio-settings{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px 12px}
@@ -599,6 +595,43 @@ h1.bs-title small{font:12px "Special Elite",monospace;letter-spacing:.06em;color
 @keyframes polout{0%,80%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.police-fx::before,.police-fx::after{animation:none;opacity:.5}}
 @media (prefers-reduced-motion:reduce){.spy-stamp{animation:none;opacity:.95;transform:rotate(-10deg)}.heist-fx .siren,.btn-extra{animation:none}}
+/* ---------- start screen (2026-10): PLAY on the playfield, three dropdowns, the rest in More options ---------- */
+#questionCard,#melCard{position:relative}
+.ready{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center;border-radius:inherit;background:radial-gradient(70% 80% at 50% 50%,rgba(11,16,32,.78),rgba(11,16,32,.94));-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.ready-title{margin:0;font:clamp(24px,3.6vw,36px)/1.05 "Black Ops One",Impact,system-ui,sans-serif;letter-spacing:.04em;color:#fff;text-shadow:0 2px 0 #000}
+.ready-go{font:clamp(22px,3vw,30px)/1 "Black Ops One",Impact,system-ui,sans-serif;letter-spacing:.05em;padding:16px 44px;min-height:64px;border:0;border-radius:18px;color:#1b1206;background:linear-gradient(135deg,#f5c542,#ff8a3d);box-shadow:0 5px 0 #a8641c,0 10px 34px rgba(245,197,66,.35);animation:readyPulse 2.2s ease-in-out infinite}
+.ready-go svg{width:.9em;height:.9em}
+@keyframes readyPulse{50%{box-shadow:0 5px 0 #a8641c,0 10px 44px rgba(245,197,66,.6)}}
+.ready-sum{font:600 15px "JetBrains Mono",monospace;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:6px 14px}
+.ready-sum b{color:var(--gold)}
+.ready-hint{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;font:14px "Special Elite",monospace;color:var(--muted)}
+.ready-hint .linkbtn{font:inherit;color:var(--gold);min-height:36px;padding:6px 4px}
+.ready-hint kbd{font:700 12px "JetBrains Mono",monospace;border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--text)}
+body.ready-on .actionbar{visibility:hidden}
+body.ready-on .card-head .edit-tools{visibility:hidden}
+@media (prefers-reduced-motion:reduce){.ready-go{animation:none}}
+.setup{margin-top:12px}
+.quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;align-items:end}
+.quick:has(#ddThirdWrap[hidden]){grid-template-columns:repeat(2,minmax(0,1fr)) auto}
+.dd{display:flex;flex-direction:column;gap:4px;min-width:0}
+.dd > span{font:12px "Special Elite",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.dd select{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;font-weight:750;font-size:16px;cursor:pointer}
+.dd select:hover:not(:disabled){border-color:var(--gold)}
+.dd select:disabled{opacity:.6;cursor:not-allowed}
+.more-btn{min-height:46px;white-space:nowrap}
+.more-btn[aria-expanded="true"]{border-color:var(--gold);color:var(--gold)}
+.more{margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.mtabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding:4px 6px 0}
+.mtabs button{border:0;background:none;color:var(--muted);font:700 14px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px 8px;min-height:44px;border-bottom:3px solid transparent;cursor:pointer}
+.mtabs button[aria-selected="true"]{color:var(--text);border-color:var(--gold)}
+.mpanel{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.mrow{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.mpanel .pool-row{margin:0}
+.howto{margin:0 0 6px;padding-left:22px;display:flex;flex-direction:column;gap:8px;font-size:16px}
+.howto b{color:var(--gold)}
+@media (max-width:820px){.quick,.quick:has(#ddThirdWrap[hidden]){grid-template-columns:repeat(2,minmax(0,1fr))}.quick .more-btn{width:100%}}
+@media (pointer:coarse){.ready-hint .kb-only{display:none}}
+@media (max-width:600px){.ready{gap:9px;padding:48px 12px 12px;justify-content:flex-start}.ready-go{padding:14px 30px}.ready-sum{font-size:13px}.mpanel .field{width:100%}}
 </style>
 <style>
 /* Music Theory Games home link: the same in every game, on its own row at the top left of the header */
@@ -619,7 +652,7 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
       <svg class="vault-logo" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#1b2440" stroke="#f5c542" stroke-width="3"/><circle cx="32" cy="32" r="21" fill="#131a2c" stroke="#5a6a92" stroke-width="2"/><g stroke="#f5c542" stroke-width="2.2" stroke-linecap="round"><line x1="32" y1="4" x2="32" y2="9"/><line x1="32" y1="55" x2="32" y2="60"/><line x1="4" y1="32" x2="9" y2="32"/><line x1="55" y1="32" x2="60" y2="32"/><line x1="12" y1="12" x2="15.5" y2="15.5"/><line x1="52" y1="12" x2="48.5" y2="15.5"/><line x1="12" y1="52" x2="15.5" y2="48.5"/><line x1="52" y1="52" x2="48.5" y2="48.5"/></g><text x="32" y="44" text-anchor="middle" font-size="30" fill="#f5c542" font-family="Noto Music, serif">𝄞</text></svg>
       <h1 class="bs-title">THE BIG <span>SCORE</span><small>Hear it. Write it. Pull off the big score.</small></h1>
     </div>
-    <div class="seg app-tabs" id="appTabs" role="group" aria-label="Game">
+    <div class="seg app-tabs" id="appTabs" role="group" aria-label="Game" hidden>
       <button type="button" data-app="rhythm" title="Rhythm dictation">📡 Transmissions</button><button type="button" data-app="melody" title="Melodic dictation">🔐 Safecracking</button>
     </div>
     <div class="top-actions">
@@ -641,38 +674,13 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
   <!-- ===== Play view (practice + challenge) ===== -->
   <div id="playView">
     <div class="assign-banner" id="assignBanner" hidden></div>
-    <div class="controls" id="controls">
-      <button class="btn btn-sm settings-toggle" id="settingsToggle" type="button" aria-expanded="false" aria-controls="controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span id="settingsSummary">Settings</span><span aria-hidden="true" id="settingsCaret">▾</span></button>
-      <div class="settings" id="practiceSettings">
-        <div class="seg" id="typeSeg" role="group" aria-label="Meter type">
-          <button type="button" data-v="simple">Simple</button><button type="button" data-v="compound">Compound</button>
-        </div>
-        <div class="seg" id="levelSeg" role="group" aria-label="Level">
-          <button type="button" data-v="beginner" title="Beginner">🔰 Rookie</button><button type="button" data-v="easy" title="Easy">😎 Agent</button><button type="button" data-v="hard" title="Hard">🎖️ Special Ops</button><button type="button" data-v="extreme" title="Extreme">🧠 Mastermind</button>
-        </div>
-        <div class="seg" id="lenSeg" role="group" aria-label="Length">
-          <button type="button" data-v="2">2 measures</button><button type="button" data-v="4">4 measures</button>
-        </div>
-        <label class="field"><span>Time signature</span><select id="tsSelect" aria-label="Time signature"></select></label>
-        <span class="beg-note small muted" id="begNote" hidden>One measure of 4/4</span>
-        <button class="btn btn-sm b16-toggle" type="button" id="b16Toggle" aria-pressed="false" hidden title="Add sixteenth-note patterns to Beginner">＋ Add 16th notes</button>
-      </div>
-
+    <div class="controls" id="controls" hidden>
       <div class="challenge-bar" id="challengeBar" hidden>
         <span class="cb-badge">💎 <span id="cbLevel">Agent</span> Heist</span>
         <span class="cb-progress"><span class="pips" id="cbPips"></span><span id="cbText">Rhythm 1 of 5</span></span>
         <span class="cb-plays" id="cbPlays" title="Blue = regular plays. Gold = extra listens, each costs 10% of that rhythm's points."></span>
         <span class="cb-timer" id="cbTimer">⏱ 0:00</span>
         <button class="btn btn-sm" id="quitBtn" type="button">Quit</button>
-      </div>
-
-      <div class="audio">
-        <div class="audio-settings" id="audioSettings">
-          <label class="tempo"><span>Tempo</span><input type="range" id="tempo" min="50" max="120" step="1" aria-label="Tempo in beats per minute"><output id="tempoOut">72 BPM</output></label>
-          <label class="switch"><input type="checkbox" id="metro"><span class="track"></span><span>Metronome</span></label>
-          <label class="field"><span>Sound</span><select id="soundSel" aria-label="Sound"></select></label>
-          <span class="muted small" id="tempoNote" hidden>Tempo is fixed in Challenge Mode</span>
-        </div>
       </div>
     </div>
 
@@ -697,12 +705,56 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
 
       <div class="bank-wrap" id="bankWrap">
         <p class="bank-label" id="bankLabel">Answer bank</p>
-        <div class="pool-row" id="poolRow">
-          <label for="poolSlider" class="pool-label">Rhythms in play: <b id="poolCount"></b></label>
-          <div class="pool-slide"><span class="small muted">Easiest</span><input type="range" id="poolSlider" min="0" max="100" step="1" value="100" aria-label="How many rhythms are in play"><span class="small muted">All</span></div>
-          <button class="btn btn-sm" id="poolEdit" type="button" aria-pressed="false" title="Pick exactly which rhythms are in play">Edit</button>
-        </div>
         <div class="bank" id="bank"></div>
+      </div>
+    </section>
+
+    <!-- start screen (2026-10): PLAY on the playfield, three dropdowns, everything else in "More options" -->
+    <div class="ready" id="ready">
+      <h2 class="ready-title" id="readyTitle">Ready for your first job?</h2>
+      <button class="btn ready-go" id="readyGo" type="button"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg><span id="readyLabel">Intercept</span></button>
+      <div class="ready-sum" id="readySum"></div>
+      <div class="ready-hint"><span class="kb-only">or press <kbd>Space</kbd></span><span class="kb-only" aria-hidden="true">·</span><button type="button" class="linkbtn" id="howtoBtn">? How to play</button></div>
+    </div>
+    <section class="setup" id="setup" aria-label="Game setup">
+      <div class="quick">
+        <label class="dd"><span>Mission</span><select id="ddMission"><option value="rhythm">📡 Transmissions · rhythm</option><option value="melody">🔐 Safecracking · melody</option><option value="heist">💎 The Heist · scored</option></select></label>
+        <label class="dd"><span>Level</span><select id="ddLevel"></select></label>
+        <label class="dd" id="ddThirdWrap"><span id="ddThirdName">Length</span><select id="ddThird"></select></label>
+        <button class="btn more-btn" id="moreBtn" type="button" aria-expanded="false" aria-controls="more">⚙ More options</button>
+      </div>
+      <div class="more" id="more" hidden>
+        <div class="mtabs" role="tablist" aria-label="More options">
+          <button type="button" role="tab" data-tab="rhythm" aria-selected="true">Rhythm</button><button type="button" role="tab" data-tab="melody" aria-selected="false">Melody</button><button type="button" role="tab" data-tab="sound" aria-selected="false">Sound</button>
+        </div>
+        <div class="mpanel" data-panel="rhythm" role="tabpanel">
+          <div class="mrow">
+            <div class="seg" id="typeSeg" role="group" aria-label="Meter type">
+              <button type="button" data-v="simple">Simple</button><button type="button" data-v="compound">Compound</button>
+            </div>
+            <label class="field"><span>Time signature</span><select id="tsSelect" aria-label="Time signature"></select></label>
+          </div>
+          <span class="beg-note small muted" id="begNote" hidden>Rookie is always one measure of 4/4. Pick Agent or higher for other meters.</span>
+          <div class="pool-row" id="poolRow">
+            <label for="poolSlider" class="pool-label">Rhythms in play: <b id="poolCount"></b></label>
+            <div class="pool-slide"><span class="small muted">Easiest</span><input type="range" id="poolSlider" min="0" max="100" step="1" value="100" aria-label="How many rhythms are in play"><span class="small muted">All</span></div>
+            <button class="btn btn-sm" id="poolEdit" type="button" aria-pressed="false" title="Pick exactly which rhythms are in play">Edit</button>
+          </div>
+        </div>
+        <div class="mpanel" data-panel="melody" role="tabpanel" hidden>
+          <div class="mrow">
+            <label class="field"><span>Labels</span><select id="melLabels"><option value="both">do · 1</option><option value="solfege">do re mi</option><option value="numbers">1 2 3</option><option value="letters">C D E</option><option value="none">None</option></select></label>
+            <label class="switch"><input type="checkbox" id="melShowRhythm"><span class="track"></span><span>Show rhythm</span></label>
+          </div>
+        </div>
+        <div class="mpanel" data-panel="sound" role="tabpanel" hidden>
+          <div class="mrow audio-settings" id="audioSettings">
+            <label class="tempo"><span>Tempo</span><input type="range" id="tempo" min="50" max="120" step="1" aria-label="Tempo in beats per minute"><output id="tempoOut">72 BPM</output></label>
+            <label class="switch"><input type="checkbox" id="metro"><span class="track"></span><span>Metronome</span></label>
+            <label class="field"><span>Sound</span><select id="soundSel" aria-label="Sound"></select></label>
+          </div>
+          <span class="muted small" id="tempoNote" hidden>Heists use a fixed tempo for rhythms.</span>
+        </div>
       </div>
     </section>
 
@@ -714,16 +766,6 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
 
   <!-- ===== Melody view ===== -->
   <div id="melodyView" hidden>
-    <div class="controls mel-controls">
-      <div class="seg" id="melLevelSeg" role="group" aria-label="Melody level">
-        <button type="button" data-v="newbie" title="Newbie">🎓 Training Room</button><button type="button" data-v="beginner" title="Beginner">🧪 Field Test</button><button type="button" data-v="five" title="Five-finger">🔐 Safecracker</button>
-      </div>
-      <div class="seg" id="melModeSeg" role="group" aria-label="Major or minor">
-        <button type="button" data-v="both">Major &amp; minor</button><button type="button" data-v="major">Major</button><button type="button" data-v="minor">Minor</button>
-      </div>
-      <label class="field"><span>Labels</span><select id="melLabels"><option value="both">do · 1</option><option value="solfege">do re mi</option><option value="numbers">1 2 3</option><option value="letters">C D E</option><option value="none">None</option></select></label>
-      <label class="switch"><input type="checkbox" id="melShowRhythm"><span class="track"></span><span>Show rhythm</span></label>
-    </div>
     <section class="card" id="melCard" aria-label="Melody question">
       <div class="card-head">
         <div class="qmeta"><span class="ts-badge" id="melKeyBadge">C major</span><span class="muted" id="melInfo"></span></div>
@@ -1508,8 +1550,8 @@ const $ = s => document.querySelector(s);
 const els = {
   staff: $('#staff'), staffWrap: $('#staffWrap'), correctStaff: $('#correctStaff'), bank: $('#bank'), bankWrap: $('#bankWrap'), bankLabel: $('#bankLabel'),
   tsBadge: $('#tsBadge'), qInfo: $('#qInfo'), status: $('#status'), hint: $('#hint'), feedback: $('#feedback'), fbMsg: $('#fbMsg'),
-  typeSeg: $('#typeSeg'), levelSeg: $('#levelSeg'), lenSeg: $('#lenSeg'), tsSelect: $('#tsSelect'), practiceSettings: $('#practiceSettings'),
-  tempo: $('#tempo'), tempoOut: $('#tempoOut'), metro: $('#metro'), tempoNote: $('#tempoNote'), settingsSummary: $('#settingsSummary'), settingsCaret: $('#settingsCaret'), settingsToggle: $('#settingsToggle'), controls: $('#controls'), audioSettings: $('#audioSettings'),
+  typeSeg: $('#typeSeg'), tsSelect: $('#tsSelect'),
+  tempo: $('#tempo'), tempoOut: $('#tempoOut'), metro: $('#metro'), tempoNote: $('#tempoNote'), controls: $('#controls'), audioSettings: $('#audioSettings'),
   challengeBar: $('#challengeBar'), cbPips: $('#cbPips'), cbText: $('#cbText'), cbPlays: $('#cbPlays'), cbTimer: $('#cbTimer'),
   playQBtn: $('#playQBtn'), playABtn: $('#playABtn'), stopBtn: $('#stopBtn'), checkBtn: $('#checkBtn'), checkLabel: $('#checkLabel'), playsBadge: $('#playsBadge'),
   deleteBtn: $('#deleteBtn'), clearBtn: $('#clearBtn'), statsLine: $('#statsLine'), modeNote: $('#modeNote'),
@@ -1528,7 +1570,7 @@ const store = {
 
 const S = {
   mode: 'practice',                // 'practice' | 'challenge' | 'end'
-  settings: { type: 'simple', level: 'easy', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false, sound: 'cycle', app: 'rhythm', mel: { level: 'newbie', mode: 'both', labels: 'both', showRhythm: null } },
+  settings: { type: 'simple', level: 'beginner', measures: 2, lock: 'random', tempo: CONFIG.defaultTempo, metronome: false, sound: 'cycle', app: 'rhythm', mission: 'rhythm', mel: { level: 'newbie', mode: 'both', labels: 'both', showRhythm: null } },
   q: null, answer: [], selected: null, checked: false, nextLockUntil: 0,
   pool: { pct: 1, custom: {} }, poolEdit: false,      // practice "rhythms in play" (resets every visit)
   stats: { rhythms: 0, correct: 0, total: 0, streak: 0 },
@@ -1554,6 +1596,7 @@ function loadSettings() {
     S.settings.metronome = !!saved.metronome;
     if (saved.mel && typeof saved.mel === 'object') Object.assign(S.settings.mel, saved.mel);
     if (saved.app === 'melody' || saved.app === 'rhythm') S.settings.app = saved.app;
+    S.settings.mission = ['rhythm', 'melody', 'heist'].includes(saved.mission) ? saved.mission : S.settings.app;
   } catch (e) { /* ignore bad saved settings */ }
 }
 const saveSettings = () => store.set('rdt_settings', JSON.stringify(S.settings));
@@ -1877,32 +1920,8 @@ function updateUI() {
   const inChallenge = S.mode === 'challenge';
   const s = S.settings;
 
-  els.practiceSettings.hidden = inChallenge;
   els.challengeBar.hidden = !inChallenge;
-  els.tempo.disabled = inChallenge;
-  els.tempoNote.hidden = !inChallenge;
-  const tempo = currentTempo();
-  els.tempo.value = tempo;
-  els.tempoOut.textContent = `${tempo} BPM`;
-  els.metro.checked = s.metronome;
-  const beg = isLocked(s.level);
-  els.typeSeg.classList.toggle('locked', beg);
-  els.lenSeg.classList.toggle('locked', beg);
-  els.tsSelect.disabled = beg;
-  $('#begNote').hidden = !beg;
-  els.settingsSummary.textContent = inChallenge
-    ? `${tempo} BPM · Metronome ${s.metronome ? 'on' : 'off'}`
-    : beg ? `${LEVEL_FUN[s.level]} · 4/4 · 1 measure · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`
-    : `${LEVEL_FUN[s.level]} · ${s.type === 'simple' ? 'Simple' : 'Compound'} · ${s.measures} measures · ${s.lock === 'random' ? 'Random' : s.lock} · ${tempo} BPM${s.metronome ? ' · Metronome' : ''}`;
-  els.settingsCaret.textContent = els.controls.classList.contains('open') ? '▴' : '▾';
-
-  for (const b of els.typeSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.type));
-  for (const b of els.lenSeg.children) b.setAttribute('aria-pressed', String(!beg && +b.dataset.v === s.measures));
-  for (const b of els.levelSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.level || (b.dataset.v === 'beginner' && s.level === 'beginner16')));
-  const t16 = $('#b16Toggle');
-  t16.hidden = !beg;
-  t16.setAttribute('aria-pressed', String(s.level === 'beginner16'));
-  t16.textContent = s.level === 'beginner16' ? '✓ 16th notes on' : '＋ Add 16th notes';
+  syncSetup();
 
   if (!S.q) return;
   const ts = TIME_SIGS[S.q.ts];
@@ -1932,7 +1951,7 @@ function updateUI() {
   const st = S.stats;
   els.statsLine.innerHTML = inChallenge ? ''
     : st.rhythms ? `This session: <b>${st.rhythms}</b> rhythm${st.rhythms > 1 ? 's' : ''} · <b>${Math.round(st.correct / st.total * 100)}%</b> accuracy · streak <b>${st.streak}</b>${st.streak >= 2 ? ' 🔥' : ''}`
-    : 'Press <b>Question</b> to hear the rhythm, then rebuild it from the answer bank.';
+    : 'Press <b>Intercept</b> to hear the rhythm, then rebuild it from the answer bank.';
 }
 
 function populateTsSelect() {
@@ -1941,6 +1960,130 @@ function populateTsSelect() {
   els.tsSelect.innerHTML = `<option value="random">Random</option>` + list.map(t => `<option value="${t}">${t} only</option>`).join('');
   els.tsSelect.value = S.settings.lock;
 }
+
+// ---------- start screen: PLAY on the playfield, three dropdowns, the rest in More options ----------
+// Mission = which game the PLAY button starts: rhythm practice, melody practice or a scored Heist.
+// Transmissions and the Heist share the rhythm level; Safecracking has its own.
+S.started = false;                                     // the PLAY card shows until the first listen of each visit
+const readyShowing = () => S.mode === 'practice' && (!S.started || S.settings.mission === 'heist');
+const MEL_KEYS_NAME = { both: 'Major & minor', major: 'Major', minor: 'Minor' };
+const LEVEL_HINT = { beginner: 'one measure of 4/4', beginner16: 'one measure of 4/4, with 16ths', easy: '', hard: '', extreme: '' };
+const setOpts = (sel, html) => { if (sel.dataset.html !== html) { sel.innerHTML = html; sel.dataset.html = html; } };   // rebuilding would close an open list
+const opts = (list, val) => list.map(([v, t, off]) => `<option value="${v}"${v === val ? ' selected' : ''}${off ? ' disabled' : ''}>${esc(t)}</option>`).join('');
+function syncSetup() {
+  const s = S.settings, mis = s.mission, beg = isLocked(s.level), practice = S.mode === 'practice';
+  const view = S.app === 'melody' ? $('#melodyView') : els.playView, card = S.app === 'melody' ? $('#melCard') : $('#questionCard');
+  // one setup row and one PLAY card, moved to whichever game is showing
+  if (card.lastElementChild !== $('#ready')) card.append($('#ready'));
+  if (card.nextElementSibling !== $('#setup')) card.after($('#setup'));
+  $('#setup').hidden = !practice;
+  els.controls.hidden = S.mode !== 'challenge';
+  const ready = readyShowing();
+  $('#ready').hidden = !ready;
+  document.body.classList.toggle('ready-on', ready && !view.hidden);
+  // dropdowns
+  $('#ddMission').value = mis;
+  setOpts($('#ddLevel'), mis === 'melody' ? opts(Object.keys(MEL_FUN).map(k => [k, MEL_FUN[k]]), s.mel.level)
+    : opts(LEVELS.map(l => [l, `${LEVEL_FUN[l]}${mis === 'heist' ? ' heist' : ''}`]), s.level));
+  $('#ddThirdWrap').hidden = mis === 'heist';
+  $('#ddThirdName').textContent = mis === 'melody' ? 'Keys' : 'Length';
+  setOpts($('#ddThird'), mis === 'melody' ? opts(Object.keys(MEL_KEYS_NAME).map(k => [k, MEL_KEYS_NAME[k]]), s.mel.mode)
+    : beg ? opts([['1', '1 measure (Rookie)']], '1') : opts([['2', '2 measures'], ['4', '4 measures']], String(s.measures)));
+  $('#ddLevel').value = mis === 'melody' ? s.mel.level : s.level;
+  $('#ddThird').value = mis === 'melody' ? s.mel.mode : beg ? '1' : String(s.measures);
+  $('#ddThird').disabled = mis !== 'melody' && beg;
+  // More options: only the tabs that matter for this mission
+  const tabs = { rhythm: mis === 'rhythm', melody: mis !== 'rhythm', sound: true };   // a heist picks its own meters and rhythms
+  document.querySelectorAll('.mtabs [data-tab]').forEach(b => { b.hidden = !tabs[b.dataset.tab]; });
+  const cur = document.querySelector('.mtabs [aria-selected="true"]');
+  if (!cur || cur.hidden) showMoreTab(mis === 'rhythm' ? 'rhythm' : mis === 'melody' ? 'melody' : 'sound');
+  els.typeSeg.classList.toggle('locked', beg);
+  els.tsSelect.disabled = beg;
+  $('#begNote').hidden = !beg;
+  for (const b of els.typeSeg.children) b.setAttribute('aria-pressed', String(b.dataset.v === s.type));
+  els.poolRow.hidden = mis !== 'rhythm' || !practice;
+  const fixed = S.mode === 'challenge' || mis === 'heist', tempo = fixed ? CONFIG.challengeTempo : s.tempo;
+  els.tempo.value = tempo;
+  els.tempo.disabled = fixed;
+  els.tempoOut.textContent = `${tempo} BPM`;
+  els.tempoNote.hidden = !fixed;
+  els.metro.checked = s.metronome;
+  $('#melLabels').value = s.mel.labels;
+  $('#melShowRhythm').closest('label').hidden = mis !== 'melody';
+  // the PLAY card
+  const first = !store.get('rdt_howto');
+  const meter = s.lock === 'random' ? `${s.type === 'simple' ? 'Simple' : 'Compound'}, any meter` : tsLabel(s.lock);
+  if (mis === 'heist') {
+    const jail = spyState().jail;
+    $('#readyTitle').textContent = jail ? "You're in jail, agent" : 'Ready for the big score?';
+    $('#readyLabel').textContent = jail ? 'Break out' : 'Start the heist';
+    $('#readySum').innerHTML = `<b>${esc(LEVEL_FUN[s.level])} heist</b> · 5 vault layers · rhythm + melody`;
+  } else {
+    $('#readyTitle').textContent = first ? 'Ready for your first job?' : mis === 'melody' ? 'Ready to crack a safe?' : 'Ready for a transmission?';
+    $('#readyLabel').textContent = mis === 'melody' ? 'Listen' : 'Intercept';
+    $('#readySum').innerHTML = mis === 'melody' ? `<b>${esc(MEL_FUN[s.mel.level])}</b> · ${MEL_KEYS_NAME[s.mel.mode]}`
+      : beg ? `<b>${esc(LEVEL_FUN[s.level])}</b> · 1 measure · 4/4${s.level === 'beginner16' ? ' · 16ths' : ''}` : `<b>${esc(LEVEL_FUN[s.level])}</b> · ${s.measures} measures · ${esc(meter)}`;
+  }
+}
+function showMoreTab(t) {
+  document.querySelectorAll('.mtabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  document.querySelectorAll('.mpanel').forEach(p => { p.hidden = p.dataset.panel !== t; });
+}
+function refreshSetup() { if (S.app === 'melody') melUI(); else updateUI(); }
+function setMission(m) {
+  S.settings.mission = m; saveSettings();
+  const app = m === 'heist' ? 'rhythm' : m;            // a heist waits on the (shorter) rhythm screen
+  if (app !== S.app) setApp(app); else refreshSetup();
+}
+// How to play: shown once before a student's very first job, and any time from the link
+function showHowTo(then) {
+  const mis = S.settings.mission, touch = matchMedia('(pointer: coarse)').matches;
+  const steps = mis === 'heist' ? [
+    'Crack <b>5 vault layers</b>: rhythms 📡 and melodies 🔐, each one harder than the last.',
+    `You get <b>${CONFIG.challengePlays} listens</b> per layer. Gold extra listens cost points.`,
+    'Score <b>80%</b> to escape with the diamond. Under 60% and you\'re <b>BUSTED</b>.',
+  ] : mis === 'melody' ? [
+    `Press <b>Listen</b>${touch ? '' : ' (Space)'} to hear the key, then the safe's melody.`,
+    `Tap the <b>piano</b> for each note you heard. Tap a note on the staff to change it.`,
+    `Press <b>Open safe</b>${touch ? '' : ' (Enter)'} to check, then <b>Next safe</b>.`,
+  ] : [
+    `Press <b>Intercept</b>${touch ? '' : ' (Space)'} to hear a secret rhythm. Listen as often as you like.`,
+    `Tap the <b>rhythm cards</b>${touch ? '' : ' (or number keys)'} to rebuild it, one slot at a time.`,
+    `Press <b>Crack it</b>${touch ? '' : ' (Enter)'} to check, then <b>Next mission</b>.`,
+  ];
+  openModal(`<h3>How to play</h3><ol class="howto">${steps.map(x => `<li>${x}</li>`).join('')}</ol>
+    <div class="modal-actions"><button class="btn btn-primary" type="button" id="howtoOk">${then ? 'Got it · Play!' : 'Got it'}</button></div>`);
+  $('#howtoOk').onclick = () => { closeModal(); store.set('rdt_howto', '1'); if (then) then(); else refreshSetup(); };
+}
+// PLAY: the first listen of practice, or the start of a heist
+function readyGo() {
+  if (!store.get('rdt_howto')) { showHowTo(readyGo); return; }
+  if (S.settings.mission === 'heist') {
+    if (spyState().jail) { showJail(); return; }
+    startChallenge(S.settings.level);
+    return;
+  }
+  S.started = true;
+  if (S.app === 'melody') { melUI(); melPlay('question'); } else { updateUI(); playQuestion(); }
+}
+$('#readyGo').onclick = readyGo;
+$('#howtoBtn').onclick = () => showHowTo(null);
+$('#ddMission').addEventListener('change', e => setMission(e.target.value));
+$('#ddLevel').addEventListener('change', e => {
+  const v = e.target.value;
+  if (S.settings.mission === 'melody') { S.settings.mel.level = v; S.settings.mel.showRhythm = null; saveSettings(); melNew(); return; }
+  S.settings.level = v; saveSettings();
+  if (S.app === 'rhythm') newPracticeRhythm(); else refreshSetup();
+});
+$('#ddThird').addEventListener('change', e => {
+  if (S.settings.mission === 'melody') { S.settings.mel.mode = e.target.value; saveSettings(); melNew(); return; }
+  S.settings.measures = +e.target.value; saveSettings(); newPracticeRhythm();
+});
+$('#moreBtn').addEventListener('click', () => {
+  const open = $('#more').hidden;
+  $('#more').hidden = !open; $('#moreBtn').setAttribute('aria-expanded', String(open));
+});
+document.querySelector('.mtabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showMoreTab(b.dataset.tab); });
 
 // ---------- challenge ----------
 function chooseChallenge() {
@@ -2000,7 +2143,7 @@ function startChallenge(level) {
   window.scrollTo({ top: 0 });
 }
 
-const BAR_HOME = () => $('#controls').insertBefore(els.challengeBar, $('#controls > .audio'));
+const BAR_HOME = () => $('#controls').append(els.challengeBar);
 function heistLoad(i) {
   const L = S.ch.rhythms[i];
   if (L.mel) {
@@ -2043,6 +2186,7 @@ function heistExit(to) {                               // leave the heist (or it
   Engine.stop();
   endChallengeTimer();
   const home = to || (S.ch && S.ch.home) || 'rhythm';
+  S.settings.mission = home;                           // "Back to training" lands on practice, not another heist
   S.ch = null; S.mode = 'practice'; S.mel.heistLv = null; S.mel.q = null;
   BAR_HOME();
   S.app = 'rhythm';
@@ -2599,10 +2743,11 @@ function applyFocus(label) {
     // a time signature and the easiest level that use this skill
     const ts = Object.keys(TIME_SIGS).find(t => BANKS[TIME_SIGS[t].bank].cells.some(c => skillsOf(c).includes(L)));
     if (ts) { const T = TIME_SIGS[ts]; S.settings.type = T.type; S.settings.lock = ts; const level = LEVELS.find(l => cellsFor(T.bank, l).some(c => skillsOf(c).includes(L))); if (level) S.settings.level = level; }
-  } else { toast('Pick your level and meter, then press Question to start.', 5000); return; }
+  } else { toast('Pick your level and meter, then press Intercept to start.', 5000); return; }
   S.pool = { pct: 1, custom: {} };
+  S.settings.mission = S.settings.app = 'rhythm';
   populateTsSelect(); saveSettings(); newPracticeRhythm(); updateUI(); renderAssignment();
-  toast(`🎯 Practice set up for ${L}. Press Question to listen!`, 6000);
+  toast(`🎯 Practice set up for ${L}. Press Intercept to listen!`, 6000);
 }
 function showWelcome(keep) {
   Engine.stop();
@@ -2922,30 +3067,9 @@ els.typeSeg.addEventListener('click', e => {
   S.settings.lock = 'random';
   populateTsSelect(); saveSettings(); newPracticeRhythm();
 });
-$('#b16Toggle').addEventListener('click', () => {
-  S.settings.level = S.settings.level === 'beginner16' ? 'beginner' : 'beginner16';
-  saveSettings(); newPracticeRhythm();
-});
-els.levelSeg.addEventListener('click', e => {
-  const b = e.target.closest('button');
-  if (!b || b.dataset.v === S.settings.level) return;
-  S.settings.level = b.dataset.v;
-  saveSettings(); newPracticeRhythm();
-});
-els.lenSeg.addEventListener('click', e => {
-  const b = e.target.closest('button');
-  if (!b || +b.dataset.v === S.settings.measures) return;
-  S.settings.measures = +b.dataset.v;
-  saveSettings(); newPracticeRhythm();
-});
 els.tsSelect.addEventListener('change', () => { S.settings.lock = els.tsSelect.value; saveSettings(); newPracticeRhythm(); });
 els.tempo.addEventListener('input', () => { S.settings.tempo = +els.tempo.value; saveSettings(); updateUI(); });
 els.metro.addEventListener('change', () => { S.settings.metronome = els.metro.checked; saveSettings(); updateUI(); });
-els.settingsToggle.addEventListener('click', () => {
-  const open = els.controls.classList.toggle('open');
-  els.settingsToggle.setAttribute('aria-expanded', String(open));
-  updateUI();
-});
 
 // Number keys pick answer-bank rhythms. With 10+ rhythms, type two digits quickly (e.g. 1 then 2 for #12).
 let numBuffer = '', numTimer = 0;
@@ -2974,6 +3098,10 @@ document.addEventListener('keydown', e => {
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
   if (S.mode === 'end' || !els.reportView.hidden || !els.teacherView.hidden) { if (e.key === 'Escape') Engine.stop(); return; }
   const k = e.key;
+  if (readyShowing()) {
+    if ((k === ' ' || k === 'Enter') && !e.target.closest('button,a')) { e.preventDefault(); spaceHandled = k === ' '; if (!e.repeat) readyGo(); }
+    return;
+  }
   if (S.app === 'melody') { melKey(e); return; }
   if (k === ' ') { e.preventDefault(); spaceHandled = true; if (!e.repeat) playQuestion(); }
   else if (k === 'a' || k === 'A') { e.preventDefault(); if (!e.repeat) playAnswer(); }
@@ -3082,14 +3210,14 @@ function fitScreen(force) {
   setZoom(1);                                                  // measure at 100%
   const appEl = document.querySelector('.app');
   appEl.style.flex = 'none';                                   // measure content height, not the stretched page
-  const appH = appEl.offsetHeight + els.actionbar.offsetHeight;
+  const appH = appEl.offsetHeight + els.actionbar.offsetHeight - $('#more').offsetHeight;   // an open More options panel may scroll
   appEl.style.flex = '';
   const staffW = els.staff.clientWidth || 1000, bankW = els.bank.clientWidth || staffW;
   const cell = els.bank.querySelector('.cell-btn');
   const cellH = cell ? cell.offsetHeight : 67;
   if (!els.bankWrap.hidden) swapCache = appH - els.staffWrap.offsetHeight - els.bankWrap.offsetHeight;
   const chrome = swapCache != null ? swapCache : appH - els.staffWrap.offsetHeight;
-  const worst = worstSwapAreas(scn, staffW, bankW, cellH, els.poolRow.hidden ? 0 : els.poolRow.offsetHeight + 10);
+  const worst = worstSwapAreas(scn, staffW, bankW, cellH, 0);
   const needed = chrome + worst.staffH + worst.swap + 12;
   const contentW = Math.min(1120, vw) + 40;
 
@@ -3634,7 +3762,9 @@ function applyAssignment() {
   if (a.measures) S.settings.measures = a.measures;
   S.settings.lock = a.lock && TIME_SIGS[a.lock] && TIME_SIGS[a.lock].type === S.settings.type ? a.lock : 'random';
   S.pool = { pct: 1, custom: {} };
-  populateTsSelect(); saveSettings(); newPracticeRhythm(); renderAssignment();
+  populateTsSelect(); saveSettings();
+  if (S.settings.mission !== 'rhythm') setMission('rhythm');
+  newPracticeRhythm(); renderAssignment();
   toast('Assignment settings on. Have fun!');
 }
 
@@ -4144,12 +4274,11 @@ function melRenderAll() { renderMount(melAnsMount); renderPalette(); renderPiano
 function melUI() {
   const m = S.mel, q = m.q, st = S.settings.mel, lv = mlv();
   for (const b of $('#appTabs').children) b.setAttribute('aria-pressed', String(b.dataset.app === S.app));
-  for (const b of $('#melLevelSeg').children) b.setAttribute('aria-pressed', String(b.dataset.v === st.level));
-  for (const b of $('#melModeSeg').children) b.setAttribute('aria-pressed', String(b.dataset.v === st.mode));
   $('#melLabels').value = st.labels;
   $('#melShowRhythm').checked = ghostMode();
   const heist = S.mode === 'challenge' && !!S.ch;
-  $('#melLevelSeg').hidden = $('#melModeSeg').hidden = $('#melShowRhythm').closest('label').hidden = heist;
+  $('#melShowRhythm').closest('label').hidden = heist;
+  syncSetup();
   if (!q) return;
   const k = MKEYS[q.key];
   $('#melKeyBadge').textContent = k.name;
@@ -4423,8 +4552,6 @@ $('#appTabs').addEventListener('click', e => {
   if (S.mode === 'end') { heistExit(b.dataset.app); return; }
   if (b.dataset.app !== S.app) setApp(b.dataset.app);
 });
-$('#melLevelSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; S.settings.mel.level = b.dataset.v; S.settings.mel.showRhythm = null; saveSettings(); melNew(); });
-$('#melModeSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; S.settings.mel.mode = b.dataset.v; saveSettings(); melNew(); });
 $('#melLabels').addEventListener('change', e => { S.settings.mel.labels = e.target.value; saveSettings(); melRenderAll(); if (S.mel.checked) renderMount(melCorrectMount); });
 $('#melShowRhythm').addEventListener('change', e => { S.settings.mel.showRhythm = e.target.checked; saveSettings(); melNew(); });
 $('#melPalette').addEventListener('click', e => { const b = e.target.closest('[data-dur]'); if (b) melSetDur(+b.dataset.dur); });
@@ -4737,7 +4864,7 @@ if (!getProfile() && !isGuest()) showWelcome(false);
 else refreshClassInfo();
 applyFocusFromUrl();
 spyUI();
-if (S.settings.app === 'melody') setApp('melody');
+if (S.settings.app === 'melody' && S.settings.mission !== 'heist') setApp('melody');
 if (/[?&]selftest/.test(location.search)) window.RDT = { heistEndFx, heistBoltFx, SFX, HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
 })();
 </script>
