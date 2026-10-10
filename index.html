@@ -187,6 +187,7 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .rhythm .slot.correct{color:var(--ok)}
 .rhythm .slot.wrong .slot-bg{fill:var(--bad-soft);stroke:var(--bad);stroke-dasharray:none;stroke-width:1.5}
 .rhythm .slot.wrong{color:var(--bad)}
+.rhythm .mark,.mstaff .mark{font:800 16px system-ui,sans-serif;text-anchor:middle;fill:currentColor}   /* ✓ ~ ✗ beside the colors, for color-blind players */
 .rhythm .slot.playing .slot-bg{fill:var(--play-soft);stroke:var(--play);stroke-dasharray:none;stroke-width:2.5}
 .rhythm .note.sounding{color:var(--a)}
 @media (hover:hover){.rhythm.interactive .slot:not(.selected):hover .slot-bg{stroke:var(--accent);stroke-dasharray:none}}
@@ -630,6 +631,7 @@ body.ready-on .card-head .edit-tools{visibility:hidden}
 .howto{margin:0 0 6px;padding-left:22px;display:flex;flex-direction:column;gap:8px;font-size:16px}
 .howto b{color:var(--gold)}
 @media (max-width:820px){.quick,.quick:has(#ddThirdWrap[hidden]){grid-template-columns:repeat(2,minmax(0,1fr))}.quick .more-btn{width:100%}}
+@media (max-width:560px){.quick > .dd:first-child{grid-column:1/-1}.quick:not(:has(#ddThirdWrap[hidden])) .more-btn{grid-column:1/-1}}   /* phones: the mission name gets the full width */
 @media (pointer:coarse){.ready-hint .kb-only{display:none}}
 @media (max-width:600px){.ready{gap:9px;padding:48px 12px 12px;justify-content:flex-start}.ready-go{padding:14px 30px}.ready-sum{font-size:13px}.mpanel .field{width:100%}}
 </style>
@@ -698,7 +700,7 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
 
       <div class="feedback" id="feedback" hidden>
         <div class="fb-msg" id="fbMsg"></div>
-        <p class="fb-next muted">Take your time. Replay the transmission or your decode, then press <b>Next mission</b> when you're ready.</p>
+        <p class="fb-next muted" id="fbNext">Take your time. Replay the transmission or your decode, then press <b>Next transmission</b> when you're ready.</p>
         <div class="fb-label">Correct rhythm</div>
         <div class="staff" id="correctStaff"></div>
       </div>
@@ -780,7 +782,7 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
       <p class="hint" id="melHint"></p>
       <div class="feedback" id="melFeedback" hidden>
         <div class="fb-msg" id="melFbMsg"></div>
-        <p class="fb-next muted">Replay the safe or your combination, then press <b>Next safe</b> when you're ready.</p>
+        <p class="fb-next muted">Replay the safe or your decode, then press <b>Next safe</b> when you're ready.</p>
         <div class="fb-label">Correct melody</div>
         <div class="staff" id="melCorrect"></div>
       </div>
@@ -880,7 +882,7 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
     <div class="form-error" id="wError"></div>
     <button class="btn btn-primary w-go" type="submit" id="wGo">Report for duty</button>
     <button class="btn w-guest" type="button" id="wGuest">Play as guest</button>
-    <p class="muted small w-note">Guests' practice and scores aren't saved. One sign-in works for the Rhythm Trainer, Scale Quest and Tidal Tones.</p>
+    <p class="muted small w-note">Guests' practice and scores aren't saved. One sign-in works for every game on Music Theory Games.</p>
   </form>
 </div>
 
@@ -1504,6 +1506,8 @@ function renderRhythm({ ts: tsId, measures, cells, states = [], interactive = fa
           r.parts.forEach((p, n) => { out += `<g class="note" data-n="${n}">${p}</g>`; });
           out += r.beams;
         }
+        const mk = { correct: '✓', wrong: '✗' }[states[si]];
+        if (mk) out += `<text class="mark" x="${r1(sx + L.slotW - 15)}" y="${y0 + G.slotTop + 17}">${mk}</text>`;
         out += '</g>';
       }
       const bx = mx + L.spm * L.slotW;
@@ -1806,6 +1810,7 @@ function onCheck() {
     const c = S.answer.filter((id, i) => id === S.q.cells[i]).length;
     const x = Math.max(0, ch.used[ch.idx] - CONFIG.challengePlays);
     heistBoltFx(ch.idx, c / n >= 0.6);
+    gradeStamp(c / n, c === n, els.feedback);          // replaces any stamp left over from practice
     els.fbMsg.textContent = (c === n ? 'Perfect! Every slot is correct 🎉' : `${c} of ${n} slots correct.`)
       + (x ? ` (${x} extra listen${x > 1 ? 's' : ''}: −${Math.round(x * CONFIG.extraPenalty * 100)}%)` : '');
     els.fbMsg.classList.toggle('perfect', c === n);
@@ -1943,10 +1948,11 @@ function updateUI() {
     els.playQBtn.classList.add('btn-q');
     els.playQBtn.classList.remove('btn-extra');
     els.playQBtn.querySelector('span').firstChild.textContent = 'Intercept ';
-    els.checkLabel.textContent = S.checked ? 'Next mission' : 'Crack it';
+    els.checkLabel.textContent = S.checked ? 'Next transmission' : 'Crack it';
     $('#playALabel').textContent = 'My decode';
     els.checkBtn.disabled = S.checked ? Date.now() < S.nextLockUntil : !full;
   }
+  if (S.checked) $('#fbNext').innerHTML = `Take your time. Replay the transmission or your decode, then press <b>${esc(els.checkLabel.textContent)}</b> when you're ready.`;
 
   const st = S.stats;
   els.statsLine.innerHTML = inChallenge ? ''
@@ -1988,7 +1994,7 @@ function syncSetup() {
   $('#ddThirdWrap').hidden = mis === 'heist';
   $('#ddThirdName').textContent = mis === 'melody' ? 'Keys' : 'Length';
   setOpts($('#ddThird'), mis === 'melody' ? opts(Object.keys(MEL_KEYS_NAME).map(k => [k, MEL_KEYS_NAME[k]]), s.mel.mode)
-    : beg ? opts([['1', '1 measure (Rookie)']], '1') : opts([['2', '2 measures'], ['4', '4 measures']], String(s.measures)));
+    : beg ? opts([['1', '1 measure']], '1') : opts([['2', '2 measures'], ['4', '4 measures']], String(s.measures)));
   $('#ddLevel').value = mis === 'melody' ? s.mel.level : s.level;
   $('#ddThird').value = mis === 'melody' ? s.mel.mode : beg ? '1' : String(s.measures);
   $('#ddThird').disabled = mis !== 'melody' && beg;
@@ -2020,7 +2026,7 @@ function syncSetup() {
     $('#readySum').innerHTML = `<b>${esc(LEVEL_FUN[s.level])} heist</b> · 5 vault layers · rhythm + melody`;
   } else {
     $('#readyTitle').textContent = first ? 'Ready for your first job?' : mis === 'melody' ? 'Ready to crack a safe?' : 'Ready for a transmission?';
-    $('#readyLabel').textContent = mis === 'melody' ? 'Listen' : 'Intercept';
+    $('#readyLabel').textContent = 'Intercept';
     $('#readySum').innerHTML = mis === 'melody' ? `<b>${esc(MEL_FUN[s.mel.level])}</b> · ${MEL_KEYS_NAME[s.mel.mode]}`
       : beg ? `<b>${esc(LEVEL_FUN[s.level])}</b> · 1 measure · 4/4${s.level === 'beginner16' ? ' · 16ths' : ''}` : `<b>${esc(LEVEL_FUN[s.level])}</b> · ${s.measures} measures · ${esc(meter)}`;
   }
@@ -2043,13 +2049,13 @@ function showHowTo(then) {
     `You get <b>${CONFIG.challengePlays} listens</b> per layer. Gold extra listens cost points.`,
     'Score <b>80%</b> to escape with the diamond. Under 60% and you\'re <b>BUSTED</b>.',
   ] : mis === 'melody' ? [
-    `Press <b>Listen</b>${touch ? '' : ' (Space)'} to hear the key, then the safe's melody.`,
+    `Press <b>Intercept</b>${touch ? '' : ' (Space)'} to hear the key, then the safe's melody.`,
     `Tap the <b>piano</b> for each note you heard. Tap a note on the staff to change it.`,
-    `Press <b>Open safe</b>${touch ? '' : ' (Enter)'} to check, then <b>Next safe</b>.`,
+    `Press <b>Crack it</b>${touch ? '' : ' (Enter)'} to check, then <b>Next safe</b>.`,
   ] : [
     `Press <b>Intercept</b>${touch ? '' : ' (Space)'} to hear a secret rhythm. Listen as often as you like.`,
     `Tap the <b>rhythm cards</b>${touch ? '' : ' (or number keys)'} to rebuild it, one slot at a time.`,
-    `Press <b>Crack it</b>${touch ? '' : ' (Enter)'} to check, then <b>Next mission</b>.`,
+    `Press <b>Crack it</b>${touch ? '' : ' (Enter)'} to check, then <b>Next transmission</b>.`,
   ];
   openModal(`<h3>How to play</h3><ol class="howto">${steps.map(x => `<li>${x}</li>`).join('')}</ol>
     <div class="modal-actions"><button class="btn btn-primary" type="button" id="howtoOk">${then ? 'Got it · Play!' : 'Got it'}</button></div>`);
@@ -2195,7 +2201,7 @@ function heistExit(to) {                               // leave the heist (or it
   setApp(home);
 }
 function heistBarUI(ready, lockUntil, reviewing) {
-  const ch = S.ch, mel = S.app === 'melody', word = mel ? 'Listen ' : 'Intercept ', last = ch.idx === ch.rhythms.length - 1;
+  const ch = S.ch, word = 'Intercept ', mel = S.app === 'melody', last = ch.idx === ch.rhythms.length - 1;
   const used = ch.used[ch.idx], P = CONFIG.challengePlays, X = CONFIG.challengeExtra;
   const regLeft = Math.max(0, P - used), extraLeft = Math.max(0, Math.min(X, P + X - used));
   const inReserve = regLeft === 0;
@@ -2305,16 +2311,16 @@ function showEndScreen() {
       <div class="ri-head"><b>Layer ${i + 1} · 🔐 Safe</b><span class="ts-badge">${MKEYS[r.key].name}</span>
         <span class="ri-score ${res.c === res.n ? 'perfect' : ''}">Pitches ${res.pc}/${res.mn} · Rhythm ${res.rc}/${res.mn}${res.c === res.n ? ' ✓' : ''}${xNote(res)}</span>
         <button class="btn btn-sm btn-q" type="button" data-play="q" data-i="${i}">▶ Melody</button>
-        <button class="btn btn-sm btn-a" type="button" data-play="a" data-i="${i}">▶ Your combo</button></div>
-      <div class="ri-label">Your combination</div><div class="staff" data-staff="a${i}"></div>
+        <button class="btn btn-sm btn-a" type="button" data-play="a" data-i="${i}">▶ Your decode</button></div>
+      <div class="ri-label">Your decode</div><div class="staff" data-staff="a${i}"></div>
       <div class="ri-label">Correct melody</div><div class="staff" data-staff="q${i}"></div>
     </div>`;
     return `<div class="review-item">
       <div class="ri-head"><b>Layer ${i + 1} · 📡 Transmission</b><span class="ts-badge">${tsLabel(r.ts)}</span>
         <span class="ri-score ${res.c === res.n ? 'perfect' : ''}">${res.c}/${res.n} correct${res.c === res.n ? ' ✓' : ''}${res.x ? ` <span class="ri-extra">· ${res.x} extra listen${res.x > 1 ? 's' : ''} (−${Math.round(res.x * CONFIG.extraPenalty * 100)}%)</span>` : ''}</span>
         <button class="btn btn-sm btn-q" type="button" data-play="q" data-i="${i}">▶ Question</button>
-        <button class="btn btn-sm btn-a" type="button" data-play="a" data-i="${i}">▶ Your answer</button></div>
-      <div class="ri-label">Your answer</div><div class="staff" data-staff="a${i}"></div>
+        <button class="btn btn-sm btn-a" type="button" data-play="a" data-i="${i}">▶ Your decode</button></div>
+      <div class="ri-label">Your decode</div><div class="staff" data-staff="a${i}"></div>
       <div class="ri-label">Correct rhythm</div><div class="staff" data-staff="q${i}"></div>
     </div>`;
   }).join('');
@@ -3196,7 +3202,9 @@ function worstSwapAreas(scn, staffW, bankW, cellH, extra = 0) {
 function fitScreen(force) {
   if (S.app === 'melody') {
     const big = innerWidth >= 1500 && innerHeight >= 850;
-    setZoom(innerWidth <= 700 ? 1 : Math.max(0.6, Math.min(2.2, (big ? Math.min(innerWidth / 1160, innerHeight / 820) : 1) * zoomAdj)));
+    // laptop/Chromebook: shrink (never below 75%) so the piano, the setup row and the buttons fit without scrolling
+    const auto = big ? Math.min(innerWidth / 1160, innerHeight / 820) : innerWidth <= 700 ? 1 : Math.max(0.75, Math.min(1, innerHeight / melNeeded()));
+    setZoom(innerWidth <= 700 ? 1 : Math.max(0.6, Math.min(2.2, Math.round(auto * zoomAdj * 100) / 100)));
     updateZoomLabel(); return;
   }
   if (S.mode === 'end' || !S.q) { setZoom(Math.max(0.6, Math.min(2.5, zoomNow))); return; }
@@ -3227,6 +3235,22 @@ function fitScreen(force) {
   auto = Math.max(0.75, auto);
   setZoom(Math.max(0.6, Math.min(2.5, Math.round(auto * zoomAdj * 100) / 100)));
   updateZoomLabel();
+}
+
+// Height of the melody screen at 100%, sized for answering (piano showing); while the answer is
+// being checked, the correct melody is extra and may scroll, so the size doesn't jump.
+let melFit = null;
+function melNeeded() {
+  setZoom(1);
+  const appEl = document.querySelector('.app'), fb = $('#melFeedback');
+  appEl.style.flex = 'none';
+  let h = appEl.offsetHeight + els.actionbar.offsetHeight - $('#more').offsetHeight;
+  appEl.style.flex = '';
+  const key = S.mel.q;
+  if (fb.hidden) melFit = { key, h };
+  else if (melFit && melFit.key === key) h = melFit.h;
+  else h -= fb.offsetHeight;
+  return h + 12;
 }
 
 function updateZoomLabel() {
@@ -3735,11 +3759,12 @@ async function refreshClassInfo() {
   } catch (e) { /* offline: keep going */ }
 }
 
-const assignText = a => isLocked(a.level) ? `${LEVEL_NAME[a.level]} · 4/4 · 1 measure` : `${LEVEL_NAME[a.level] || 'Any level'} · ${a.type === 'simple' ? 'Simple' : a.type === 'compound' ? 'Compound' : 'Simple or Compound'}${a.lock && a.lock !== 'random' ? ` (${a.lock})` : ''} · ${a.measures || 2} measures`;
+// fun = the game's own level names (students' banner); the teacher pages keep Easy/Hard to match their level picker
+const assignText = (a, fun) => { const N = fun ? LEVEL_FUN : LEVEL_NAME; return isLocked(a.level) ? `${N[a.level]} · 4/4 · 1 measure` : `${N[a.level] || 'Any level'} · ${a.type === 'simple' ? 'Simple' : a.type === 'compound' ? 'Compound' : 'Simple or Compound'}${a.lock && a.lock !== 'random' ? ` (${a.lock})` : ''} · ${a.measures || 2} measures`; };
 function renderAssignment() {
   const a = S.assignment, banner = els.assignBanner;
   // the student's other classes' assignments, each labeled with its class name
-  const more = (S.moreAssign || []).map(x => `<span class="ab-more">📌 <b>${esc(x.name)}</b>: ${esc(assignText(x.a))}${x.a.goal ? ` · goal ${x.a.goal} rhythms` : ''}${x.a.minutes ? ` · ${x.a.minutes} min` : ''}</span>`).join('');
+  const more = (S.moreAssign || []).map(x => `<span class="ab-more">📌 <b>${esc(x.name)}</b>: ${esc(assignText(x.a, true))}${x.a.goal ? ` · goal ${x.a.goal} rhythms` : ''}${x.a.minutes ? ` · ${x.a.minutes} min` : ''}</span>`).join('');
   if ((!a && !more) || S.mode !== 'practice') { banner.hidden = true; return; }
   if (!a) { banner.innerHTML = more; banner.hidden = false; return; }
   const day = todayOf(readLog()), done = day.rhythms.length, mins = activeMinutes(day.rhythms);
@@ -3747,7 +3772,7 @@ function renderAssignment() {
   const met = (!a.goal || done >= a.goal) && (!a.minutes || mins >= a.minutes) && (a.goal || a.minutes);
   const st = S.settings;
   const using = (!a.level || st.level === a.level) && (!a.type || a.type === 'either' || st.type === a.type) && (!a.measures || st.measures === a.measures) && (!a.lock || a.lock === 'random' || st.lock === a.lock);
-  banner.innerHTML = `<span class="ab-title">📌 Assignment</span><b>${esc(assignText(a))}</b>
+  banner.innerHTML = `<span class="ab-title">📌 Assignment</span><b>${esc(assignText(a, true))}</b>
     <span class="ab-prog ${met ? 'done' : ''}">${met ? '✓ Goal met! ' : 'You: '}${goalBits.join(' · ')}</span>
     ${using ? '<span class="small muted">✓ Using these settings</span>' : '<button class="btn btn-sm btn-primary" type="button" id="useAssign">Use these settings</button>'}
     ${a.note ? `<span class="ab-note">“${esc(a.note)}”</span>` : ''}${more}`;
@@ -4238,6 +4263,8 @@ function renderMelody({ m, notes, states = [], sel = null, labels = 'both', cw, 
     if (n.d == null) g += `<text class="mlabel" x="${r1(x)}" y="${ly - 14}">?</text>`;
     else if (labels === 'both') g += `<text class="mlabel" x="${r1(x)}" y="${ly - 18}">${esc(degLabel(k, n.d, 'solfege'))}</text><text class="mlabel num" x="${r1(x)}" y="${ly - 5}">${esc(degLabel(k, n.d, 'numbers'))}</text>`;
     else if (labels !== 'none') g += `<text class="mlabel" x="${r1(x)}" y="${ly - 14}">${esc(degLabel(k, n.d, labels))}</text>`;
+    const mk = { ok: '✓', pitch: '~', bad: '✗' }[states[o.i]];
+    if (mk) g += `<text class="mark" x="${r1(x)}" y="${oy + 16}">${mk}</text>`;
     out += g + '</g>';
   }
   for (const o of placed) {
@@ -4268,6 +4295,7 @@ function melNew() {
   if (!mlv().durs.includes(S.mel.dur)) S.mel.dur = 4;
   $('#melFeedback').hidden = true;
   melRenderAll();
+  if (S.app === 'melody' && !$('#melodyView').hidden) fitScreen(true);   // a longer melody may need a smaller size
 }
 function melRenderAll() { renderMount(melAnsMount); renderPalette(); renderPiano(); melUI(); }
 
@@ -4299,12 +4327,11 @@ function melUI() {
   els.playsBadge.hidden = true;
   els.playABtn.disabled = !m.ans.some(n => n.d != null);
   els.stopBtn.disabled = !m.playing;
-  els.checkLabel.textContent = m.checked ? 'Next safe' : 'Open safe';
-  $('#playALabel').textContent = 'My combo';
-  els.playQBtn.querySelector('span').firstChild.textContent = 'Listen ';
+  els.checkLabel.textContent = m.checked ? 'Next safe' : 'Crack it';
+  $('#playALabel').textContent = 'My decode';
   els.checkBtn.disabled = m.checked ? Date.now() < m.lockUntil : !complete;
-  $('#melFeedback .fb-next').innerHTML = `Replay the safe or your combination, then press <b>${heist ? 'Next layer' : 'Next safe'}</b> when you're ready.`;
   if (heist) heistBarUI(complete, m.lockUntil, m.checked);
+  $('#melFeedback .fb-next').innerHTML = `Replay the safe or your decode, then press <b>${esc(els.checkLabel.textContent)}</b> when you're ready.`;
 }
 
 // ---------- palette + piano ----------
@@ -4436,7 +4463,7 @@ function melCheck() {
   m.checked = true; m.sel = null; m.states = g.states;
   m.lockUntil = Date.now() + 1500; setTimeout(melUI, 1550);
   const perfect = g.pc === g.n && g.rc === g.n;
-  $('#melFbMsg').textContent = perfect ? 'Perfect melody! 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green = right, orange = right rhythm but wrong pitch, red = wrong rhythm.`;
+  $('#melFbMsg').textContent = perfect ? 'Perfect melody! 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green ✓ = right, orange ~ = right rhythm but wrong pitch, red ✗ = wrong rhythm.`;
   $('#melFbMsg').classList.toggle('perfect', perfect);
   $('#melFeedback').hidden = false;
   const log = readLog(), day = todayOf(log);
@@ -4460,7 +4487,8 @@ function heistMelCheck() {
   m.lockUntil = Date.now() + VAULT_MS; setTimeout(melUI, VAULT_MS + 50);
   const perfect = g.pc === g.n && g.rc === g.n, x = Math.max(0, ch.used[ch.idx] - CONFIG.challengePlays);
   heistBoltFx(ch.idx, (g.pc + g.rc) / (2 * g.n) >= 0.6);
-  $('#melFbMsg').textContent = (perfect ? 'Safe cracked! Every note is right 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green = right, orange = right rhythm but wrong pitch, red = wrong rhythm.`)
+  gradeStamp((g.pc + g.rc) / (2 * g.n), perfect, $('#melFeedback'));
+  $('#melFbMsg').textContent = (perfect ? 'Safe cracked! Every note is right 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green ✓ = right, orange ~ = right rhythm but wrong pitch, red ✗ = wrong rhythm.`)
     + (x ? ` (${x} extra listen${x > 1 ? 's' : ''}: −${Math.round(x * CONFIG.extraPenalty * 100)}%)` : '');
   $('#melFbMsg').classList.toggle('perfect', perfect);
   $('#melFeedback').hidden = false;
@@ -4653,8 +4681,11 @@ function stamp(box, text, kind) {
   box.appendChild(el);
   if (kind === 'denied') { box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake'); }
 }
-function spyAfterPractice(acc, perfect, loot, box) {
+function gradeStamp(acc, perfect, box) {             // practice and heist layers use the same stamp
   stamp(box, perfect ? 'CRACKED!' : acc >= 0.6 ? 'PARTIAL' : 'ACCESS DENIED', perfect ? 'cracked' : acc >= 0.6 ? 'partial' : 'denied');
+}
+function spyAfterPractice(acc, perfect, loot, box) {
+  gradeStamp(acc, perfect, box);
   addLoot(loot);
   const st = spyState();
   if (st.jail && acc >= 0.8) {
