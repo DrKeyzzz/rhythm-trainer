@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Big Score</title>
+<script>/* Skin (shared by every Music Theory Game): localStorage mtg_skin_v1 = clean (default) · day · classic; ?skin=day previews and saves */
+(function () { var ok = { clean: 1, day: 1, classic: 1 }, s = null;
+  try { var q = new URLSearchParams(location.search).get('skin'); if (ok[q]) { s = q; localStorage.setItem('mtg_skin_v1', q); } else s = localStorage.getItem('mtg_skin_v1'); } catch (e) {}
+  document.documentElement.dataset.skin = ok[s] ? s : 'clean'; })();</script>
 <style>
 [hidden]{display:none!important}
 :root{
@@ -634,6 +638,108 @@ body.ready-on .card-head .edit-tools{visibility:hidden}
 @media (max-width:560px){.quick > .dd:first-child{grid-column:1/-1}.quick:not(:has(#ddThirdWrap[hidden])) .more-btn{grid-column:1/-1}}   /* phones: the mission name gets the full width */
 @media (pointer:coarse){.ready-hint .kb-only{display:none}}
 @media (max-width:600px){.ready{gap:9px;padding:48px 12px 12px;justify-content:flex-start}.ready-go{padding:14px 30px}.ready-sum{font-size:13px}.mpanel .field{width:100%}}
+/* ---------- Look tab: skin swatches ---------- */
+.skin-pick{display:flex;gap:10px;flex-wrap:wrap}
+.skin-btn{flex-direction:column;align-items:stretch;gap:7px;min-width:120px;padding:10px 12px}
+.skin-btn .sw{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid rgba(128,128,128,.45)}
+.skin-btn .sw i{flex:1;background:var(--c)}
+.skin-btn[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.skin-btn[aria-pressed="true"]::after{content:"✓ chosen";font-size:12px;font-weight:700;color:var(--gold)}
+@media (max-width:600px){.skin-pick{flex-wrap:nowrap;gap:8px}.skin-btn{flex:1 1 0;min-width:0;padding:10px 8px}}
+
+/* ===================== SKINS (2026-10): html[data-skin] = clean (default) · day · classic =====================
+   Classic is everything above, unchanged. Clean and Day only re-color and re-font the same layout. */
+html[data-skin="clean"]:not(#spy){
+  --bg:#0f1420; --surface:#171e2d; --surface-2:#212a3d; --text:#e8ecf4; --muted:#9ea9bf; --border:#2e3a52;
+  --accent:#f0c04a; --accent-soft:rgba(240,192,74,.14);
+  --q:#7db0ff; --q-soft:#18294a; --a:#ffa36b; --a-soft:#3a2617;
+  --ok:#3ddc97; --ok-soft:rgba(61,220,151,.13); --bad:#ff7b86; --bad-soft:rgba(255,123,134,.14);
+  --play:#f0c04a; --play-soft:rgba(240,192,74,.16);
+  --accent-btn:#f0c04a; --q-btn:#2563eb; --a-btn:#c2410c; --bad-btn:#dc2626;
+  --paper:#f7f8fa; --paper-2:#d9dee8; --ink:#151a26; --green:#3ddc97; --gold:#f0c04a; --red:#ff5c6c;
+  --gold-bg:#f0c04a; --on-gold:#1a1405; --on-accent:#1a1405;
+  --shadow:0 1px 2px rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.22); --radius:16px; color-scheme:dark;
+}
+html[data-skin="day"]:not(#spy){
+  --bg:#f4f1ea; --surface:#ffffff; --surface-2:#efebe2; --text:#1b2333; --muted:#566074; --border:#d8d1c2;
+  --accent:#b42318; --accent-soft:#fbe3df;
+  --q:#1d4ed8; --q-soft:#e1e9fd; --a:#c2410c; --a-soft:#fdeadf;
+  --ok:#11713a; --ok-soft:#dcf3e4; --bad:#b91c1c; --bad-soft:#fbe2e2;
+  --play:#8a5a00; --play-soft:#fdeec6;
+  --accent-btn:#b42318; --q-btn:#1d4ed8; --a-btn:#c2410c; --bad-btn:#b91c1c;
+  --paper:#fffdf8; --paper-2:#e4dccb; --ink:#1b2333; --green:#11713a; --gold:#8a5a00; --red:#b42318;
+  --gold-bg:#f5b919; --on-gold:#1b1206; --on-accent:#fff;
+  --shadow:0 1px 2px rgba(40,30,10,.06),0 6px 18px rgba(40,30,10,.08); --radius:16px; color-scheme:light;
+}
+html:is([data-skin="clean"],[data-skin="day"]) body{font-family:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background-image:none}
+html[data-skin="clean"] body{background-image:radial-gradient(circle at 15% -10%,rgba(80,120,200,.12),transparent 50%);background-attachment:fixed}
+html:is([data-skin="clean"],[data-skin="day"]) :is(.mtabs button,.layer,.vault-skip,.jail-modal .big){font-family:inherit}
+/* headings + title: one modern sans instead of stencil/typewriter */
+html:is([data-skin="clean"],[data-skin="day"]) h1.bs-title{font:800 26px/1.05 "Outfit",system-ui,sans-serif;letter-spacing:.02em;color:var(--text);text-shadow:none}
+html:is([data-skin="clean"],[data-skin="day"]) h1.bs-title small{font:500 13px "Outfit",system-ui,sans-serif;letter-spacing:.01em}
+html:is([data-skin="clean"],[data-skin="day"]) :is(.card h3,.report h2,.td h2,.modal h3,.end-hero h2,.welcome-card h2,.agent-id b,.cb-badge,.hint,.bank-label,.rank-box,.vault-cap,.jail-modal .placard,.ready-hint,.dd > span){font-family:"Outfit",system-ui,sans-serif;letter-spacing:.01em}
+html:is([data-skin="clean"],[data-skin="day"]) :is(.card h3,.report h2,.td h2,.modal h3,.welcome-card h2,.agent-id b){font-weight:700}
+html:is([data-skin="clean"],[data-skin="day"]) .card{background:var(--surface)}
+/* buttons: flat with soft shadows */
+html:is([data-skin="clean"],[data-skin="day"]) .btn{font-weight:700}
+html:is([data-skin="clean"],[data-skin="day"]) :is(.btn-q,.btn-a,.btn-primary,.btn-danger,.btn.jb){box-shadow:0 2px 6px rgba(0,0,0,.18)}
+html:is([data-skin="clean"],[data-skin="day"]) .btn-primary{color:var(--on-accent)}
+html:is([data-skin="clean"],[data-skin="day"]) .btn-primary .kbd{border-color:currentColor}
+html:is([data-skin="clean"],[data-skin="day"]) .btn-challenge{background:var(--gold-bg);color:var(--on-gold);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+html:is([data-skin="clean"],[data-skin="day"]) .btn-challenge.jailed{background:repeating-linear-gradient(90deg,#3a4255 0 6px,#232a3a 6px 14px);color:#ffc7cd}
+html:is([data-skin="clean"],[data-skin="day"]) .btn-extra{box-shadow:0 2px 6px rgba(0,0,0,.18)}
+html:is([data-skin="clean"],[data-skin="day"]) .seg button[aria-pressed="true"]{color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+html:is([data-skin="clean"],[data-skin="day"]) .actionbar{background:color-mix(in srgb,var(--surface) 94%,transparent)}
+/* agent strip */
+html:is([data-skin="clean"],[data-skin="day"]) .agent-avatar{border-color:transparent}
+html:is([data-skin="clean"],[data-skin="day"]) .rank-now{color:var(--text)}
+html:is([data-skin="clean"],[data-skin="day"]) .rank-bar i{background:var(--green)}
+html[data-skin="day"] .loot-pill{color:var(--gold)}
+/* staff paper: plain clean sheet, dark ink, same grade colors */
+html:is([data-skin="clean"],[data-skin="day"]) :is(.staff-wrap,#melStaff,#melCorrect,#correctStaff,.review-item .staff){background:var(--paper);background-image:none;border-radius:12px;box-shadow:inset 0 0 0 1px var(--paper-2);
+  --text:#151a26;--muted:#5f6778;--border:#b7bfcd;--accent:#9a6a00;--accent-soft:rgba(240,192,74,.32);--ok:#17784a;--ok-soft:#d6f2e2;--bad:#b3261e;--bad-soft:#f8d7d3;--play:#9a6a00;--play-soft:rgba(240,192,74,.45);--a:#c2410c;color:#151a26}
+html[data-skin="day"] :is(.staff-wrap,#melStaff,#melCorrect,#correctStaff,.review-item .staff){--accent:#b42318;--accent-soft:#fbe3df}
+html:is([data-skin="clean"],[data-skin="day"]) .mstaff :is(.clef,.acc,.tsig){fill:#151a26}
+html:is([data-skin="clean"],[data-skin="day"]) .staff-wrap::before{font:700 11px "Outfit",system-ui,sans-serif;letter-spacing:.12em;border-width:1.5px;opacity:.4}
+/* answer cards + note-length buttons */
+html:is([data-skin="clean"],[data-skin="day"]) .cell-btn{background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;box-shadow:none}
+html:is([data-skin="clean"],[data-skin="day"]) .cell-btn svg{background:var(--paper);color:#151a26;--text:#151a26;--muted:#6b7385}
+html:is([data-skin="clean"],[data-skin="day"]) .cell-btn .key{color:var(--muted)}
+html:is([data-skin="clean"],[data-skin="day"]) .cell-btn:active{background:var(--accent-soft);border-color:var(--gold)}
+html[data-skin="day"] .cell-btn{background:var(--surface);box-shadow:0 1px 3px rgba(40,30,10,.08)}
+html[data-skin="day"] .cell-btn svg{box-shadow:inset 0 0 0 1px var(--surface-2)}
+html:is([data-skin="clean"],[data-skin="day"]) .dur-btn{background:var(--surface-2);border-color:var(--border);color:var(--text)}
+html:is([data-skin="clean"],[data-skin="day"]) .dur-btn svg{background:var(--paper);color:#151a26}
+html:is([data-skin="clean"],[data-skin="day"]) .dur-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--gold);color:var(--text)}
+html[data-skin="day"] .dur-btn{background:var(--surface)}
+html[data-skin="day"] .dur-btn svg{box-shadow:inset 0 0 0 1px var(--surface-2)}
+/* heist bar, stamps, results */
+html:is([data-skin="clean"],[data-skin="day"]) .challenge-bar{background:var(--accent-soft);border-color:color-mix(in srgb,var(--gold) 40%,transparent)}
+html:is([data-skin="clean"],[data-skin="day"]) :is(.spy-stamp,.bust-stamp){font-family:"Outfit",system-ui,sans-serif;font-weight:800;background:var(--surface);text-shadow:none}
+html:is([data-skin="clean"],[data-skin="day"]) :is(.end-hero.busted h2,.bust,.end-hero.win h2,.end-hero.close h2){font-family:"Outfit",system-ui,sans-serif;font-weight:800;text-shadow:none}
+html[data-skin="day"] .end-hero.close h2{color:var(--a)}
+html:is([data-skin="clean"],[data-skin="day"]) .big-score{background:none;color:var(--gold)}
+html[data-skin="day"] .jail-modal .big{color:var(--text)}
+html[data-skin="day"] .vault-card{background:var(--surface);border-color:var(--border)}
+html[data-skin="day"] .vault-cap{color:var(--text)}
+html[data-skin="day"] .vault-ov{background:rgba(40,34,20,.45)}
+html:is([data-skin="clean"],[data-skin="day"]) .welcome{background:var(--bg)}
+html:is([data-skin="clean"],[data-skin="day"]) .piano{filter:drop-shadow(0 3px 6px rgba(0,0,0,.18))}
+/* start screen */
+html:is([data-skin="clean"],[data-skin="day"]) .ready{background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+html:is([data-skin="clean"],[data-skin="day"]) .ready-title{font:800 clamp(24px,3.4vw,34px)/1.1 "Outfit",system-ui,sans-serif;letter-spacing:.01em;color:var(--text);text-shadow:none}
+html:is([data-skin="clean"],[data-skin="day"]) .ready-go{font:800 clamp(22px,2.8vw,28px)/1 "Outfit",system-ui,sans-serif;letter-spacing:.02em;color:var(--on-gold);background:var(--gold-bg);box-shadow:0 4px 14px rgba(0,0,0,.22);animation:none}
+html:is([data-skin="clean"],[data-skin="day"]) .ready-sum{font:600 15px "Outfit",system-ui,sans-serif}
+html:is([data-skin="clean"],[data-skin="day"]) .ready-hint{font-size:15px}
+html:is([data-skin="clean"],[data-skin="day"]) .dd > span{font-weight:700;font-size:12px;letter-spacing:.1em}
+html:is([data-skin="clean"],[data-skin="day"]) .mtabs button{font-weight:700}
+html[data-skin="clean"] :is(.logo,.b16-toggle[aria-pressed="true"],#poolEdit[aria-pressed="true"],.bank.editing .cell-btn.on::after,.devtag){color:var(--on-accent)}
+/* sign-in icon picker (its own injected styles assume a dark card) */
+html[data-skin="day"] .icon-pick button{background:var(--surface-2);border-color:var(--border)}
+html[data-skin="day"] .icon-pick button:hover{border-color:var(--muted)}
+html[data-skin="day"] .icon-pick button[aria-pressed="true"]{border-color:var(--gold);background:var(--play-soft);box-shadow:none}
+html[data-skin="day"] .icon-pick button .ic-svg{color:var(--text)}
+@media (max-width:600px){html:is([data-skin="clean"],[data-skin="day"]) h1.bs-title{font-size:22px}}
 </style>
 <style>
 /* Music Theory Games home link: the same in every game, on its own row at the top left of the header */
@@ -644,7 +750,7 @@ body.ready-on .card-head .edit-tools{visibility:hidden}
 header:has(> .mtg-home) { flex-wrap: wrap; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Music&family=Black+Ops+One&family=Special+Elite&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Music&family=Black+Ops+One&family=Special+Elite&family=JetBrains+Mono:wght@600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="app">
@@ -727,7 +833,7 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
       </div>
       <div class="more" id="more" hidden>
         <div class="mtabs" role="tablist" aria-label="More options">
-          <button type="button" role="tab" data-tab="rhythm" aria-selected="true">Rhythm</button><button type="button" role="tab" data-tab="melody" aria-selected="false">Melody</button><button type="button" role="tab" data-tab="sound" aria-selected="false">Sound</button>
+          <button type="button" role="tab" data-tab="rhythm" aria-selected="true">Rhythm</button><button type="button" role="tab" data-tab="melody" aria-selected="false">Melody</button><button type="button" role="tab" data-tab="sound" aria-selected="false">Sound</button><button type="button" role="tab" data-tab="look" aria-selected="false">Look</button>
         </div>
         <div class="mpanel" data-panel="rhythm" role="tabpanel">
           <div class="mrow">
@@ -756,6 +862,13 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
             <label class="field"><span>Sound</span><select id="soundSel" aria-label="Sound"></select></label>
           </div>
           <span class="muted small" id="tempoNote" hidden>Heists use a fixed tempo for rhythms.</span>
+        </div>
+        <div class="mpanel" data-panel="look" role="tabpanel" hidden>
+          <div class="skin-pick" id="skinPick" role="group" aria-label="Look">
+            <button type="button" class="btn skin-btn" data-skin="clean" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#0f1420"></i><i style="--c:#212a3d"></i><i style="--c:#f0c04a"></i></span>Clean</button>
+            <button type="button" class="btn skin-btn" data-skin="day" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#f4f1ea"></i><i style="--c:#ffffff"></i><i style="--c:#b42318"></i></span>Day</button>
+            <button type="button" class="btn skin-btn" data-skin="classic" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#0b1020"></i><i style="--c:#f4e6c6"></i><i style="--c:#ff3b4f"></i></span>Classic</button>
+          </div>
         </div>
       </div>
     </section>
@@ -1999,7 +2112,7 @@ function syncSetup() {
   $('#ddThird').value = mis === 'melody' ? s.mel.mode : beg ? '1' : String(s.measures);
   $('#ddThird').disabled = mis !== 'melody' && beg;
   // More options: only the tabs that matter for this mission
-  const tabs = { rhythm: mis === 'rhythm', melody: mis !== 'rhythm', sound: true };   // a heist picks its own meters and rhythms
+  const tabs = { rhythm: mis === 'rhythm', melody: mis !== 'rhythm', sound: true, look: true };   // a heist picks its own meters and rhythms
   document.querySelectorAll('.mtabs [data-tab]').forEach(b => { b.hidden = !tabs[b.dataset.tab]; });
   const cur = document.querySelector('.mtabs [aria-selected="true"]');
   if (!cur || cur.hidden) showMoreTab(mis === 'rhythm' ? 'rhythm' : mis === 'melody' ? 'melody' : 'sound');
@@ -2090,6 +2203,15 @@ $('#moreBtn').addEventListener('click', () => {
   $('#more').hidden = !open; $('#moreBtn').setAttribute('aria-expanded', String(open));
 });
 document.querySelector('.mtabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showMoreTab(b.dataset.tab); });
+// Look: the skin is shared by every game (mtg_skin_v1); it only re-colors, so a re-fit is all it needs
+function syncSkin() { document.querySelectorAll('#skinPick [data-skin]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.skin === document.documentElement.dataset.skin))); }
+$('#skinPick').addEventListener('click', e => {
+  const b = e.target.closest('[data-skin]'); if (!b) return;
+  document.documentElement.dataset.skin = b.dataset.skin;
+  try { localStorage.setItem('mtg_skin_v1', b.dataset.skin); } catch (err) {}
+  syncSkin(); fitScreen(true);
+});
+syncSkin();
 
 // ---------- challenge ----------
 function chooseChallenge() {
