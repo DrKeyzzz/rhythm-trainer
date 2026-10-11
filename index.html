@@ -638,7 +638,11 @@ body.ready-on .card-head .edit-tools{visibility:hidden}
 @media (max-width:560px){.quick > .dd:first-child{grid-column:1/-1}.quick:not(:has(#ddThirdWrap[hidden])) .more-btn{grid-column:1/-1}}   /* phones: the mission name gets the full width */
 @media (pointer:coarse){.ready-hint .kb-only{display:none}}
 @media (max-width:600px){.ready{gap:9px;padding:48px 12px 12px;justify-content:flex-start}.ready-go{padding:14px 30px}.ready-sum{font-size:13px}.mpanel .field{width:100%}}
-/* ---------- Look tab: skin swatches ---------- */
+/* ---------- Skins menu (header): a popover with the skin swatches ---------- */
+.skin-menu{position:relative;display:flex}
+.skin-pop{position:absolute;z-index:60;top:calc(100% + 8px);right:0;width:min(440px,calc(100vw - 16px));background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:0 18px 40px -10px rgba(0,0,0,.45)}
+.skin-pop .skin-pick{flex-wrap:nowrap}.skin-pop .skin-btn{flex:1 1 0;min-width:0}
+.skin-note{margin:10px 2px 0;font-size:13px;color:var(--muted)}
 .skin-pick{display:flex;gap:10px;flex-wrap:wrap}
 .skin-btn{flex-direction:column;align-items:stretch;gap:7px;min-width:120px;padding:10px 12px}
 .skin-btn .sw{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid rgba(128,128,128,.45)}
@@ -748,6 +752,16 @@ html[data-skin="day"] .icon-pick button .ic-svg{color:var(--text)}
 .mtg-home a:hover, .mtg-home a:focus-visible { opacity: 1; border-color: currentColor; }
 .mtg-home svg { width: 15px; height: 15px; flex: none; }
 header:has(> .mtg-home) { flex-wrap: wrap; }
+/* ---------- Header hints (same in every Music Theory Game): a small label under a header button ---------- */
+.mtg-hint { position: fixed; left: 0; top: 0; z-index: 9999; max-width: min(260px, calc(100vw - 16px)); padding: 7px 11px; border-radius: 9px; background: var(--hint-bg); color: var(--hint-ink); border: 1px solid var(--hint-edge); box-shadow: 0 8px 20px -6px rgba(0,0,0,.45); font: 600 13.5px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: normal; text-transform: none; text-align: left; pointer-events: none; opacity: 0; visibility: hidden; transform: translateY(-3px); transition: opacity .14s, transform .14s, visibility 0s .14s; }
+.mtg-hint.up { transform: translateY(3px); }
+.mtg-hint.on { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.mtg-hint::before { content: ''; position: absolute; left: var(--ax, 50%); top: -6px; width: 10px; height: 10px; margin-left: -6px; background: var(--hint-bg); border: 1px solid var(--hint-edge); border-width: 1px 0 0 1px; transform: rotate(45deg); }
+.mtg-hint.up::before { top: auto; bottom: -6px; border-width: 0 1px 1px 0; }
+html[data-skin="day"] .mtg-hint { box-shadow: 0 8px 20px -8px rgba(20,40,80,.35); }
+[data-hint] { -webkit-touch-callout: none; }
+@media (prefers-reduced-motion: reduce) { .mtg-hint, .mtg-hint.up { transform: none; transition: none; } }
+.mtg-hint { --hint-bg: var(--surface-2); --hint-ink: var(--text); --hint-edge: var(--border); }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Music&family=Black+Ops+One&family=Special+Elite&family=JetBrains+Mono:wght@600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -761,11 +775,22 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
       <h1 class="bs-title">THE BIG <span>SCORE</span><small>Hear it. Write it. Pull off the big score.</small></h1>
     </div>
     <div class="seg app-tabs" id="appTabs" role="group" aria-label="Game" hidden>
-      <button type="button" data-app="rhythm" title="Rhythm dictation">📡 Transmissions</button><button type="button" data-app="melody" title="Melodic dictation">🔐 Safecracking</button>
+      <button type="button" data-app="rhythm">📡 Transmissions</button><button type="button" data-app="melody">🔐 Safecracking</button>
     </div>
     <div class="top-actions">
-      <button class="btn btn-challenge" id="challengeBtn" type="button" title="Challenge Mode">💎 The Heist</button>
-      <button class="btn btn-sm mw-btn" id="mwBtn" type="button" title="See the leaderboards">🕵️ Most Wanted</button>
+      <div class="skin-menu">
+        <button class="btn btn-sm" id="skinBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="skinPop">🎨 Skins</button>
+        <div class="skin-pop" id="skinPop" role="dialog" aria-label="Skins" hidden>
+          <div class="skin-pick" id="skinPick" role="group" aria-label="Skins">
+            <button type="button" class="btn skin-btn" data-skin="clean" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#0f1420"></i><i style="--c:#212a3d"></i><i style="--c:#f0c04a"></i></span>Clean</button>
+            <button type="button" class="btn skin-btn" data-skin="day" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#f4f1ea"></i><i style="--c:#ffffff"></i><i style="--c:#b42318"></i></span>Day</button>
+            <button type="button" class="btn skin-btn" data-skin="classic" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#0b1020"></i><i style="--c:#f4e6c6"></i><i style="--c:#ff3b4f"></i></span>Classic</button>
+          </div>
+          <p class="skin-note">Your skin is saved on this device and used in every Music Theory Game.</p>
+        </div>
+      </div>
+      <button class="btn btn-challenge" id="challengeBtn" type="button">💎 The Heist</button>
+      <button class="btn btn-sm mw-btn" id="mwBtn" type="button">🕵️ Most Wanted</button>
       <button class="btn btn-sm teacher-top" id="teacherBtn" type="button">Teacher Dashboard</button>
     </div>
   </header>
@@ -833,7 +858,7 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
       </div>
       <div class="more" id="more" hidden>
         <div class="mtabs" role="tablist" aria-label="More options">
-          <button type="button" role="tab" data-tab="rhythm" aria-selected="true">Rhythm</button><button type="button" role="tab" data-tab="melody" aria-selected="false">Melody</button><button type="button" role="tab" data-tab="sound" aria-selected="false">Sound</button><button type="button" role="tab" data-tab="look" aria-selected="false">Look</button>
+          <button type="button" role="tab" data-tab="rhythm" aria-selected="true">Rhythm</button><button type="button" role="tab" data-tab="melody" aria-selected="false">Melody</button><button type="button" role="tab" data-tab="sound" aria-selected="false">Sound</button>
         </div>
         <div class="mpanel" data-panel="rhythm" role="tabpanel">
           <div class="mrow">
@@ -863,12 +888,6 @@ header:has(> .mtg-home) { flex-wrap: wrap; }
           </div>
           <span class="muted small" id="tempoNote" hidden>Heists use a fixed tempo for rhythms.</span>
         </div>
-        <div class="mpanel" data-panel="look" role="tabpanel" hidden>
-          <div class="skin-pick" id="skinPick" role="group" aria-label="Look">
-            <button type="button" class="btn skin-btn" data-skin="clean" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#0f1420"></i><i style="--c:#212a3d"></i><i style="--c:#f0c04a"></i></span>Clean</button>
-            <button type="button" class="btn skin-btn" data-skin="day" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#f4f1ea"></i><i style="--c:#ffffff"></i><i style="--c:#b42318"></i></span>Day</button>
-            <button type="button" class="btn skin-btn" data-skin="classic" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#0b1020"></i><i style="--c:#f4e6c6"></i><i style="--c:#ff3b4f"></i></span>Classic</button>
-          </div>
         </div>
       </div>
     </section>
@@ -2203,14 +2222,34 @@ $('#moreBtn').addEventListener('click', () => {
   $('#more').hidden = !open; $('#moreBtn').setAttribute('aria-expanded', String(open));
 });
 document.querySelector('.mtabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showMoreTab(b.dataset.tab); });
-// Look: the skin is shared by every game (mtg_skin_v1); it only re-colors, so a re-fit is all it needs
+// Skins (header menu): the skin is shared by every game (mtg_skin_v1); it only re-colors, so a re-fit is all it needs
 function syncSkin() { document.querySelectorAll('#skinPick [data-skin]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.skin === document.documentElement.dataset.skin))); }
+function skinMenu(open) {
+  const pop = $('#skinPop');
+  if (open === !pop.hidden) return;
+  pop.hidden = !open; $('#skinBtn').setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  pop.style.transform = '';                                      // keep the popover on screen (phones: the button may wrap to the left)
+  const r = pop.getBoundingClientRect(), w = document.documentElement.clientWidth, dx = r.left < 8 ? 8 - r.left : r.right > w - 8 ? w - 8 - r.right : 0;
+  if (dx) pop.style.transform = `translateX(${dx}px)`;
+  (pop.querySelector('[aria-pressed="true"]') || pop.querySelector('button')).focus();
+}
+$('#skinBtn').addEventListener('click', () => skinMenu($('#skinPop').hidden));
 $('#skinPick').addEventListener('click', e => {
   const b = e.target.closest('[data-skin]'); if (!b) return;
   document.documentElement.dataset.skin = b.dataset.skin;
   try { localStorage.setItem('mtg_skin_v1', b.dataset.skin); } catch (err) {}
   syncSkin(); fitScreen(true);
+  skinMenu(false); $('#skinBtn').focus();
 });
+document.querySelector('.skin-menu').addEventListener('keydown', e => {
+  if ($('#skinPop').hidden) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); skinMenu(false); $('#skinBtn').focus(); return; }
+  const items = [...document.querySelectorAll('#skinPick [data-skin]')], i = items.indexOf(document.activeElement);
+  if (i >= 0 && ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); e.stopPropagation(); items[(i + (['ArrowRight', 'ArrowDown'].includes(e.key) ? 1 : items.length - 1)) % items.length].focus(); }
+});
+document.querySelector('.skin-menu').addEventListener('focusout', e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) skinMenu(false); });
+document.addEventListener('click', e => { if (!e.target.closest('.skin-menu')) skinMenu(false); });
 syncSkin();
 
 // ---------- challenge ----------
@@ -2857,25 +2896,70 @@ function focusToast(html) {
   d.innerHTML = html; document.body.appendChild(d); setTimeout(() => d.remove(), 8000);
 }
 function applyFocusFromUrl() {
-  const q = new URLSearchParams(location.search), f = q.get('focus'); if (!f) return;
-  q.delete('focus'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
-  try { applyFocus(f); } catch (e) { console.warn('focus link:', e); }
+  const q = new URLSearchParams(location.search), f = q.get('focus'), raw = q.get('settings'); if (!f && raw == null) return;
+  q.delete('focus'); q.delete('settings'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
+  let set = null;
+  if (raw != null) try { set = applyUrlSettings(decodeSettings(raw)); } catch (e) { console.warn('settings link:', e); }
+  if (f) { try { applyFocus(f, set); } catch (e) { console.warn('focus link:', e); } }
+  else if (set) toast(`🎯 Your teacher's settings are ready. Press ${S.settings.mission === 'heist' ? 'Start the heist' : 'Intercept'}!`, 6000);
 }
-function applyFocus(label) {
+// ---------- teacher settings links: ?settings=<base64url JSON> (from the home page's Assign page) ----------
+// Keys reuse the class assignment's (level, type, lock, measures); see the Assign page's spec for the rest.
+function decodeSettings(raw) {
+  let b = String(raw).replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '=';
+  const bin = atob(b), bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  const o = JSON.parse(new TextDecoder().decode(bytes));
+  return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+}
+// applies every valid key exactly like the dropdowns / More options would; returns the keys it used
+function applyUrlSettings(o) {
+  const s = S.settings, m = s.mel, used = {};
+  const take = (k, ok) => { if (Object.prototype.hasOwnProperty.call(o, k) && ok(o[k])) { used[k] = o[k]; return true; } return false; };
+  const int = (lo, hi) => v => typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi;
+  if (take('mission', v => ['rhythm', 'melody', 'heist'].includes(v))) s.mission = o.mission;
+  if (take('level', v => LEVELS.includes(v))) s.level = o.level;
+  if (take('type', v => v === 'simple' || v === 'compound')) s.type = o.type;
+  if (take('lock', v => v === 'random' || SIMPLE_TS.includes(v) || COMPOUND_TS.includes(v))) { s.lock = o.lock; if (o.lock !== 'random') s.type = TIME_SIGS[o.lock].type; }   // a time signature brings its meter type
+  else if (used.type) s.lock = 'random';                // a new meter type without a time signature: any meter of that type
+  if (take('measures', v => v === 2 || v === 4)) s.measures = o.measures;
+  if (take('pool', int(0, 100))) S.pool = { pct: o.pool / 100, custom: {} };
+  if (take('melLevel', v => Object.prototype.hasOwnProperty.call(MLEVELS, v))) { m.level = o.melLevel; m.showRhythm = null; }
+  if (take('melKeys', v => Object.prototype.hasOwnProperty.call(MEL_KEYS_NAME, v))) m.mode = o.melKeys;
+  if (take('melLabels', v => ['both', 'solfege', 'numbers', 'letters', 'none'].includes(v))) m.labels = o.melLabels;
+  if (take('melShowRhythm', v => ['auto', 'on', 'off'].includes(v))) m.showRhythm = o.melShowRhythm === 'auto' ? null : o.melShowRhythm === 'on';
+  if (take('tempo', int(50, 120))) s.tempo = o.tempo;
+  if (take('metronome', v => typeof v === 'boolean')) s.metronome = o.metronome;
+  if (!Object.keys(used).length) return null;
+  if (used.mission) s.app = s.mission === 'melody' ? 'melody' : 'rhythm';
+  populateTsSelect(); saveSettings();
+  if (S.mel.q && (used.melLevel || used.melKeys || used.melShowRhythm)) S.mel.q = null;   // a fresh safe for the new melody settings
+  newPracticeRhythm(); renderAssignment();
+  return used;
+}
+// set = the teacher's settings from the same link (if any): the skill only changes what it needs
+function applyFocus(label, set) {
   const L = String(label);
   const lv = LEVELS.find(l => `${LEVEL_NAME[l]} level` === L);
   const tsId = Object.keys(TIME_SIGS).find(t => `${TIME_SIGS[t].label || t} time` === L);
-  if (lv) S.settings.level = lv;
-  else if (tsId) { S.settings.type = TIME_SIGS[tsId].type; S.settings.lock = tsId; }
+  const st = S.settings, teach = set || {};
+  let keepPool = teach.pool != null;
+  if (lv) st.level = lv;
+  else if (tsId) { st.type = TIME_SIGS[tsId].type; st.lock = tsId; }
   else if (SKILLS.includes(L)) {
-    // a time signature and the easiest level that use this skill
-    const ts = Object.keys(TIME_SIGS).find(t => BANKS[TIME_SIGS[t].bank].cells.some(c => skillsOf(c).includes(L)));
-    if (ts) { const T = TIME_SIGS[ts]; S.settings.type = T.type; S.settings.lock = ts; const level = LEVELS.find(l => cellsFor(T.bank, l).some(c => skillsOf(c).includes(L))); if (level) S.settings.level = level; }
-  } else { toast('Pick your level and meter, then press Intercept to start.', 5000); return; }
-  S.pool = { pct: 1, custom: {} };
-  S.settings.mission = S.settings.app = 'rhythm';
+    const has = (bank, level) => cellsFor(bank, level).some(c => skillsOf(c).includes(L));
+    const tsOk = t => TIME_SIGS[t] && BANKS[TIME_SIGS[t].bank].cells.some(c => skillsOf(c).includes(L));
+    // the teacher's time signature and level when they already use this skill; otherwise a time signature and the easiest level that do
+    const ts = teach.lock && tsOk(teach.lock) ? teach.lock : Object.keys(TIME_SIGS).find(t => tsOk(t) && (!teach.type || TIME_SIGS[t].type === teach.type)) || Object.keys(TIME_SIGS).find(tsOk);
+    if (ts) {
+      const T = TIME_SIGS[ts]; st.type = T.type; st.lock = ts;
+      if (!(teach.level && has(T.bank, teach.level))) { const level = LEVELS.find(l => has(T.bank, l)); if (level) st.level = level; }
+      if (keepPool) keepPool = poolFor(T.bank, st.level).some(c => skillsOf(c).includes(L));   // the teacher's "rhythms in play" must still include the skill
+    }
+  } else { toast(set ? `🎯 Your teacher's settings are ready. Press ${st.mission === 'heist' ? 'Start the heist' : 'Intercept'}!` : 'Pick your level and meter, then press Intercept to start.', 6000); return; }
+  if (!keepPool) S.pool = { pct: 1, custom: {} };
+  st.mission = st.app = 'rhythm';
   populateTsSelect(); saveSettings(); newPracticeRhythm(); updateUI(); renderAssignment();
-  toast(`🎯 Practice set up for ${L}. Press Intercept to listen!`, 6000);
+  toast(set ? `🎯 Your teacher's settings are ready, set up for ${L}. Press Intercept!` : `🎯 Practice set up for ${L}. Press Intercept to listen!`, 6000);
 }
 function showWelcome(keep) {
   Engine.stop();
@@ -5019,6 +5103,88 @@ applyFocusFromUrl();
 spyUI();
 if (S.settings.app === 'melody' && S.settings.mission !== 'heist') setApp('melody');
 if (/[?&]selftest/.test(location.search)) window.RDT = { heistEndFx, heistBoltFx, SFX, HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+/* ---------- Header hints (same in every Music Theory Game): hover, keyboard focus or long-press a header button to see what it does ---------- */
+function headerHints(HINTS) {
+  const tip = document.createElement('div'); tip.className = 'mtg-hint'; tip.setAttribute('aria-hidden', 'true');
+  const descs = document.createElement('div'); descs.hidden = true;   // screen readers get each hint through aria-describedby
+  document.body.append(tip, descs);
+  let n = 0, hov = null, cur = null, timer = 0, press = null, eat = null;
+  const textFor = el => { const h = HINTS[el.dataset.hint]; return (typeof h === 'function' ? h(el) : h) || ''; };
+  function scan() {
+    for (const sel of Object.keys(HINTS)) document.querySelectorAll(sel).forEach(el => {
+      if (el.dataset.hint) return;
+      el.dataset.hint = sel; el.removeAttribute('title');
+      const d = document.createElement('span'); d.id = 'mtg-hint-' + (++n); descs.append(d);
+      el.setAttribute('aria-describedby', ((el.getAttribute('aria-describedby') || '') + ' ' + d.id).trim());
+    });
+    refresh();
+  }
+  function refresh() {   // keep each description current, without repeating the button's own name
+    document.querySelectorAll('[data-hint]').forEach(el => {
+      const d = document.getElementById((el.getAttribute('aria-describedby') || '').split(' ').find(id => id.startsWith('mtg-hint-')));
+      if (!d) return;
+      const name = (el.getAttribute('aria-label') || el.textContent).trim().toLowerCase();
+      let s = textFor(el);
+      if (s.toLowerCase().startsWith(name + ':')) s = s.slice(name.length + 1).trim();
+      if (s.toLowerCase() === name) s = '';
+      if (d.textContent !== s) d.textContent = s;
+    });
+    if (cur) show(cur);
+  }
+  function show(el) {
+    const s = textFor(el);
+    if (!s || !el.isConnected || !el.getClientRects().length || el.getAttribute('aria-expanded') === 'true') return hide();
+    cur = el; tip.textContent = s;
+    const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, m = 8;
+    const x = Math.max(m, Math.min(innerWidth - w - m, r.left + r.width / 2 - w / 2));
+    const up = r.bottom + 10 + h + m > innerHeight && r.top - 10 - h >= m;   // flip above only when there's no room below
+    tip.style.left = x + 'px'; tip.style.top = (up ? r.top - 10 - h : r.bottom + 10) + 'px';
+    tip.style.setProperty('--ax', Math.max(12, Math.min(w - 12, r.left + r.width / 2 - x)) + 'px');
+    tip.classList.toggle('up', up); tip.classList.add('on');
+  }
+  function hide() { clearTimeout(timer); hov = cur = null; tip.classList.remove('on'); }
+  const hintEl = t => t && t.closest ? t.closest('[data-hint]') : null;
+  // mouse: show after a short rest on the button
+  document.addEventListener('pointerover', e => {
+    if (e.pointerType !== 'mouse') return;
+    const el = hintEl(e.target); if (el === hov) return;
+    hide(); if (el) { hov = el; timer = setTimeout(() => show(el), 300); }
+  });
+  document.addEventListener('pointerout', e => { if (e.pointerType === 'mouse' && hov && !hov.contains(e.relatedTarget)) hide(); });
+  // touch: a long press shows the hint (and doesn't press the button); letting go hides it
+  document.addEventListener('pointerdown', e => {
+    hide(); eat = null; press = null;
+    if (e.pointerType === 'mouse') return;
+    const el = hintEl(e.target); if (!el) return;
+    press = { el, x: e.clientX, y: e.clientY };
+    timer = setTimeout(() => { eat = el; show(el); }, 500);
+  }, true);
+  document.addEventListener('pointermove', e => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) { press = null; if (!eat) hide(); } }, true);
+  const release = () => { if (!press && !eat) return; press = null; hide(); if (eat) { const was = eat; setTimeout(() => { if (eat === was) eat = null; }, 700); } };
+  document.addEventListener('pointerup', release, true);
+  document.addEventListener('pointercancel', release, true);
+  document.addEventListener('click', e => { if (eat && eat.contains(e.target)) { e.preventDefault(); e.stopImmediatePropagation(); eat = null; } }, true);
+  document.addEventListener('contextmenu', e => { if ((press || eat) && hintEl(e.target)) e.preventDefault(); }, true);
+  // keyboard: show while a header button has keyboard focus
+  document.addEventListener('focusin', e => { const el = hintEl(e.target); if (el && el.matches(':focus-visible')) { hide(); show(el); } });
+  document.addEventListener('focusout', e => { if (cur && hintEl(e.target) === cur) hide(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && cur) hide(); }, true);
+  addEventListener('scroll', hide, true); addEventListener('resize', hide); addEventListener('blur', hide);
+  scan();
+  // buttons change their words (sound on/off, signed in, MIDI connected): keep the hints in step
+  const mo = new MutationObserver(recs => { if (recs.some(r => hintEl(r.target.nodeType === 1 ? r.target : r.target.parentElement))) refresh(); });
+  document.querySelectorAll('header').forEach(h => mo.observe(h, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['aria-pressed', 'aria-label', 'data-state', 'hidden'] }));
+}
+headerHints({
+  '.mtg-home a[href="https://drkeyzzz.github.io/"]': 'Back to all the games',
+  '.mtg-home a[href*="/report/"]': 'Your trophies, badges and what to practice next',
+  '#skinBtn': 'Change how the game looks',
+  '#appTabs [data-app="rhythm"]': 'Rhythm game: hear the beats, write them',
+  '#appTabs [data-app="melody"]': 'Melody game: hear the notes, write them',
+  '#challengeBtn': () => spyState().jail ? "You're in jail: see how to break out" : 'A scored heist: win loot and rank up',
+  '#mwBtn': 'See the top scores',
+  '#teacherBtn': 'For teachers: classes, scores and assignments',
+});
 })();
 </script>
 </body>
