@@ -195,6 +195,15 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .rhythm .slot.playing .slot-bg{fill:var(--play-soft);stroke:var(--play);stroke-dasharray:none;stroke-width:2.5}
 .rhythm .note.sounding{color:var(--a)}
 @media (hover:hover){.rhythm.interactive .slot:not(.selected):hover .slot-bg{stroke:var(--accent);stroke-dasharray:none}}
+/* what went wrong in each red slot + "hear yours, then the right one" */
+.fb-fix{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin:2px 0 4px}
+.fb-fix .fix-tip{font-size:12px;color:var(--muted)}
+.fix-chip{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:4px 11px;border-radius:999px;border:1.5px solid var(--bad);background:var(--bad-soft);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;line-height:1.2;cursor:pointer}
+.fix-chip b{color:var(--bad)}
+.fix-chip.on{background:var(--play-soft);border-color:var(--play)}
+.fix-chip:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rhythm .slot.hl .slot-bg{stroke-width:3.5}
+#staff .slot.wrong,#correctStaff .slot.wrong{cursor:pointer}
 
 /* ---------- footer ---------- */
 .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--muted)}
@@ -831,6 +840,7 @@ html[data-skin="day"] .mtg-hint { box-shadow: 0 8px 20px -8px rgba(20,40,80,.35)
 
       <div class="feedback" id="feedback" hidden>
         <div class="fb-msg" id="fbMsg"></div>
+        <div class="fb-fix" id="fbFix" hidden></div>
         <p class="fb-next muted" id="fbNext">Take your time. Replay the transmission or your decode, then press <b>Next transmission</b> when you're ready.</p>
         <div class="fb-label">Correct rhythm</div>
         <div class="staff" id="correctStaff"></div>
@@ -1910,13 +1920,15 @@ function onCheck() {
     const c = S.answer.filter((id, i) => id === S.q.cells[i]).length;
     S.stats.rhythms++; S.stats.correct += c; S.stats.total += n;
     S.stats.streak = c === n ? S.stats.streak + 1 : 0;
-    setTimeout(() => spyAfterPractice(c / n, c === n, (CONFIG.lootMult[S.q.level] || 1) * (c * 2 + (c === n ? 5 : 0)), els.feedback), 0);
+    const skill = { k: 'r', lv: S.q.level, full: (S.q.poolFrac ?? 1) >= 1 };
+    setTimeout(() => spyAfterPractice(c / n, c === n, (CONFIG.lootMult[S.q.level] || 1) * (c * 2 + (c === n ? 5 : 0)), els.feedback, skill), 0);
     logRhythm({ m: 'p', lv: S.q.level, ts: S.q.ts, ms: S.q.measures, q: S.q.cells, a: S.answer, pl: S.qPlays, x: 0, pf: S.q.poolFrac ?? 1, t0: S.qStart, t1: Date.now() });
     els.fbMsg.textContent = c === n
       ? (S.stats.streak > 1 ? `Perfect! ${S.stats.streak} in a row 🔥` : 'Perfect! Every slot is correct 🎉')
       : `${c} of ${n} slots correct. Compare with the correct rhythm below.`;
     els.fbMsg.classList.toggle('perfect', c === n);
     els.feedback.hidden = false;
+    renderFix();
     els.bankWrap.hidden = true;
     els.hint.hidden = true;
     renderMount(mainMount);
@@ -1947,6 +1959,7 @@ function onCheck() {
       + (x ? ` (${x} extra listen${x > 1 ? 's' : ''}: −${Math.round(x * CONFIG.extraPenalty * 100)}%)` : '');
     els.fbMsg.classList.toggle('perfect', c === n);
     els.feedback.hidden = false;
+    renderFix();
     els.bankWrap.hidden = true;
     els.hint.hidden = true;
     renderMount(mainMount);
@@ -2033,6 +2046,86 @@ function showPlaying(voice) {
     ? `<span class="pill question">♪ Playing question${name}</span>`
     : `<span class="pill answer">♪ Playing your answer${name}</span>`;
 }
+
+// ---------- what went wrong in a slot (compares note start times and lengths inside the cell) ----------
+function cellHits(id) {                               // [{ t: start, dur, rest }] in sixteenths
+  let p = 0;
+  return CELLS[id].seq.map(n => { const h = { t: rp(p), dur: rp(n.dur), rest: n.rest }; p += n.dur; return h; });
+}
+function diagnoseCell(yours, right) {
+  if (!yours || !right || yours === right) return '';
+  const A = cellHits(yours), Q = cellHits(right);
+  const tupA = CELLS[yours].seq.some(n => n.tup), tupQ = CELLS[right].seq.some(n => n.tup);
+  if (tupQ && !tupA) return 'Should be a triplet';
+  if (tupA && !tupQ) return 'Not a triplet';
+  const an = A.filter(h => !h.rest), qn = Q.filter(h => !h.rest);
+  const at = an.map(h => h.t), qt = qn.map(h => h.t);
+  const missing = qt.filter(t => !at.includes(t)), extra = at.filter(t => !qt.includes(t));
+  const restAt = (hits, t) => hits.some(h => h.rest && h.t === t);
+  if (!missing.length && !extra.length) return 'Right attacks, wrong lengths';
+  if (missing.length && !extra.length) return missing.every(t => restAt(A, t)) ? 'Rest instead of a note' : missing.length > 1 ? `Missed ${missing.length} notes` : 'Missed a note';
+  if (extra.length && !missing.length) return extra.every(t => restAt(Q, t)) ? 'Note instead of a rest' : extra.length > 1 ? `${extra.length} extra notes` : 'Extra note';
+  if (an.length === qn.length) {
+    const d = rp(at[0] - qt[0]);
+    return an.every((h, i) => rp(h.t - qn[i].t) === d && h.dur === qn[i].dur) ? 'Right rhythm, shifted' : 'Right count, wrong timing';
+  }
+  return 'Different rhythm';
+}
+function renderFix() {                                // one chip per red slot: the reason + play yours, then the right one
+  const box = $('#fbFix');
+  const wrong = S.q ? S.answer.map((id, i) => (id && id !== S.q.cells[i] ? i : -1)).filter(i => i >= 0) : [];
+  box.hidden = !wrong.length;
+  box.innerHTML = wrong.length ? `<span class="fix-tip">Tap to hear yours, then the right one:</span>` + wrong.map(i => {
+    const why = diagnoseCell(S.answer[i], S.q.cells[i]);
+    return `<button type="button" class="fix-chip" data-slot="${i}" aria-label="Slot ${i + 1}: ${esc(why)}. Play yours, then the right one" title="Play yours, then the right one"><b>✗ Slot ${i + 1}</b> ${esc(why)} <span aria-hidden="true">🔊</span></button>`;
+  }).join('') : '';
+}
+// Plays the student's cell (answer voice), a short gap, then the correct cell (question voice), with a steady beat.
+function buildDiffSchedule(i) {
+  const ts = TIME_SIGS[S.q.ts], beatU = BEAT_UNITS[ts.type], u = 60 / currentTempo() / beatU, beatSec = beatU * u;
+  const slotU = slotUnitsOf(ts), bps = slotU / beatU, lead = Math.max(2, bps);   // beats of count-in and of gap
+  const parts = [[S.answer[i], 'answer', lead], [S.q.cells[i], 'question', 2 * lead + bps]].map(([id, voice, b]) => ({ id, voice, start: b * beatSec, end: b * beatSec + slotU * u }));
+  const events = [];
+  for (let b = 0; b < 2 * lead + 2 * bps; b++) events.push({ kind: 'click', t: b * beatSec, accent: b === 0 || b === lead || b === 2 * lead + bps });
+  for (const p of parts) {
+    let pos = 0;
+    for (const n of CELLS[p.id].seq) { if (!n.rest) events.push({ kind: 'tone', voice: p.voice, t: p.start + pos * u, dur: n.dur * u }); pos += n.dur; }
+  }
+  return { events, parts, sound: S.q.sound || 0, total: parts[1].end + 0.3 };
+}
+function playDiff(i) {
+  if (!S.q || !S.checked || !S.answer[i] || S.answer[i] === S.q.cells[i]) return;
+  Engine.stop();
+  maybeShowIosTip();
+  const sched = buildDiffSchedule(i), chip = $(`#fbFix .fix-chip[data-slot="${i}"]`);
+  const mounts = [mainMount, correctMount];
+  let shown = -1;
+  const clear = () => { mounts.forEach(m => m.el.querySelectorAll('.playing').forEach(e => e.classList.remove('playing'))); if (chip) chip.classList.remove('on'); };
+  clear();
+  if (chip) chip.classList.add('on');
+  S.playing = 'diff';
+  updateUI();
+  Engine.play(sched, {
+    onFrame(t) {
+      const k = sched.parts.findIndex(p => t >= p.start && t < p.end);
+      if (k === shown || k < 0) return;
+      shown = k;
+      mounts.forEach(m => m.el.querySelectorAll('.playing').forEach(e => e.classList.remove('playing')));
+      const el = mounts[k].el.querySelector(`.slot[data-slot="${i}"]`);
+      if (el) el.classList.add('playing');
+      if (k === 0) scrollSlotIntoView(i);
+      els.status.innerHTML = k === 0 ? `<span class="pill answer">♪ Yours (slot ${i + 1})</span>` : `<span class="pill question">♪ The right one (slot ${i + 1})</span>`;
+    },
+    onEnd() { clear(); S.playing = null; els.status.innerHTML = ''; updateUI(); },
+  });
+}
+$('#fbFix').addEventListener('click', e => { const b = e.target.closest('.fix-chip'); if (b) playDiff(+b.dataset.slot); });
+for (const ev of ['pointerover', 'focusin', 'pointerout', 'focusout']) $('#fbFix').addEventListener(ev, e => {   // point at the slot the chip is about
+  const b = e.target.closest('.fix-chip'); if (!b) return;
+  const on = ev === 'pointerover' || ev === 'focusin';
+  [els.staff, els.correctStaff].forEach(el => { const g = el.querySelector(`.slot[data-slot="${b.dataset.slot}"]`); if (g) g.classList.toggle('hl', on); });
+});
+els.correctStaff.addEventListener('click', e => { const g = e.target.closest('.slot.wrong'); if (g) playDiff(+g.dataset.slot); });
 
 let soundTurn = Math.floor(Math.random() * SOUNDS.length);
 function pickSound() {
@@ -2155,7 +2248,8 @@ function syncSetup() {
     const jail = spyState().jail;
     $('#readyTitle').textContent = jail ? "You're in jail, agent" : 'Ready for the big score?';
     $('#readyLabel').textContent = jail ? 'Break out' : 'Start the heist';
-    $('#readySum').innerHTML = `<b>${esc(LEVEL_FUN[s.level])} heist</b> · 5 vault layers · rhythm + melody`;
+    $('#readySum').innerHTML = jail && jail.need ? `To break out: <b>${esc(jailNeedName(jail.need))}</b> at 80%+ (${jail.sawn}/${CONFIG.jailbreak})`
+      : `<b>${esc(LEVEL_FUN[s.level])} heist</b> · 5 vault layers · rhythm + melody`;
   } else {
     $('#readyTitle').textContent = first ? 'Ready for your first job?' : mis === 'melody' ? 'Ready to crack a safe?' : 'Ready for a transmission?';
     $('#readyLabel').textContent = 'Intercept';
@@ -3217,6 +3311,7 @@ function toast(msg, ms = 2600) {
 // ---------- events ----------
 els.staff.addEventListener('click', e => {
   const g = e.target.closest('.slot');
+  if (g && S.checked) { if (g.classList.contains('wrong')) playDiff(+g.dataset.slot); return; }   // after checking: hear the difference
   if (g) selectSlot(+g.dataset.slot);
 });
 els.bank.addEventListener('click', e => {
@@ -3310,6 +3405,7 @@ document.addEventListener('keydown', e => {
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
   if (S.mode === 'end' || !els.reportView.hidden || !els.teacherView.hidden) { if (e.key === 'Escape') Engine.stop(); return; }
   const k = e.key;
+  if ((k === 'Enter' || k === ' ') && e.target.closest('.fix-chip')) return;   // the chip itself: hear yours, then the right one
   if (readyShowing()) {
     if ((k === ' ' || k === 'Enter') && !e.target.closest('button,a')) { e.preventDefault(); spaceHandled = k === ' '; if (!e.repeat) readyGo(); }
     return;
@@ -3359,6 +3455,11 @@ function selfTest() {
   const ps = buildSchedule(r, partial, 'answer', 72, false);
   out.partialAnswerClicks = ps.events.filter(e => e.kind === 'click').length; // count-in (4) + 2 beats per empty slot (4 slots x 2)
   out.partialNotesOnlyInFilledSlots = ps.notes.every(n => partial[n.slot]);
+  // every wrong pick gets a reason, and the common mix-ups get the right one
+  out.diagnoseProblems = Object.values(BANKS).reduce((bad, b) => bad + b.cells.reduce((x, c1) => x + b.cells.filter(c2 => c2 !== c1 && !diagnoseCell(c1.id, c2.id)).length, 0), 0);
+  out.diagnoseMismatches = [['q', 'er', 'Right attacks, wrong lengths'], ['q', 'ee', 'Missed a note'], ['ee', 'q', 'Extra note'], ['er', 'ee', 'Rest instead of a note'],
+    ['ee', 'er', 'Note instead of a rest'], ['qr', 'q', 'Rest instead of a note'], ['re', 'er', 'Right rhythm, shifted'], ['ee', 't3', 'Should be a triplet'],
+    ['des', 'ee', 'Right count, wrong timing'], ['ee', 'ssss', 'Missed 2 notes']].filter(([a, b, want]) => diagnoseCell(a, b) !== want).map(x => x.join(' / '));
   return out;
 }
 
@@ -4659,6 +4760,19 @@ function melGrade(q, ans) {
   q.notes.forEach((n, j) => { const i = ao.indexOf(qo[j]); if (i >= 0 && ans[i].d === n.d) pc++; if (i >= 0 && ans[i].dur === n.dur) rc++; });
   return { states, pc, rc, n: q.notes.length };
 }
+// A short "what to fix" for a melody that isn't perfect (rhythm vs pitch, or the whole tune moved)
+function melTip(q, ans, g) {
+  if (g.pc === g.n && g.rc === g.n) return '';
+  if (g.rc === g.n) {
+    const diffs = q.notes.map((n, j) => ans[j] && ans[j].d != null ? ans[j].d - n.d : null).filter(x => x != null);
+    return diffs.length === g.n && diffs[0] && diffs.every(x => x === diffs[0]) ? 'Right shape, wrong starting note' : 'Right rhythm, check the pitches';
+  }
+  if (g.pc === g.n) return 'Right pitches, check the rhythm';
+  if (ans.length < g.n) return ans.length === g.n - 1 ? 'Missed a note' : `Missed ${g.n - ans.length} notes`;
+  if (ans.length > g.n) return ans.length === g.n + 1 ? 'Extra note' : `${ans.length - g.n} extra notes`;
+  return g.rc > g.pc ? 'Rhythm is closer, check the pitches' : g.pc > g.rc ? 'Pitches are closer, check the rhythm' : '';
+}
+const melScore = (q, ans, g) => { const tip = melTip(q, ans, g); return `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}.${tip ? ` 💡 ${tip}.` : ''} Green ✓ = right, orange ~ = right rhythm but wrong pitch, red ✗ = wrong rhythm.`; };
 function melCheck() {
   const m = S.mel; if (!m.q) return;
   if (S.mode === 'challenge' && S.ch) { heistMelCheck(); return; }
@@ -4669,11 +4783,11 @@ function melCheck() {
   m.checked = true; m.sel = null; m.states = g.states;
   m.lockUntil = Date.now() + 1500; setTimeout(melUI, 1550);
   const perfect = g.pc === g.n && g.rc === g.n;
-  $('#melFbMsg').textContent = perfect ? 'Perfect melody! 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green ✓ = right, orange ~ = right rhythm but wrong pitch, red ✗ = wrong rhythm.`;
+  $('#melFbMsg').textContent = perfect ? 'Perfect melody! 🎉' : melScore(m.q, m.ans, g);
   $('#melFbMsg').classList.toggle('perfect', perfect);
   $('#melFeedback').hidden = false;
   const log = readLog(), day = todayOf(log);
-  setTimeout(() => spyAfterPractice((g.pc + g.rc) / (2 * g.n), perfect, (MEL_LOOT[m.q.level] || 1) * (g.pc + g.rc + (perfect ? 5 : 0)), $('#melFeedback')), 0);
+  setTimeout(() => spyAfterPractice((g.pc + g.rc) / (2 * g.n), perfect, (MEL_LOOT[m.q.level] || 1) * (g.pc + g.rc + (perfect ? 5 : 0)), $('#melFeedback'), { k: 'm', lv: m.q.level }), 0);
   (day.melodies || (day.melodies = [])).push({ lv: m.q.level, key: m.q.key, mode: MKEYS[m.q.key].mode, pc: g.pc, pn: g.n, rc: g.rc, rn: g.n, pl: m.plays, t0: m.t0, t1: Date.now() });
   writeLog(log);
   renderMount(melAnsMount); renderMount(melCorrectMount); melUI();
@@ -4694,7 +4808,7 @@ function heistMelCheck() {
   const perfect = g.pc === g.n && g.rc === g.n, x = Math.max(0, ch.used[ch.idx] - CONFIG.challengePlays);
   heistBoltFx(ch.idx, (g.pc + g.rc) / (2 * g.n) >= 0.6);
   gradeStamp((g.pc + g.rc) / (2 * g.n), perfect, $('#melFeedback'));
-  $('#melFbMsg').textContent = (perfect ? 'Safe cracked! Every note is right 🎉' : `Pitches ${g.pc}/${g.n} · Rhythm ${g.rc}/${g.n}. Green ✓ = right, orange ~ = right rhythm but wrong pitch, red ✗ = wrong rhythm.`)
+  $('#melFbMsg').textContent = (perfect ? 'Safe cracked! Every note is right 🎉' : melScore(m.q, m.ans, g))
     + (x ? ` (${x} extra listen${x > 1 ? 's' : ''}: −${Math.round(x * CONFIG.extraPenalty * 100)}%)` : '');
   $('#melFbMsg').classList.toggle('perfect', perfect);
   $('#melFeedback').hidden = false;
@@ -4890,10 +5004,35 @@ function stamp(box, text, kind) {
 function gradeStamp(acc, perfect, box) {             // practice and heist layers use the same stamp
   stamp(box, perfect ? 'CRACKED!' : acc >= 0.6 ? 'PARTIAL' : 'ACCESS DENIED', perfect ? 'cracked' : acc >= 0.6 ? 'partial' : 'denied');
 }
-function spyAfterPractice(acc, perfect, loot, box) {
+// Jailbreak practice must be the skill that tripped the alarm: { k: 'r' rhythm | 'm' melody, lv }, that level or harder.
+// Jail saved before this rule (no "need") still takes any practice mission.
+const jailOrder = k => (k === 'm' ? Object.keys(MLEVELS) : LEVELS);
+const jailNeedName = need => (need.k === 'm' ? `${MEL_FUN[need.lv]} safes` : `${LEVEL_FUN[need.lv]} transmissions`);
+const jailNeedShort = need => (need.k === 'm' ? MEL_FUN : LEVEL_FUN)[need.lv].replace(/^\S+\s/, '');
+function jailCounts(need, skill) {
+  if (!need) return true;
+  if (!skill || skill.k !== need.k || skill.full === false) return false;
+  const o = jailOrder(need.k);
+  return o.indexOf(skill.lv) >= o.indexOf(need.lv);
+}
+function jailbreakSetup(need) {                         // one click: practice at the level the jailbreak needs
+  const app = need.k === 'm' ? 'melody' : 'rhythm';
+  if (app === 'melody') { S.settings.mel.level = need.lv; S.settings.mel.showRhythm = null; }
+  else { S.settings.level = need.lv; S.pool = { pct: 1, custom: {} }; }
+  saveSettings();
+  if (S.mode === 'end') { heistExit(app); return; }
+  if (S.mode !== 'practice') return;
+  if (S.settings.mission !== app) setMission(app);
+  if (app === 'melody') melNew(); else newPracticeRhythm();
+}
+function spyAfterPractice(acc, perfect, loot, box, skill) {
   gradeStamp(acc, perfect, box);
   addLoot(loot);
   const st = spyState();
+  if (st.jail && acc >= 0.8 && !jailCounts(st.jail.need, skill)) {
+    toast(`Nice! But only ${jailNeedName(st.jail.need)} (or harder${st.jail.need.k === 'r' ? ', all rhythms in play' : ''}) saw through the bars.`, 4500);
+    return;
+  }
   if (st.jail && acc >= 0.8) {
     st.jail.sawn++;
     if (st.jail.sawn >= CONFIG.jailbreak) { st.jail = null; saveSpy(st); toast('🔓 You broke out of jail! The Heist is open again.', 5000); }
@@ -4909,7 +5048,9 @@ function spyAfterHeist(ch) {
   const mult = CONFIG.lootMult[ch.level] || 1;
   ch.loot = ch.outcome === 'win' ? Math.round(ch.score) * mult : ch.outcome === 'close' ? Math.round(ch.score / 2) * mult : 0;
   const st = spyState(); st.heists++;
-  if (ch.outcome === 'busted' && !isGuest()) st.jail = { sawn: 0, score: ch.score, at: Date.now(), heist: st.heists, layer: ch.tripped < 0 ? 4 : ch.tripped };
+  const layer = ch.tripped < 0 ? 4 : ch.tripped, spec = (HEIST_PLAN[ch.level] || HEIST_PLAN.easy)[layer];
+  ch.need = { k: spec[0], lv: spec[1] };                 // the skill that tripped the alarm
+  if (ch.outcome === 'busted' && !isGuest()) st.jail = { sawn: 0, score: ch.score, at: Date.now(), heist: st.heists, layer, need: ch.need };
   saveSpy(st);
   addLoot(ch.loot);
   spyUI();
@@ -4932,7 +5073,7 @@ function heistScreen(ch) {
   bn.textContent = "🚔 Busted heists don't go on Most Wanted. Break out of jail and pull off the next one!";
   const extra = ch.outcome === 'win' ? `You escaped with the diamond. +${ch.loot} loot`
     : ch.outcome === 'close' ? `You got away, but dropped some loot. +${ch.loot} loot`
-    : `The alarm tripped at the ${where}. You needed ${CONFIG.heistJail}% to get away. Finish ${CONFIG.jailbreak} training missions at 80%+ to break out of jail.`;
+    : `The alarm tripped at the ${where}. You needed ${CONFIG.heistJail}% to get away. Finish ${CONFIG.jailbreak} training missions at 80%+ on ${jailNeedName(ch.need)} (or harder) to break out of jail.`;
   els.endDetail.textContent = `${els.endDetail.textContent} · ${extra}`;
 }
 // ---------- vault animations + sound effects ----------
@@ -5074,12 +5215,13 @@ function showJail() {
     <div class="bust">BUSTED!</div>
     <div class="mug"><div id="jailAvatar"></div><div class="placard">${esc(codename().toUpperCase())} · HEIST #${j.heist} · ${j.score}%</div></div>
     <p class="big">You're in jail, agent.</p>
-    <p>Saw through the bars: finish <b>${CONFIG.jailbreak} training missions at 80%+</b> (Transmissions or Safecracking) to break out and try The Heist again.</p>
+    ${j.need ? `<p>The alarm tripped on <b>${esc(jailNeedName(j.need))}</b>. Saw through the bars: finish <b>${CONFIG.jailbreak} training missions at 80%+</b> on that (or harder) to break out and try The Heist again.</p>`
+      : `<p>Saw through the bars: finish <b>${CONFIG.jailbreak} training missions at 80%+</b> (Transmissions or Safecracking) to break out and try The Heist again.</p>`}
     <div class="saw">${bars}</div>
-    <div class="modal-actions" style="justify-content:center"><button class="btn jb" type="button" id="jbGo">🪚 Start a jailbreak mission</button><button class="btn" type="button" data-close>Close</button></div>
+    <div class="modal-actions" style="justify-content:center"><button class="btn jb" type="button" id="jbGo">🪚 ${j.need ? `Practice at ${esc(jailNeedShort(j.need))}` : 'Start a jailbreak mission'}</button><button class="btn" type="button" data-close>Close</button></div>
   </div>`, true);
   $('#jailAvatar').innerHTML = $('#agentAvatar').innerHTML;
-  $('#jbGo').onclick = () => { closeModal(); window.scrollTo({ top: 0, behavior: 'smooth' }); toast('Jailbreak mission: score 80% or better!'); };
+  $('#jbGo').onclick = () => { closeModal(); if (j.need) jailbreakSetup(j.need); window.scrollTo({ top: 0, behavior: 'smooth' }); toast(`Jailbreak mission${j.need ? `: ${jailNeedName(j.need)}` : ''}. Score 80% or better!`, 3500); };
 }
 
 /* ---------- start ---------- */
@@ -5102,7 +5244,7 @@ else refreshClassInfo();
 applyFocusFromUrl();
 spyUI();
 if (S.settings.app === 'melody' && S.settings.mission !== 'heist') setApp('melody');
-if (/[?&]selftest/.test(location.search)) window.RDT = { heistEndFx, heistBoltFx, SFX, HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge };
+if (/[?&]selftest/.test(location.search)) window.RDT = { heistEndFx, heistBoltFx, SFX, HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge, diagnoseCell, playDiff, melTip, newPracticeRhythm, melNew, melUI, readyGo, setMission, spyUI, updateUI, showJail, jailCounts };
 /* ---------- Header hints (same in every Music Theory Game): hover, keyboard focus or long-press a header button to see what it does ---------- */
 function headerHints(HINTS) {
   const tip = document.createElement('div'); tip.className = 'mtg-hint'; tip.setAttribute('aria-hidden', 'true');
