@@ -1040,6 +1040,212 @@ html[data-skin="day"] .mtg-hint { box-shadow: 0 8px 20px -8px rgba(20,40,80,.35)
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true"><div class="modal-box" id="modalBox"></div></div>
 <div class="toast" id="toast" hidden role="status"></div>
 
+<script id="mtg-test">
+/* MTG_TEST start (shared Test mode: the same block lives in every game; master: Music Games/shared/mtg-test.snippet.js)
+   The teacher's test (tests/<id>) carries the settings, how it is graded (acc | score) and the tries (0 = unlimited).
+   A student opens <game>/?test=<id> from the home page's Test card: a newsroom "THIS IS A TEST" screen, settings locked,
+   a try counts when it starts, the best result is kept in test_results/<id>_<sid>. Each game calls MTGTest.setup({...}) once
+   and MTGTest.finish({acc, score, quit}) when a run ends; MTGTest.menu() where it returns to its settings screen. */
+(function () {
+  const FIREBASE = { apiKey: 'AIzaSyDU9vbCWJ4yWuD8bAX984DmQF4dvo13BHs', authDomain: 'rhythm-trainer-fc313.firebaseapp.com', projectId: 'rhythm-trainer-fc313', appId: '1:956677028482:web:c3ec72a279e61b6f6c929b' };
+  const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/', HUB = '../';
+  const GAME_NAMES = { scale: 'Scale Quest', tidal: 'Tidal Tones', rooftop: 'Rooftop Runner', rhythm: 'The Big Score', earshot: 'Earshot Saloon' };
+  const T = { active: false, allow: false, running: false, cfg: null, id: null, doc: null, result: null, heard: false };
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const q = new URLSearchParams(location.search);
+  T.id = q.get('test');
+  T.active = !!T.id;
+  window.MTGTest = T;
+  if (!T.active) { T.setup = () => {}; T.finish = () => false; T.menu = () => false; T.canStart = () => true; return; }
+  document.documentElement.classList.add('mtg-testmode');
+
+  // ---- sign-in (shared by every game) ----
+  const profile = () => { try { if (sessionStorage.getItem('music_guest') === '1') return null; const p = JSON.parse(localStorage.getItem('rdt_profile_v1') || 'null'); return p && p.first && p.init ? p : null; } catch (e) { return null; } };
+  const sidOf = p => (p.first + p.init).toLowerCase().replace(/[^a-z]/g, '');
+  const nameOf = p => `${p.first.charAt(0).toUpperCase()}${p.first.slice(1)} ${p.init}.`;
+  const classesOf = p => (Array.isArray(p.classes) && p.classes.length ? p.classes : (p.classCode ? [{ code: p.classCode, name: p.className || p.classCode }] : [])).filter(c => c && c.code).slice(0, 3);
+  let fbP = null;
+  const fb = () => (fbP = fbP || Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-firestore.js')])
+    .then(([a, fs]) => ({ fs, db: fs.getFirestore(a.getApps().length ? a.getApps()[0] : a.initializeApp(FIREBASE)) })).catch(e => { fbP = null; throw e; }));
+  const wait = p => Promise.race([p, new Promise((_, bad) => setTimeout(() => bad(new Error('The database took too long to answer.')), 15000))]);
+  const run = async fn => { const f = await fb(); return wait(fn(f)); };
+  const errText = e => (e && e.code === 'permission-denied') ? "That isn't allowed right now. Tell your teacher." : (e && e.message) || 'Check your internet connection.';
+
+  // ---- sound: an original broadcast bumper (Web Audio, no files) ----
+  let AC = null;
+  function tone(freq, o = {}) {
+    try {
+      const C = window.AudioContext || window.webkitAudioContext; if (!C) return; AC = AC || new C(); if (AC.state === 'suspended') AC.resume();
+      const { type = 'square', dur = .15, vol = .1, at = 0, slide = null, attack = .005 } = o, t = AC.currentTime + at, os = AC.createOscillator(), g = AC.createGain();
+      os.type = type; os.frequency.setValueAtTime(freq, t); if (slide) os.frequency.exponentialRampToValueAtTime(slide, t + dur);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + attack); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      os.connect(g).connect(AC.destination); os.start(t); os.stop(t + dur + .05);
+    } catch (e) {}
+  }
+  function sting() {
+    tone(98, { type: 'sine', dur: .9, vol: .16, slide: 70 });
+    for (let i = 0; i < 8; i++) tone(110 + (i % 2) * 6, { type: 'sine', dur: .09, vol: .05 + i * .008, at: i * .07 });
+    [[293, .62], [370, .8], [440, .98]].forEach(([f, at]) => { tone(f, { type: 'sawtooth', dur: .2, vol: .07, at }); tone(f * 2, { type: 'square', dur: .16, vol: .025, at }); });
+    [587, 740, 880, 1175].forEach(f => { tone(f, { type: 'sawtooth', dur: 1.5, vol: .05, at: 1.25, attack: .02 }); tone(f / 2, { type: 'triangle', dur: 1.5, vol: .05, at: 1.25 }); });
+    for (let i = 0; i < 14; i++) tone(2400 + (i % 3) * 300, { type: 'square', dur: .012, vol: .03, at: 1.6 + i * .06 + (i % 4) * .01 });
+  }
+  const jingle = ok => (ok ? [523, 659, 784, 1047, 784, 1047, 1319] : [392, 330, 262, 196]).forEach((f, i) => tone(f, { dur: .16, vol: .09, at: i * (ok ? .11 : .18) }));
+
+  // ---- the newsroom screen ----
+  const CSS = `
+#mtgts{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;background:radial-gradient(900px 500px at 50% -10%,#1b2d52,#0a101d 70%);color:#f2f5fb;font-family:Georgia,'Times New Roman',serif;overflow:auto}
+#mtgts[hidden]{display:none}
+#mtgts .bar{display:flex;align-items:center;gap:14px;background:#c8102e;color:#fff;padding:10px 18px;font:700 15px/1 Arial,Helvetica,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+#mtgts .lamp{display:inline-flex;align-items:center;gap:8px;background:#7a0a1c;border-radius:6px;padding:6px 10px}
+#mtgts .lamp i{width:12px;height:12px;border-radius:50%;background:#ff5d6c;box-shadow:0 0 10px #ff5d6c;animation:mtgblink 1.2s infinite}
+@keyframes mtgblink{50%{opacity:.25}}
+#mtgts .sp{flex:1}
+#mtgts .main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 20px;gap:14px}
+#mtgts h1{margin:0;font-size:clamp(40px,8vw,84px);line-height:1;letter-spacing:.02em;text-transform:uppercase;color:#f2f5fb;font-family:Georgia,'Times New Roman',serif;font-weight:700}
+#mtgts h2{margin:0;font:700 clamp(18px,3vw,28px)/1.2 Arial,Helvetica,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ffcf4a}
+#mtgts p{margin:0;font:400 clamp(17px,2.2vw,22px)/1.45 Georgia,serif;max-width:46ch;color:#cdd6e6}
+#mtgts .facts{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:8px 0}
+#mtgts .fact{min-width:140px;padding:12px 18px;border:1px solid #33466e;border-radius:10px;background:#101a30;font-family:Arial,Helvetica,sans-serif}
+#mtgts .fact small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#93a6c8}
+#mtgts .fact b{display:block;font-size:30px;margin-top:4px;color:#f2f5fb}
+#mtgts button.go{font:800 18px Arial,Helvetica,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:16px 34px;border-radius:999px;border:0;background:#ffcf4a;color:#161006;cursor:pointer}
+#mtgts button.go:disabled{opacity:.45;cursor:default}
+#mtgts button.alt{font:700 15px Arial,Helvetica,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:12px 24px;border-radius:999px;border:1px solid #4a5f8c;background:transparent;color:#f2f5fb;cursor:pointer}
+#mtgts button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+#mtgts .err{color:#ff9aa6;font:700 17px Arial,Helvetica,sans-serif}
+#mtgts .tick{background:#c8102e;color:#fff;overflow:hidden;white-space:nowrap;font:700 15px Arial,Helvetica,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:10px 0}
+#mtgts .tick span{display:inline-block;padding-left:100%;animation:mtgscroll 38s linear infinite}
+@keyframes mtgscroll{to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion:reduce){#mtgts .tick span{animation:none;padding-left:18px}#mtgts .lamp i{animation:none}}
+`;
+  const TICKER = 'THIS IS A TEST • TAKE YOUR TIME • READ EACH QUESTION CAREFULLY • YOUR BEST SCORE COUNTS • DO NOT RELOAD OR LEAVE THIS PAGE • GOOD LUCK • ';
+  const rootEls = () => (T.cfg && T.cfg.root ? [].concat(T.cfg.root) : []).map(s => document.querySelector(s)).filter(Boolean);
+  function el() {
+    let e = document.getElementById('mtgts');
+    if (!e) {
+      const st = document.createElement('style'); st.textContent = CSS + ((T.cfg && T.cfg.hide && T.cfg.hide.length) ? `html.mtg-testmode :is(${T.cfg.hide.join(',')}){display:none!important}` : '') + 'html.mtg-testmode .mtg-home,html.mtg-testmode .mtgfb-foot{display:none!important}'; document.head.appendChild(st);
+      e = document.createElement('div'); e.id = 'mtgts'; e.setAttribute('role', 'dialog'); e.setAttribute('aria-modal', 'true'); e.setAttribute('aria-label', 'Test'); document.body.appendChild(e);
+    }
+    return e;
+  }
+  function show(main, sound) {
+    const e = el(); e.hidden = false; rootEls().forEach(r => { r.inert = true; });
+    e.innerHTML = `<div class="bar"><span class="lamp"><i></i>ON AIR</span><span class="sp"></span><span>Music Theory News Desk</span></div><div class="main">${main}</div><div class="tick" aria-hidden="true"><span>${TICKER.repeat(3)}</span></div>`;
+    const f = e.querySelector('[data-focus]'); if (f) setTimeout(() => f.focus(), 30);
+    if (sound) sting();
+    return e;
+  }
+  const hide = () => { const e = document.getElementById('mtgts'); if (e) e.hidden = true; rootEls().forEach(r => { r.inert = false; }); };
+  const tries = t => t.tries ? (t.tries === 1 ? 'One and done' : `${t.tries} tries, best score counts`) : 'Unlimited tries, best score counts';
+  const left = () => T.doc.tries ? Math.max(0, T.doc.tries - (T.result ? T.result.tries : 0)) : Infinity;
+  const unit = () => T.doc.grade === 'score' ? '' : '%';
+  const metric = (acc, score) => T.doc.grade === 'score' ? score : acc;
+  const home = () => { location.href = HUB; };
+
+  function bail(msg) {
+    const e = show(`<h2>Music Theory News Desk</h2><h1>Test unavailable</h1><p class="err" role="alert">${esc(msg)}</p><div><button class="go" type="button" id="mtgHome" data-focus>Back to home</button></div>`);
+    e.querySelector('#mtgHome').onclick = home;
+  }
+  function lobby(note) {
+    T.running = false;
+    const t = T.doc, r = T.result, p = profile(), used = r ? r.tries : 0, block = left() === 0;
+    const e = show(`
+      <h2>${esc(t.className || '')}</h2><h1>This is a test</h1><h2 style="color:#fff">${esc(t.name)}</h2>
+      <p>Take your time. Read each question carefully and do your best. Once you begin, the settings are locked.</p>
+      <div class="facts">
+        <div class="fact"><small>Student</small><b style="font-size:22px">${esc(p ? nameOf(p) : '')}</b></div>
+        <div class="fact"><small>Tries</small><b style="font-size:22px">${esc(tries(t))}</b></div>
+        <div class="fact"><small>Tries used</small><b>${used}${t.tries ? ' / ' + t.tries : ''}</b></div>
+        <div class="fact"><small>Your best</small><b>${used ? esc(r.best + unit()) : '–'}</b></div>
+      </div>
+      ${note ? `<p class="err" role="alert">${esc(note)}</p>` : ''}
+      <p style="font-size:16px;color:#93a6c8">Reloading or leaving the page after you begin counts as a try.</p>
+      ${block ? '<p class="err">You have used all your tries for this test.</p>' : ''}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+        <button class="go" type="button" id="mtgGo" data-focus${block ? ' disabled' : ''}>${used ? 'Begin another try' : 'Begin the test'}</button>
+        <button class="alt" type="button" id="mtgHome">Back to home</button>
+      </div>`, !T.heard);
+    T.heard = true;
+    e.querySelector('#mtgHome').onclick = home; e.querySelector('#mtgGo').onclick = begin;
+  }
+  const ref = ({ fs, db }) => fs.doc(db, 'test_results', T.id + '_' + sidOf(profile()));
+  async function begin() {
+    const t = T.doc, p = profile(); if (!p || left() === 0) return;
+    const b = document.getElementById('mtgGo'); if (b) { b.disabled = true; b.textContent = 'Starting...'; }
+    const next = { test: T.id, class_code: t.class_code, owner: t.owner, game: t.game, sid: sidOf(p), student: nameOf(p), tries: (T.result ? T.result.tries : 0) + 1,
+      best: T.result ? T.result.best : 0, best_acc: T.result ? T.result.best_acc : 0, best_score: T.result ? T.result.best_score : 0 };
+    try { await run(f => f.fs.setDoc(ref(f), { ...next, updated_at: f.fs.serverTimestamp() })); T.result = next; }
+    catch (e) { return lobby("Couldn't start the test: " + errText(e) + ' Try again.'); }
+    // the teacher's settings go through the game's own ?settings= reader, so they are applied exactly like a normal assignment link
+    try {
+      const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(t.settings || {})))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const u = new URL(location.href); u.searchParams.set('settings', b64); u.searchParams.delete('focus'); history.replaceState(null, '', u.pathname + u.search + u.hash);
+      if (T.cfg.apply) T.cfg.apply();
+      const u2 = new URL(location.href); u2.searchParams.delete('settings'); history.replaceState(null, '', u2.pathname + u2.search + u2.hash);
+    } catch (e) { console.warn('test settings:', e); }
+    hide(); T.running = true; T.allow = true; setTimeout(() => { T.allow = false; }, 2500);   // some games start a moment later (a view transition)
+    T.cfg.start();
+  }
+  async function finish(r) {
+    if (!T.active || !T.running || !T.doc) return false;
+    T.running = false;
+    const acc = Math.max(0, Math.min(100, Math.round(r.acc || 0))), score = Math.max(0, Math.min(1000000, Math.round(r.score || 0)));
+    const value = metric(acc, score), t = T.doc, cur = T.result || { best: 0, tries: 1 };
+    const improved = value > cur.best; let saved = true;
+    if (improved) {
+      const next = { ...T.result, best: value, best_acc: acc, best_score: score };
+      try { await run(f => f.fs.setDoc(ref(f), { ...next, updated_at: f.fs.serverTimestamp() })); T.result = next; } catch (e) { saved = false; }
+    }
+    const lf = left(), early = !!r.quit;
+    const e = show(`
+      <h2>${esc(t.name)}</h2><h1>${early ? 'Test ended' : 'Test complete'}</h1>
+      <div class="facts">
+        <div class="fact"><small>This try</small><b>${value}${unit()}</b></div>
+        <div class="fact"><small>Accuracy</small><b>${acc}%</b></div>
+        <div class="fact"><small>Your best</small><b>${T.result.best}${unit()}</b></div>
+        <div class="fact"><small>Tries used</small><b>${T.result.tries}${t.tries ? ' / ' + t.tries : ''}</b></div>
+      </div>
+      ${saved ? `<p>${improved ? 'New best score saved for your teacher.' : 'Your best score stays saved for your teacher.'}</p>` : '<p class="err" role="alert">Your score could not be saved. Tell your teacher before you leave this page.</p>'}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+        ${lf > 0 ? '<button class="go" type="button" id="mtgAgain" data-focus>Take it again</button>' : ''}
+        <button class="${lf > 0 ? 'alt' : 'go'}" type="button" id="mtgHome"${lf > 0 ? '' : ' data-focus'}>${lf > 0 ? 'Back to home' : 'Done'}</button>
+      </div>`);
+    e.querySelector('#mtgHome').onclick = home;
+    const a = e.querySelector('#mtgAgain'); if (a) a.onclick = () => lobby();
+    jingle(!early);
+    return true;
+  }
+  // the game went back to its own settings screen: show the test screen again (a run that was left counts as a try)
+  T.menu = () => { if (!T.doc) return false; lobby(); return true; };
+  T.finish = finish;
+  T.setup = cfg => { T.cfg = cfg; init(); };
+
+  async function init() {
+    show('<h2>Music Theory News Desk</h2><h1>Loading test</h1><p>One moment.</p>');
+    const p = profile();
+    if (!p) return bail('Sign in on the home page with your name and class code, then open the test again.');
+    try {
+      const snap = await run(({ fs, db }) => fs.getDoc(fs.doc(db, 'tests', T.id)));
+      if (!snap.exists()) return bail("That test doesn't exist any more. Check the home page for your teacher's current tests.");
+      const t = snap.data(); T.doc = t;
+      if (t.game !== T.cfg.game) return bail('This test is for ' + (GAME_NAMES[t.game] || 'a different game') + '. Open it from the home page.');
+      const ms = v => v && typeof v.toMillis === 'function' ? v.toMillis() : v && v.seconds ? v.seconds * 1000 : 0, now = Date.now();
+      if (!t.open) return bail('This test is closed right now. Ask your teacher to open it.');
+      if (ms(t.opens_at) > now) return bail('This test opens ' + new Date(ms(t.opens_at)).toLocaleString(undefined, { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '.');
+      if (ms(t.closes_at) && ms(t.closes_at) < now) return bail('This test has ended.');
+      const cl = classesOf(p).find(c => c.code === t.class_code);
+      if (!cl) return bail("This test isn't for your class. Sign in on the home page with the right class code.");
+      t.className = cl.name || cl.code;
+      const rs = await run(f => f.fs.getDoc(ref(f)));
+      T.result = rs.exists() ? rs.data() : null;
+      lobby();
+    } catch (e) { bail(errText(e)); }
+  }
+  // while the test screen is up (or between tries) the game's own start can't be used: games call MTGTest.canStart()
+  T.canStart = () => !T.active || T.allow;
+})();
+/* MTG_TEST end */
+</script>
 <script>
 (() => {
 'use strict';
@@ -2379,6 +2585,7 @@ function heistMeters(n) {                              // different meters, with
 }
 
 function startChallenge(level) {
+  if (window.MTGTest && !MTGTest.canStart()) return;
   Engine.stop();
   S.poolEdit = false;
   closeModal();
@@ -2454,6 +2661,7 @@ function heistExit(to) {                               // leave the heist (or it
   showView('play');
   newPracticeRhythm();
   setApp(home);
+  if (window.MTGTest && MTGTest.active) MTGTest.menu();
 }
 function heistBarUI(ready, lockUntil, reviewing) {
   const ch = S.ch, word = 'Intercept ', mel = S.app === 'melody', last = ch.idx === ch.rhythms.length - 1;
@@ -2518,6 +2726,7 @@ function finishChallenge() {
   ch.extra = extra;
   ch.score = Math.round(credit / ch.rhythms.length * 1000) / 10;
   ch.timeSec = Math.max(1, Math.round((ch.end - ch.start - (ch.pausedMs || 0)) / 1000));   // review time not counted
+  if (window.MTGTest && MTGTest.running) { MTGTest.finish({ acc: ch.score, score: ch.score }); return; }   // test mode: the test screen shows the result
   const log = readLog(), day = todayOf(log);
   ch.rhythms.forEach((r, i) => {
     const [t0, t1] = (ch.times && ch.times[i]) || [ch.start, ch.end];
@@ -5242,6 +5451,7 @@ updateWho();
 if (!getProfile() && !isGuest()) showWelcome(false);
 else refreshClassInfo();
 applyFocusFromUrl();
+/* MTG_TEST setup */ MTGTest.setup({ game: 'rhythm', hide: ["#teacherBtn", "#mwBtn", "#challengeBtn"], apply: () => { applyFocusFromUrl(); S.settings.mission = 'heist'; }, start: () => { startChallenge(S.settings.level); } }); /* /MTG_TEST setup */
 spyUI();
 if (S.settings.app === 'melody' && S.settings.mission !== 'heist') setApp('melody');
 if (/[?&]selftest/.test(location.search)) window.RDT = { heistEndFx, heistBoltFx, SFX, HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge, diagnoseCell, playDiff, melTip, newPracticeRhythm, melNew, melUI, readyGo, setMission, spyUI, updateUI, showJail, jailCounts };
