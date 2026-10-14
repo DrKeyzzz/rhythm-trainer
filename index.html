@@ -389,7 +389,8 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 .piano .wkey.lit{background:#fff1b8} .piano .bkey.lit{background:#7a5b00}
 .piano .wkey.litmain{background:#ffd54a;box-shadow:inset 0 -6px 0 #f0a500} .piano .bkey.litmain{background:#c98a00}
 .piano .key.down{filter:brightness(.82);transform:translateY(1px)}
-.piano .key .star{position:absolute;top:6px;font-size:13px}
+.piano .wkey.startk{background:#4cc9f0;box-shadow:inset 0 -8px 0 #0a7fb0;border-color:#0a7fb0;color:#06324a} .piano .bkey.startk{background:#0a7fb0;border-color:#06324a}
+.piano .wkey.startk.litmain{background:#4cc9f0;box-shadow:inset 0 -8px 0 #0a7fb0}
 .piano .key .kl{line-height:1.15;text-align:center;white-space:nowrap}
 .piano .key .kl small{display:block;font-weight:600;opacity:.75}
 @media (max-width:600px){.piano{height:130px}.piano .key{font-size:9px}.piano .bkey{font-size:8px}.dur-btn{min-width:54px}}
@@ -2560,8 +2561,8 @@ function chooseChallenge() {
       <button class="btn level-btn" type="button" data-level="beginner"><b>🔰 Rookie heist</b><span>Rhythm: one measure of 4/4. Melody: Training Room → Field Test</span></button>
       <button class="btn level-btn" type="button" data-level="beginner16"><b>🔰 Rookie + 16ths heist</b><span>Rhythm: Rookie → Rookie + 16ths. Melody: Training Room → Field Test</span></button>
       <button class="btn level-btn" type="button" data-level="easy"><b>😎 Agent heist</b><span>Rhythm: Agent, 2 → 4 measures. Melody: Field Test → Safecracker</span></button>
-      <button class="btn level-btn" type="button" data-level="hard"><b>🎖️ Special Ops heist</b><span>Rhythm: Agent → Special Ops. Melody: Field Test → Safecracker</span></button>
-      <button class="btn level-btn" type="button" data-level="extreme"><b>🧠 Mastermind heist</b><span>Rhythm: Special Ops → Mastermind. Melody: Safecracker</span></button>
+      <button class="btn level-btn" type="button" data-level="hard"><b>🎖️ Special Ops heist</b><span>Rhythm: Agent → Special Ops. Melody: Safecracker → Vault Breaker (dotted notes)</span></button>
+      <button class="btn level-btn" type="button" data-level="extreme"><b>🧠 Mastermind heist</b><span>Rhythm: Special Ops → Mastermind. Melody: Vault Breaker → Master Cracker (dotted notes and 16ths)</span></button>
     </div>
     <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button></div>`);
   els.modalBox.querySelectorAll('[data-level]').forEach(b => { b.onclick = () => startChallenge(b.dataset.level); });
@@ -2572,8 +2573,8 @@ const HEIST_PLAN = {
   beginner:   [['r', 'beginner'], ['m', 'newbie'], ['r', 'beginner'], ['m', 'beginner'], ['r', 'beginner']],
   beginner16: [['r', 'beginner'], ['m', 'newbie'], ['r', 'beginner16'], ['m', 'beginner'], ['r', 'beginner16']],
   easy:       [['r', 'easy', 2], ['m', 'beginner'], ['r', 'easy'], ['m', 'five'], ['r', 'easy']],
-  hard:       [['r', 'easy'], ['m', 'beginner'], ['r', 'hard'], ['m', 'five'], ['r', 'hard']],
-  extreme:    [['r', 'hard'], ['m', 'five'], ['r', 'extreme'], ['m', 'five'], ['r', 'extreme']],
+  hard:       [['r', 'easy'], ['m', 'five'], ['r', 'hard'], ['m', 'vault'], ['r', 'hard']],
+  extreme:    [['r', 'hard'], ['m', 'vault'], ['r', 'extreme'], ['m', 'master'], ['r', 'extreme']],
 };
 function heistMeters(n) {                              // different meters, with both simple and compound
   const all = [...SIMPLE_TS, ...COMPOUND_TS];
@@ -4629,12 +4630,14 @@ const MLEVELS = {
   newbie:   { name: 'Newbie',      degs: [0, 1, 2],       starts: [0, 2],    lit: true,  rhythm: true,  durs: [8, 4, 2],          meters: [16],     measures: 2, keys: ['C', 'Am'], skips: false },
   beginner: { name: 'Beginner',    degs: [0, 1, 2],       starts: [0, 2],    lit: false, rhythm: false, durs: [8, 4, 2],          meters: [16],     measures: 2, keys: ['C', 'G', 'F', 'Am', 'Em', 'Dm'], skips: false },
   five:     { name: 'Five-finger', degs: [0, 1, 2, 3, 4], starts: [0, 2, 4], lit: false, rhythm: false, durs: [16, 12, 8, 4, 2], meters: [16, 12], measures: 2, keys: ['C', 'G', 'F', 'Am', 'Em', 'Dm'], skips: true },
+  vault:    { name: 'Vault Breaker', degs: [0, 1, 2, 3, 4, 5, 6], starts: [0, 2, 4], lit: false, rhythm: false, durs: [12, 8, 6, 4, 2], meters: [16, 12], measures: 2, keys: ['C', 'G', 'F', 'Am', 'Em', 'Dm'], skips: true },
+  master:   { name: 'Master Cracker', degs: [0, 1, 2, 3, 4, 5, 6, 7], starts: [0, 2, 4], lit: false, rhythm: false, durs: [8, 6, 4, 3, 2, 1], meters: [16, 12], measures: 2, keys: ['C', 'G', 'F', 'Am', 'Em', 'Dm'], skips: true, thirds: true },
 };
 const SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] };
 const SOLF = { major: ['do', 're', 'mi', 'fa', 'sol', 'la', 'ti'], minor: ['do', 're', 'me', 'fa', 'sol', 'le', 'te'] };
 const LETTERS = 'CDEFGAB';
 const SHARP_ORDER = [3, 0, 4, 1, 5, 2, 6], FLAT_ORDER = [6, 2, 5, 1, 4, 0, 3];
-const DUR_NAME = { 16: 'Whole', 12: 'Dotted half', 8: 'Half', 4: 'Quarter', 2: 'Eighth' };
+const DUR_NAME = { 16: 'Whole', 12: 'Dotted half', 8: 'Half', 6: 'Dotted quarter', 4: 'Quarter', 3: 'Dotted eighth', 2: 'Eighth', 1: 'Sixteenth' };
 const mod = (a, n) => ((a % n) + n) % n;
 const degMidi = (k, d) => k.tonic + 12 * Math.floor(d / 7) + SCALES[k.mode][mod(d, 7)];
 const degStep = (k, d) => (Math.floor(k.tonic / 12) - 1) * 7 + k.letter + d;        // diatonic step: C4 = 28, E4 = 30
@@ -4653,23 +4656,30 @@ const ghostMode = () => (S.mel.heistLv || S.settings.mel.showRhythm == null ? ml
 
 // ---------- generator ----------
 function melRhythm(lv, mu) {
-  const W = { 16: 1, 12: 1.2, 8: 2.5, 4: 4, 2: 3 };
+  // "cells" keep every rhythm readable: eighths in pairs, dotted notes with their partner, 16ths in beat groups.
+  const D = lv.durs, has = d => D.includes(d), b16 = mu === 16;
+  const cells = [];
+  if (has(16)) cells.push({ n: [16], w: 1, ok: p => p === 0 });
+  if (has(12)) cells.push({ n: [12], w: 1.2, ok: p => p === 0 });
+  if (has(8)) cells.push({ n: [8], w: 2.5, ok: p => !b16 || p % 8 === 0 });
+  if (has(6)) cells.push({ n: [6, 2], w: 2.2, ok: p => p % 4 === 0 && (b16 ? p % 8 === 0 : p === 0) });
+  if (has(4)) cells.push({ n: [4], w: 4, ok: () => true });
+  if (has(2)) cells.push({ n: [2, 2], w: 3, ok: p => p % 4 === 0 });
+  if (has(3)) cells.push({ n: [3, 1], w: 2, ok: p => p % 4 === 0 });
+  if (has(1)) {
+    cells.push({ n: [1, 1, 1, 1], w: 1.2, ok: p => p % 4 === 0 });
+    cells.push({ n: [2, 1, 1], w: 1.5, ok: p => p % 4 === 0 });
+    cells.push({ n: [1, 1, 2], w: 1.5, ok: p => p % 4 === 0 });
+  }
   for (let tries = 0; tries < 300; tries++) {
     const out = [];
     for (let m = 0; m < lv.measures; m++) {
       let pos = 0;
       while (pos < mu) {
-        const opts = lv.durs.filter(d => {
-          const len = d === 2 ? 4 : d;                       // eighths come in pairs on the beat
-          if (pos + len > mu) return false;
-          if (d === 2 && pos % 4) return false;
-          if ((d === 16 || d === 12) && pos !== 0) return false;
-          if (d === 8 && mu === 16 && pos % 8) return false;
-          return true;
-        });
-        let r = Math.random() * sum(opts.map(d => W[d])), d = opts[0];
-        for (const o of opts) { r -= W[o]; if (r < 0) { d = o; break; } }
-        if (d === 2) { out.push(2, 2); pos += 4; } else { out.push(d); pos += d; }
+        const opts = cells.filter(c => pos + sum(c.n) <= mu && c.ok(pos));
+        let r = Math.random() * sum(opts.map(c => c.w)), c = opts[0];
+        for (const o of opts) { r -= o.w; if (r < 0) { c = o; break; } }
+        out.push(...c.n); pos += sum(c.n);
       }
     }
     if (out.length < 4 || out[out.length - 1] < 4) continue;   // at least 4 notes; end on a quarter or longer
@@ -4679,7 +4689,7 @@ function melRhythm(lv, mu) {
 }
 function melPitches(lv, n) {
   const A = lv.degs, chord = [0, 2, 4].filter(d => A.includes(d));
-  const legal = (a, b) => Math.abs(a - b) <= 1 || (lv.skips && chord.includes(a) && chord.includes(b) && Math.abs(a - b) === 2);
+  const legal = (a, b) => Math.abs(a - b) <= 1 || (lv.thirds && Math.abs(a - b) === 2) || (lv.skips && chord.includes(a) && chord.includes(b) && Math.abs(a - b) === 2);
   for (let tries = 0; tries < 800; tries++) {
     const p = [lv.starts[rand(lv.starts.length)]];
     let ok = true, lastLeap = false;
@@ -4757,32 +4767,40 @@ function renderMelody({ m, notes, states = [], sel = null, labels = 'both', cw, 
     const oy = lineOf[o.mi] * LH, st = o.n.d == null ? 34 : degStep(k, o.n.d);
     return { ...o, oy, st, x: mX[o.mi] + 16 + (a / mWt[o.mi]) * (mW[o.mi] - 30), y: oy + yOfStep(st) };
   });
-  const beamWith = new Array(placed.length).fill(-1);
-  for (let i = 0; i + 1 < placed.length; i++) {
-    const a = placed[i], b = placed[i + 1];
-    if (a.n.dur === 2 && b.n.dur === 2 && a.pos % 4 === 0 && b.pos === a.pos + 2 && a.mi === b.mi && beamWith[i] < 0) { beamWith[i] = i + 1; beamWith[i + 1] = i; }
+  // beam groups: consecutive short notes (eighths, dotted eighths, 16ths) inside one beat
+  const grp = new Array(placed.length).fill(-1), groups = [];
+  for (let i = 0; i < placed.length; i++) {
+    const o = placed[i]; if (o.n.dur >= 4 || grp[i] >= 0) continue;
+    const beat = Math.floor(o.pos / 4), g = [i];
+    for (let j = i + 1; j < placed.length && placed[j].n.dur < 4 && placed[j].mi === o.mi && Math.floor(placed[j].pos / 4) === beat; j++) g.push(j);
+    if (g.length < 2) continue;
+    g.forEach(j => { grp[j] = groups.length; });
+    groups.push({ ids: g });
   }
-  const stemUp = o => {
-    const j = beamWith[o.i];
-    const sts = [o, j >= 0 ? placed[j] : null].filter(x => x && x.n.d != null).map(x => x.st);
-    return !sts.length || sum(sts) / sts.length < 34;           // below the middle line (or unknown pitch): stems up
-  };
+  const stemUp = o => o.n.d == null || degStep(k, o.n.d) < 34;           // below the middle line (or unknown pitch): stems up
+  for (const gp of groups) {
+    const ns = gp.ids.map(i => placed[i]), sts = ns.filter(x => x.n.d != null).map(x => x.st);
+    gp.up = !sts.length || sum(sts) / sts.length < 34;
+    const ys = ns.map(x => x.y), oy = ns[0].oy;
+    let tip = gp.up ? Math.min(...ys) - 30 : Math.max(...ys) + 30;
+    if (!gp.up) tip = Math.max(Math.min(tip, oy + yOfStep(30) + 24), Math.max(...ys) + 22);
+    gp.tip = tip;
+  }
   for (const o of placed) {
-    const { n, x, y, st, oy } = o, up = stemUp(o), hollow = n.dur >= 8;
+    const { n, x, y, st, oy } = o, gp = grp[o.i] >= 0 ? groups[grp[o.i]] : null, up = gp ? gp.up : stemUp(o), hollow = n.dur >= 8;
     let g = `<g class="${['mnote', states[o.i] || '', sel === o.i ? 'sel' : '', n.d == null ? 'ghost' : ''].join(' ')}" data-i="${o.i}"><rect class="hit" x="${r1(x - 13)}" y="${oy + 14}" width="26" height="${LH - 20}" rx="6"/>`;
     for (let s2 = 28; s2 >= st; s2 -= 2) g += `<line class="ledger" x1="${r1(x - 10)}" y1="${oy + yOfStep(s2)}" x2="${r1(x + 10)}" y2="${oy + yOfStep(s2)}"/>`;
     for (let s2 = 40; s2 <= st; s2 += 2) g += `<line class="ledger" x1="${r1(x - 10)}" y1="${oy + yOfStep(s2)}" x2="${r1(x + 10)}" y2="${oy + yOfStep(s2)}"/>`;
     g += `<ellipse class="nhead${hollow ? ' hollow' : ''}" cx="${r1(x)}" cy="${y}" rx="${hollow ? 6 : 6.4}" ry="${hollow ? 4.3 : 4.6}" transform="rotate(-20 ${r1(x)} ${y})"/>`;
     if (n.dur < 16) {
-      const j = beamWith[o.i];
-      let tip = j >= 0 ? (up ? Math.min(y, placed[j].y) - 30 : Math.max(y, placed[j].y) + 30) : (up ? y - 32 : y + 32);
-      if (!up) tip = Math.max(Math.min(tip, oy + yOfStep(30) + 24), y + 22);   // keep down-stem beams above the labels
+      let tip = gp ? gp.tip : (up ? y - 32 : y + 32);
+      if (!gp && !up) tip = Math.max(Math.min(tip, oy + yOfStep(30) + 24), y + 22);   // keep down-stem beams above the labels
       const sx = up ? x + 5.6 : x - 5.6;
       o.sx = sx; o.tip = tip; o.up = up;
       g += `<line class="nstem" x1="${r1(sx)}" y1="${y}" x2="${r1(sx)}" y2="${r1(tip)}"/>`;
-      if (n.dur === 2 && j < 0) g += up ? `<path class="nflag" d="M${r1(sx)} ${r1(tip)}c1 7 10 9 8 19c1-8-3-11-8-12z"/>` : `<path class="nflag" d="M${r1(sx)} ${r1(tip)}c1-7 10-9 8-19c1 8-3 11-8 12z"/>`;
+      if (!gp && n.dur < 4) for (let f = 0; f < (n.dur === 1 ? 2 : 1); f++) { const t2 = up ? tip + f * 6 : tip - f * 6; g += up ? `<path class="nflag" d="M${r1(sx)} ${r1(t2)}c1 7 10 9 8 19c1-8-3-11-8-12z"/>` : `<path class="nflag" d="M${r1(sx)} ${r1(t2)}c1-7 10-9 8-19c1 8-3 11-8 12z"/>`; }
     }
-    if (n.dur === 12) g += `<circle class="ndot" cx="${r1(x + 11)}" cy="${st % 2 === 0 ? y - 4 : y}" r="2.2"/>`;
+    if (n.dur === 12 || n.dur === 6 || n.dur === 3) g += `<circle class="ndot" cx="${r1(x + 11)}" cy="${st % 2 === 0 ? y - 4 : y}" r="2.2"/>`;
     const ly = oy + LH;
     if (n.d == null) g += `<text class="mlabel" x="${r1(x)}" y="${ly - 14}">?</text>`;
     else if (labels === 'both') g += `<text class="mlabel" x="${r1(x)}" y="${ly - 18}">${esc(degLabel(k, n.d, 'solfege'))}</text><text class="mlabel num" x="${r1(x)}" y="${ly - 5}">${esc(degLabel(k, n.d, 'numbers'))}</text>`;
@@ -4791,9 +4809,16 @@ function renderMelody({ m, notes, states = [], sel = null, labels = 'both', cw, 
     if (mk) g += `<text class="mark" x="${r1(x)}" y="${oy + 16}">${mk}</text>`;
     out += g + '</g>';
   }
-  for (const o of placed) {
-    const j = beamWith[o.i];
-    if (j > o.i && o.sx != null && placed[j].sx != null) out += `<rect class="nbeam" x="${r1(o.sx - 0.75)}" y="${r1(o.up ? o.tip : o.tip - 4.5)}" width="${r1(placed[j].sx - o.sx + 1.5)}" height="4.5" style="color:var(--text)"/>`;
+  for (const gp of groups) {
+    const ns = gp.ids.map(i => placed[i]); if (ns.some(x => x.sx == null)) continue;
+    const x0 = ns[0].sx, x1 = ns[ns.length - 1].sx, by = gp.up ? gp.tip : gp.tip - 4.5, off = gp.up ? 6 : -6;
+    out += `<rect class="nbeam" x="${r1(x0 - 0.75)}" y="${r1(by)}" width="${r1(x1 - x0 + 1.5)}" height="4.5" style="color:var(--text)"/>`;
+    ns.forEach((o, k) => {
+      if (o.n.dur !== 1) return;
+      const nxt = ns[k + 1], prv = ns[k - 1];
+      if (nxt && nxt.n.dur === 1) out += `<rect class="nbeam" x="${r1(o.sx - 0.75)}" y="${r1(by + off)}" width="${r1(nxt.sx - o.sx + 1.5)}" height="4.5" style="color:var(--text)"/>`;
+      else if (!(prv && prv.n.dur === 1)) { const sx2 = prv ? o.sx - 9 : o.sx; out += `<rect class="nbeam" x="${r1(sx2 - 0.75)}" y="${r1(by + off)}" width="${prv ? 9.75 : 9.75}" height="4.5" style="color:var(--text)"/>`; }
+    });
   }
   if (caret) {
     const total = sum(notes.map(n => n.dur));
@@ -4835,7 +4860,7 @@ function melUI() {
   const k = MKEYS[q.key];
   $('#melKeyBadge').textContent = k.name;
   $('#melInfo').textContent = `${MEL_FUN[q.level] || lv.name} · ${q.mu / 4}/4 · ${q.measures} measures`;
-  $('#melStart').innerHTML = `Starts on <b>${esc(degLabel(k, q.notes[0].d, 'both'))}</b> (${esc(degLabel(k, q.notes[0].d, 'letters'))}) · ⭐ on the piano <button class="btn btn-sm key-btn" type="button" data-key title="Hear the I–IV–V–I chords again (K key)">🎹 Hear the key</button>`;
+  $('#melStart').innerHTML = `Starts on <b>${esc(degLabel(k, q.notes[0].d, 'both'))}</b> (${esc(degLabel(k, q.notes[0].d, 'letters'))}) · shaded blue on the piano <button class="btn btn-sm key-btn" type="button" data-key title="Hear the I–IV–V–I chords again (K key)">🎹 Hear the key</button>`;
   const total = m.ans.reduce((a, n) => a + n.dur, 0), cap = q.mu * q.measures;
   const complete = total === cap && m.ans.every(n => n.d != null);
   $('#melHint').hidden = m.checked;
@@ -4861,7 +4886,7 @@ function melUI() {
 // ---------- palette + piano ----------
 function durIcon(d) {
   const hollow = d >= 8, stem = d < 16;
-  return `<svg viewBox="0 0 34 30" aria-hidden="true"><ellipse cx="13" cy="22" rx="${hollow ? 5.4 : 5.8}" ry="${hollow ? 3.9 : 4.2}" transform="rotate(-20 13 22)" ${hollow ? 'fill="none" stroke="currentColor" stroke-width="1.8"' : 'fill="currentColor"'}/>${stem ? '<line x1="18.2" y1="21" x2="18.2" y2="3" stroke="currentColor" stroke-width="1.5"/>' : ''}${d === 2 ? '<path d="M18.2 3c1 6 9 8 7 17c1-7-3-10-7-11z" fill="currentColor"/>' : ''}${d === 12 ? '<circle cx="24" cy="20" r="2" fill="currentColor"/>' : ''}</svg>`;
+  return `<svg viewBox="0 0 34 30" aria-hidden="true"><ellipse cx="13" cy="22" rx="${hollow ? 5.4 : 5.8}" ry="${hollow ? 3.9 : 4.2}" transform="rotate(-20 13 22)" ${hollow ? 'fill="none" stroke="currentColor" stroke-width="1.8"' : 'fill="currentColor"'}/>${stem ? '<line x1="18.2" y1="21" x2="18.2" y2="3" stroke="currentColor" stroke-width="1.5"/>' : ''}${(d === 2 || d === 3 || d === 1) ? '<path d="M18.2 3c1 6 9 8 7 17c1-7-3-10-7-11z" fill="currentColor"/>' : ''}${d === 1 ? '<path transform="translate(0,6)" d="M18.2 3c1 6 9 8 7 17c1-7-3-10-7-11z" fill="currentColor"/>' : ''}${(d === 12 || d === 6 || d === 3) ? '<circle cx="24" cy="20" r="2" fill="currentColor"/>' : ''}</svg>`;
 }
 function renderPalette() {
   const lv = mlv();
@@ -4880,7 +4905,8 @@ function renderPiano() {
     const d = midiToDeg(k, n), inScale = d != null;
     let c = `key ${cls}`;
     if (lv.lit && inScale) c += lv.degs.includes(d) ? ' litmain' : ' lit';
-    const star = q.notes[0].d === d && inScale ? '<span class="star">⭐</span>' : '';
+    if (q.notes[0].d === d && inScale) c += ' startk';
+    const star = '';
     let lab = '';
     if (inScale && labels !== 'none') {
       const i = mod(d, 7), sol = SOLF[k.mode][i], li = mod(k.letter + d, 7), let_ = LETTERS[li] + keyAcc(k, li);
@@ -5153,7 +5179,7 @@ function melKey(e) {
     if (m.ans[m.sel] && m.ans[m.sel].d != null) pianoTone(degMidi(MKEYS[m.q.key], m.ans[m.sel].d));
     renderMount(melAnsMount); melUI();
   }
-  else if (/^[1-5]$/.test(k) && !ghostMode()) { const durs = mlv().durs.slice().sort((a, b) => b - a); if (durs[+k - 1]) { e.preventDefault(); melSetDur(durs[+k - 1]); } }
+  else if (/^[1-9]$/.test(k) && !ghostMode()) { const durs = mlv().durs.slice().sort((a, b) => b - a); if (durs[+k - 1]) { e.preventDefault(); melSetDur(durs[+k - 1]); } }
 }
 
 /* =====================================================================
@@ -5161,8 +5187,8 @@ function melKey(e) {
    Saved on this device for each student (guests get a temporary agent).
    ===================================================================== */
 const LEVEL_FUN = { beginner: '🔰 Rookie', beginner16: '🔰 Rookie + 16ths', easy: '😎 Agent', hard: '🎖️ Special Ops', extreme: '🧠 Mastermind' };
-const MEL_FUN = { newbie: '🎓 Training Room', beginner: '🧪 Field Test', five: '🔐 Safecracker' };
-const MEL_LOOT = { newbie: 1, beginner: 2, five: 3 };
+const MEL_FUN = { newbie: '🎓 Training Room', beginner: '🧪 Field Test', five: '🔐 Safecracker', vault: '🗝️ Vault Breaker', master: '💎 Master Cracker' };
+const MEL_LOOT = { newbie: 1, beginner: 2, five: 3, vault: 4, master: 5 };
 const HEIST_LAYERS = [['🔦', 'Laser grid'], ['💂', 'Guard patrol'], ['🚨', 'Motion sensors'], ['🔐', 'The safe'], ['💎', 'Vault door']];
 const RANKS = [[0, '🔰', 'Recruit'], [200, '🧢', 'Operative'], [600, '😎', 'Field Agent'], [1500, '🕵️', 'Secret Agent'], [3000, '👑', 'Spymaster']];
 const CODE_ADJ = ['Silver', 'Shadow', 'Midnight', 'Crimson', 'Velvet', 'Arctic', 'Golden', 'Phantom', 'Quiet', 'Neon', 'Cobalt', 'Iron', 'Scarlet', 'Jade', 'Onyx', 'Stealth'];

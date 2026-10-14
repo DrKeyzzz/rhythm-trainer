@@ -131,3 +131,6 @@ Each rhythm's durations must add up to that bank's slot size. If one doesn't, th
 - **Delay:** 0 to 10 minutes, with ±0.2 / 1 / 5 / 30 second nudges and a slider. The delay is saved between visits.
 - **Sync helper:** tap "Heard it" at a moment on the radio, then "Saw it" at the same moment on TV, and it adds the gap.
 - **Pause radio:** holds the radio while you pause the TV and picks up where it left off.
+
+
+**Melody levels (2026-10):** Training Room, Field Test, Safecracker, plus **Vault Breaker** (do to la, dotted quarter + eighth) and **Master Cracker** (full octave, thirds, dotted quarter, dotted eighth, 16ths). The Special Ops and Mastermind heists use them. The melody's first note is shaded blue on the piano. Rhythm cells in `melRhythm()` keep dotted notes and 16ths readable; the staff beams groups per beat.
