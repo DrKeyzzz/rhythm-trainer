@@ -3147,6 +3147,14 @@ function classesOf(p) {
   return list.filter(c => c && c.code).slice(0, 3);
 }
 const classNames = p => classesOf(p).map(c => c.name || c.code).join(' · ');
+/* MTG_CLASSSWITCH: a student can save up to 3 classes (p.saved) but only ONE is active (p.classes = [active]); scores, practice and tests count for the active class */
+const savedOf = p => { if (!p) return []; const l = Array.isArray(p.saved) && p.saved.length ? p.saved : classesOf(p); return l.filter(c => c && c.code).slice(0, 3); };
+const prefillOf = p => { const s = savedOf(p); return p ? [...s.filter(c => c.code === p.classCode), ...s.filter(c => c.code !== p.classCode)] : []; };
+function switchClass(code) { const p = getProfile(), s = savedOf(p), c = s.find(x => x.code === code); if (!p || !c) return; setProfile({ ...p, classCode: c.code, className: c.name || c.code, classOwner: c.owner || '', classes: [c], saved: s }); location.reload(); }
+const switchHTML = p => { const s = savedOf(p); return s.length > 1 ? `<div id="w-switchrow" role="group" aria-label="Switch class" style="margin:0 0 14px"><div style="font-weight:700;margin-bottom:6px">Your classes (tap to switch)</div><div style="display:flex;gap:8px;flex-wrap:wrap">${s.map(c => `<button type="button" data-switch-class="${String(c.code).replace(/[^A-Za-z0-9]/g, '')}" aria-pressed="${c.code === p.classCode}" style="font:inherit;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;background:transparent;color:inherit;border:${c.code === p.classCode ? '4px double' : '2px solid'} currentColor">${String(c.name || c.code).replace(/[<>&"]/g, '')}${c.code === p.classCode ? ' ✓' : ''}</button>`).join('')}</div></div>` : ''; };
+const showSwitch = p => { let sw = document.getElementById('w-switch'); const f = document.getElementById('w-first') && document.getElementById('w-first').closest('form'); if (!f) return; if (!sw) { sw = document.createElement('div'); sw.id = 'w-switch'; f.prepend(sw); } sw.innerHTML = p ? switchHTML(p) : ''; };
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-switch-class]'); if (b) switchClass(b.dataset.switchClass); });
+/* /MTG_CLASSSWITCH */
 // Guests play without saving anything (no progress, no scores, no session report) until the tab closes.
 const GUEST_KEY = 'music_guest';
 function isGuest() { try { return sessionStorage.getItem(GUEST_KEY) === '1'; } catch (e) { return false; } }
@@ -3267,15 +3275,15 @@ function applyFocus(label, set) {
 function showWelcome(keep) {
   Engine.stop();
   closeModal();
-  const p = keep ? getProfile() : null;
+  const p = keep ? getProfile() : null, pf = prefillOf(p);
   setPickedIcon(p && p.icon);
   $('#wFirst').value = p ? p.first : '';
   $('#wInit').value = p ? p.init : '';
-  $('#wCode').value = p ? p.classCode || '' : '';
+  $('#wCode').value = pf.length ? pf[0].code : '';
   $('#wSolo').checked = !!(p && !p.classCode);
   $('#wCode').disabled = $('#wSolo').checked;
   $('#wMore').innerHTML = '';
-  classesOf(p).slice(1).forEach(c => addCodeBox(c.code));
+  pf.slice(1).forEach(c => addCodeBox(c.code));
   syncCodeBoxes();
   $('#wError').textContent = '';
   els.welcome.hidden = false;
@@ -3328,12 +3336,12 @@ async function submitWelcome(e) {
       }
       found.forEach(cls => classes.push({ code: cls.code, name: cls.name, owner: cls.ownerEmail || '' }));
       className = classes[0].name; classOwner = classes[0].owner; S.assignment = found[0].assignment || null;
-      S.moreAssign = found.slice(1).filter(cls => cls.assignment).map(cls => ({ code: cls.code, name: cls.name, a: cls.assignment }));
+      S.moreAssign = [];
     } catch (ex) { err.textContent = `Couldn't check the code: ${errMsg(ex)}`; return; }
     finally { $('#wGo').disabled = false; $('#wGo').textContent = 'Report for duty'; }
   }
   const before = getProfile();
-  setProfile({ first, init, classCode: solo ? '' : classes[0].code, className, classOwner, classes, icon: pickedIcon() });
+  setProfile({ first, init, classCode: solo ? '' : classes[0].code, className, classOwner, classes: classes.slice(0, 1), saved: classes, icon: pickedIcon() });
   if (!before || studentKey(before) !== studentKey(getProfile())) S.stats = { rhythms: 0, correct: 0, total: 0, streak: 0 };
   els.welcome.hidden = true;
   updateWho();
@@ -3345,7 +3353,7 @@ async function submitWelcome(e) {
 function whoMenu() {
   const p = getProfile();
   if (!p) { showWelcome(false); return; }
-  openModal(`<h3>${esc(displayName(p))}</h3><p class="muted">${p.classCode ? `${classesOf(p).length > 1 ? 'Classes' : 'Class'}: ${classesOf(p).map(c => `<b>${esc(c.name)}</b> (code ${esc(c.code)})`).join(' · ')}` : 'Not in a class: posting to the World leaderboard only.'}</p>
+  openModal(`<h3>${esc(displayName(p))}</h3><p class="muted">${p.classCode ? `${classesOf(p).length > 1 ? 'Classes' : 'Class'}: ${classesOf(p).map(c => `<b>${esc(c.name)}</b> (code ${esc(c.code)})`).join(' · ')}` : 'Not in a class: posting to the World leaderboard only.'}</p>${switchHTML(p)}
     <div class="modal-actions"><button class="btn" type="button" data-close>Close</button><button class="btn" type="button" id="whoClass">Change class</button><button class="btn btn-primary" type="button" id="whoSwitch">Switch student</button></div>`);
   $('#whoClass').onclick = () => showWelcome(true);
   $('#whoSwitch').onclick = () => showWelcome(false);
@@ -4258,7 +4266,7 @@ async function syncProgress() {
 document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(syncTimer); syncProgress(); } });
 
 async function refreshClassInfo() {
-  const p = getProfile(), list = classesOf(p);
+  const p = getProfile(), list = savedOf(p);
   if (!p || !list.length) { S.assignment = null; S.moreAssign = []; renderAssignment(); return; }
   try {
     const found = await Promise.all(list.map(c => Board.getClass(c.code)));
@@ -4267,10 +4275,10 @@ async function refreshClassInfo() {
       if (found[i]) keep.push({ code: c.code, name: found[i].name, owner: found[i].ownerEmail || '', a: found[i].assignment || null });
       else toast(`The class code ${c.code} no longer exists. Ask your teacher for a new one.`, 6000);
     });
-    const main = keep[0] || { code: '', name: '', owner: '', a: null };
-    setProfile({ ...p, classCode: main.code, className: main.name, classOwner: main.owner, classes: keep.map(({ code, name, owner }) => ({ code, name, owner })) });
+    const main = keep.find(c => c.code === p.classCode) || keep[0] || { code: '', name: '', owner: '', a: null };
+    setProfile({ ...p, classCode: main.code, className: main.name, classOwner: main.owner, classes: main.code ? [{ code: main.code, name: main.name, owner: main.owner }] : [], saved: keep.map(({ code, name, owner }) => ({ code, name, owner })) });
     S.assignment = main.a;
-    S.moreAssign = keep.slice(1).filter(c => c.a).map(c => ({ code: c.code, name: c.name, a: c.a }));
+    S.moreAssign = [];
     updateWho(); renderAssignment();
   } catch (e) { /* offline: keep going */ }
 }
