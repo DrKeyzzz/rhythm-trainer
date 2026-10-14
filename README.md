@@ -134,3 +134,5 @@ Each rhythm's durations must add up to that bank's slot size. If one doesn't, th
 
 
 **Melody levels (2026-10):** Training Room, Field Test, Safecracker, plus **Vault Breaker** (do to la, dotted quarter + eighth) and **Master Cracker** (full octave, thirds, dotted quarter, dotted eighth, 16ths). The Special Ops and Mastermind heists use them. The melody's first note is shaded blue on the piano. Rhythm cells in `melRhythm()` keep dotted notes and 16ths readable; the staff beams groups per beat.
+
+Chromatic notes: Vault Breaker (up to 1 per melody) and Master Cracker (up to 3) include chromatic passing tones (`alt` on a note: +1 sharp, -1 flat). Grading compares sounding pitch, so enharmonic spelling never costs a point. Students enter them by tapping the in-between piano keys.
