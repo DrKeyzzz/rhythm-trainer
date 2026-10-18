@@ -754,6 +754,9 @@ html[data-skin="day"] .icon-pick button:hover{border-color:var(--muted)}
 html[data-skin="day"] .icon-pick button[aria-pressed="true"]{border-color:var(--gold);background:var(--play-soft);box-shadow:none}
 html[data-skin="day"] .icon-pick button .ic-svg{color:var(--text)}
 @media (max-width:600px){html:is([data-skin="clean"],[data-skin="day"]) h1.bs-title{font-size:22px}}
+
+/* "✉ Messages" link to the All games dashboard (added 2026-10-18) */
+.mtg-msgn{display:inline-block;min-width:18px;margin-left:6px;padding:1px 5px 0;border-radius:999px;background:#c0392b;color:#fff;font:700 11px/1.4 system-ui,sans-serif;letter-spacing:0;text-align:center;vertical-align:middle}
 </style>
 <style>
 /* Music Theory Games home link: the same in every game, on its own row at the top left of the header */
@@ -976,7 +979,7 @@ html[data-skin="day"] .mtg-hint { box-shadow: 0 8px 20px -8px rgba(20,40,80,.35)
     <section class="card td">
       <div class="td-head">
         <div><h2>Teacher Dashboard</h2><div class="muted small" id="tdWho"></div></div>
-        <div class="td-head-actions"><button class="btn btn-sm" type="button" id="tdSignOut">Sign out</button><button class="btn btn-sm btn-primary" type="button" id="tdBack">Back to app</button></div>
+        <div class="td-head-actions"><button class="btn btn-sm" type="button" id="tdMsgs" hidden title="Messages with Mr. Milnes (opens the All games dashboard)" onclick="window.open('https://drkeyzzz.github.io/teacher/all/#messages', '_blank', 'noopener')">✉ Messages<span class="mtg-msgn" id="tdMsgN" hidden></span></button><button class="btn btn-sm" type="button" id="tdSignOut">Sign out</button><button class="btn btn-sm btn-primary" type="button" id="tdBack">Back to app</button></div>
       </div>
       <div class="td-bar">
         <label class="field"><span>Class</span><select id="tdClass"></select></label>
@@ -4324,6 +4327,18 @@ const tdIsAdmin = () => !Board.remote || CONFIG.adminEmails.includes(TD.email);
 const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return dayKey(d); };
 const relTime = t => { const m = Math.round((Date.now() - t) / 60000); return m < 2 ? 'Active now' : m < 60 ? `${m} min ago` : fmtClock(t); };
 
+// "✉ Messages" opens the All games dashboard's Messages tab; the red number is this teacher's unread messages from
+// Mr. Milnes (one read of teacher_threads/<email>; the admin: one query of teacher_threads). Added 2026-10-18.
+async function tdMsgCount() {
+  const a = $('#tdMsgs'), n0 = $('#tdMsgN'); if (!a) return; a.hidden = false; let n = 0;
+  try {
+    n = await (async f => { const x = await fb(); return withTimeout(f(x)); })(async ({ fs, db }) => CONFIG.adminEmails.includes(TD.email)
+      ? (await fs.getDocs(fs.collection(db, 'teacher_threads'))).docs.reduce((s, d) => s + (+d.data().unread_admin || 0), 0)
+      : +(((await fs.getDoc(fs.doc(db, 'teacher_threads', TD.email))).data() || {}).unread_teacher) || 0);
+  } catch (e) { n = 0; }
+  n0.textContent = n > 99 ? '99+' : String(n); n0.hidden = !n;
+  a.setAttribute('aria-label', n ? `Messages, ${n} unread` : 'Messages with Mr. Milnes (opens the All games dashboard)');
+}
 async function openTeacherView() {
   $('#tdAdminTab').hidden = !(Board.remote && tdIsAdmin());
   Engine.stop(); closeModal();
@@ -4331,6 +4346,7 @@ async function openTeacherView() {
   showView('teacher'); window.scrollTo({ top: 0 });
   $('#tdWho').textContent = Board.remote ? `Signed in as ${TD.email}` : 'Test mode (this browser only)';
   $('#tdSignOut').hidden = !Board.remote;
+  $('#tdMsgs').hidden = true; if (Board.remote && TD.email) tdMsgCount();
   await tdLoadClasses();
   tdRender();
 }
