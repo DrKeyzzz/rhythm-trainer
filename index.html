@@ -2960,7 +2960,10 @@ async function devPost(name, getAuth, signIn) {
 }
 // Every developer score in a collection (merged into class boards).
 async function devRowsFor(fs, db, col, extra = []) {
-  try { return (await fs.getDocs(fs.query(fs.collection(db, col), fs.where('dev', '==', true), ...extra))).docs; } catch (e) { return []; }
+  // only the developer's 10 best (needs a dev + score index; until it exists, any 10 so a board never reads them all)
+  try { return (await fs.getDocs(fs.query(fs.collection(db, col), fs.where('dev', '==', true), ...extra, fs.orderBy('score', 'desc'), fs.limit(10)))).docs; }
+  catch (e) { if (e.code === 'failed-precondition') console.warn('[index needed]', e.message); }
+  try { return (await fs.getDocs(fs.query(fs.collection(db, col), fs.where('dev', '==', true), ...extra, fs.limit(10)))).docs; } catch (e) { return []; }
 }
 // Scores from students in 2+ classes that list this class in class_codes (no orderBy or other where, so no new index: level is filtered here).
 async function multiRowsFor(fs, db, classCode, level) {
@@ -4560,7 +4563,7 @@ async function tdProgress(keepOpen) {
       <input type="date" id="tdDate" value="${TD.date}" ${TD.range === 'date' ? '' : 'hidden'}>
       <button class="btn btn-sm" type="button" id="tdRefresh">Refresh</button>
       <button class="btn btn-sm" type="button" id="tdCsv" ${studs.length ? '' : 'disabled'}>Export CSV</button>
-      ${TD.range === 'today' ? '<span class="td-live"><i></i>Live: updates every 30 seconds</span>' : ''}
+      ${TD.range === 'today' ? '<span class="td-live"><i></i>Live: updates every 2 minutes</span>' : ''}
     </div>
     ${cls && cls.assignment ? `<p class="small muted" style="margin:0 0 8px">📌 Assignment: <b>${esc(assignText(cls.assignment))}</b>${cls.assignment.goal ? ` · goal ${cls.assignment.goal} rhythms` : ''}${cls.assignment.minutes ? ` · ${cls.assignment.minutes} min` : ''}</p>` : ''}
     <div class="rp-tiles">
@@ -4592,7 +4595,7 @@ async function tdProgress(keepOpen) {
       <div class="form-error" id="dErr"></div><div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-danger" type="button" id="dYes">Remove</button></div>`);
     $('#dYes').onclick = async () => { try { await Board.deleteStudentProgress(TD.code, s.sid); closeModal(); TD.open = null; tdProgress(); } catch (err) { $('#dErr').textContent = errMsg(err); } };
   };
-  if (TD.range === 'today') TD.timer = setInterval(() => { if (!document.hidden && TD.tab === 'progress' && !els.teacherView.hidden) tdProgress(true); }, 30000);
+  if (TD.range === 'today') TD.timer = setInterval(() => { if (!document.hidden && TD.tab === 'progress' && !els.teacherView.hidden) tdProgress(true); }, 120000);
 }
 
 function tdStudentDetail(s) {
