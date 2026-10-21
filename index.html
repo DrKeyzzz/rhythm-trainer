@@ -5047,10 +5047,10 @@ function melUI() {
   $('#melHint').hidden = m.checked;
   $('#melHint').textContent = ghostMode()
     ? 'Tap a piano key for each note. Tap a note on the staff to change it.'
-    : 'Pick a note length, then tap a piano key. Tap a note on the staff to change its pitch or length.';
+    : 'Pick a note length, then tap a piano key. Tap a note on the staff to change its pitch or length. Delete leaves a gap you can fill.';
   if (lv.chrom && !m.checked) $('#melHint').textContent += ' Some safes have chromatic notes (♯ or ♭): tap the in-between keys for those.';
   $('#melPalette').hidden = m.checked || ghostMode();
-  $('#melDelete').disabled = m.checked || !m.ans.some(n => n.d != null);
+  $('#melDelete').disabled = m.checked || (ghostMode() ? !m.ans.some(n => n.d != null) : !m.ans.length);
   $('#melClear').disabled = $('#melDelete').disabled;
   els.playQBtn.disabled = false;
   els.playQBtn.classList.add('btn-q'); els.playQBtn.classList.remove('btn-extra');
@@ -5120,7 +5120,8 @@ function melPlace(d, alt = 0) {
   const m = S.mel;
   if (!m.q || m.checked) return;
   if (d == null) { toast("That note isn't in this key."); return; }
-  if (m.sel != null) {
+  if (m.sel != null && !ghostMode() && m.ans[m.sel].d == null) { if (!melFillGap(m.sel, { d, dur: m.dur, ...(alt ? { alt } : {}) })) return; }
+  else if (m.sel != null) {
     m.ans[m.sel].d = d; if (alt) m.ans[m.sel].alt = alt; else delete m.ans[m.sel].alt;
     m.sel = ghostMode() ? (m.ans.findIndex(n => n.d == null) >= 0 ? m.ans.findIndex(n => n.d == null) : null) : null;
   } else if (ghostMode()) {
@@ -5136,9 +5137,33 @@ function melPlace(d, alt = 0) {
   }
   renderMount(melAnsMount); melUI();
 }
+// An empty gap (left by Delete) keeps every later note where it was. Filling it with a shorter note leaves the rest as a gap;
+// a longer note can use the gaps right after it too.
+function melGapsFrom(pos, len) {
+  const mu = S.mel.q.mu, out = [];
+  while (len > 0) { const t = Math.min(len, mu - pos % mu); out.push({ d: null, dur: t }); pos += t; len -= t; }
+  return out;
+}
+function melFillGap(i, note) {
+  const m = S.mel, a = m.ans;
+  const pos = a.slice(0, i).reduce((t, n) => t + n.dur, 0);
+  let j = i, room = 0;
+  while (j < a.length && a[j].d == null && room < note.dur) room += a[j++].dur;
+  if (room < note.dur) { toast("That note is longer than the gap. Pick a shorter note, or press Delete again to close the gap."); return false; }
+  const rest = melGapsFrom(pos + note.dur, room - note.dur), next = [...a.slice(0, i), note, ...rest, ...a.slice(j)];
+  if (!fitsAt(next)) { toast("That note won't fit in this measure. Pick a shorter note."); return false; }
+  m.ans = next; m.sel = rest.length ? i + 1 : null;
+  if (rest.length) melSelectGap();
+  return true;
+}
+function melSelectGap() {                              // a selected gap picks its own length on the palette, so one piano tap refills it
+  const m = S.mel, n = m.sel != null && m.ans[m.sel];
+  if (!n || n.d != null || ghostMode() || !mlv().durs.includes(n.dur)) return;
+  m.dur = n.dur; renderPalette();
+}
 function melSetDur(d) {
   const m = S.mel;
-  if (m.sel != null && !ghostMode()) {
+  if (m.sel != null && !ghostMode() && m.ans[m.sel].d != null) {
     const next = m.ans.map((n, i) => (i === m.sel ? { ...n, dur: d } : n));
     if (!fitsAt(next)) { toast("That length doesn't fit there."); return; }
     m.ans = next; renderMount(melAnsMount);
@@ -5152,8 +5177,13 @@ function melDelete() {
     if (i < 0) for (let j = m.ans.length - 1; j >= 0; j--) if (m.ans[j].d != null) { i = j; break; }
     if (i >= 0) { m.ans[i].d = null; delete m.ans[i].alt; }
     m.sel = i >= 0 ? i : null;
-  } else if (m.sel != null) { m.ans.splice(m.sel, 1); m.sel = null; }
-  else m.ans.pop();
+  } else {
+    if (m.sel == null) m.ans.pop();
+    else if (m.ans[m.sel].d != null) { m.ans[m.sel] = { d: null, dur: m.ans[m.sel].dur }; melSelectGap(); }   // leave a gap; later notes stay put
+    else { m.ans.splice(m.sel, 1); m.sel = null; }                                                         // Delete on a gap closes it up
+    while (m.ans.length && m.ans[m.ans.length - 1].d == null) m.ans.pop();                                // no gaps at the very end
+    if (m.sel != null && m.sel >= m.ans.length) m.sel = null;
+  }
   renderMount(melAnsMount); melUI();
 }
 function melClear() {
@@ -5338,7 +5368,7 @@ $('#melClear').onclick = melClear;
 $('#melStaff').addEventListener('click', e => {
   const g = e.target.closest('.mnote'); const m = S.mel;
   if (m.checked) return;
-  if (!g) { m.sel = null; } else { const i = +g.dataset.i; m.sel = m.sel === i ? null : i; if (m.ans[i] && m.ans[i].d != null) pianoTone(notePitch(MKEYS[m.q.key], m.ans[i])); }
+  if (!g) { m.sel = null; } else { const i = +g.dataset.i; m.sel = m.sel === i ? null : i; melSelectGap(); if (m.ans[i] && m.ans[i].d != null) pianoTone(notePitch(MKEYS[m.q.key], m.ans[i])); }
   renderMount(melAnsMount); melUI();
 });
 $('#piano').addEventListener('pointerdown', e => {
@@ -5369,6 +5399,7 @@ function melKey(e) {
   else if (k === 'ArrowLeft' || k === 'ArrowRight') {
     e.preventDefault(); const m = S.mel; if (!m.ans.length || m.checked) return;
     m.sel = m.sel == null ? (k === 'ArrowLeft' ? m.ans.length - 1 : 0) : Math.max(0, Math.min(m.ans.length - 1, m.sel + (k === 'ArrowLeft' ? -1 : 1)));
+    melSelectGap();
     if (m.ans[m.sel] && m.ans[m.sel].d != null) pianoTone(notePitch(MKEYS[m.q.key], m.ans[m.sel]));
     renderMount(melAnsMount); melUI();
   }
