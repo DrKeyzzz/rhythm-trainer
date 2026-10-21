@@ -878,6 +878,7 @@ html[data-skin="day"] .mtg-hint { box-shadow: 0 8px 20px -8px rgba(20,40,80,.35)
     </div>
     <div class="top-actions">
       <label class="btn btn-sm instr-game" title="Change the instrument the melody notes play on">🎵 <select id="instr-game" aria-label="Instrument"></select></label>
+      <button class="btn btn-sm" id="fxBtn" type="button" aria-pressed="false" aria-label="Sound effects and intro on">🔊</button>
       <div class="skin-menu">
         <button class="btn btn-sm" id="skinBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="skinPop">🎨 Skins</button>
         <div class="skin-pop" id="skinPop" role="dialog" aria-label="Skins" hidden>
@@ -5547,7 +5548,7 @@ function heistScreen(ch) {
 const VAULT_MS = 2600;                                  // how long the bolt animation runs after each layer
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SFX = {
-  ctx() { if (!Engine.ctx) { try { Engine.ensure().catch(() => {}); } catch (e) { /* no audio */ } } else Engine.resumeIfNeeded(); return Engine.ctx; },
+  ctx() { if (fxOff()) return null; if (!Engine.ctx) { try { Engine.ensure().catch(() => {}); } catch (e) { /* no audio */ } } else Engine.resumeIfNeeded(); return Engine.ctx; },
   now() { const c = this.ctx(); return c ? c.currentTime + 0.03 : 0; },
   noise(t, dur, f, g, type = 'bandpass', q = 4) {
     const c = this.ctx(); if (!c) return;
@@ -5585,6 +5586,31 @@ const SFX = {
   },
   thud(at = 0) { const t = this.now() + at; this.osc(t, 0.4, 95, 0.8, 'sine', 38); this.noise(t, 0.22, 260, 0.7, 'lowpass', 1); },
 };
+/* the 🔊 button in the top bar: turns off the intro sound and the vault sound effects (the rhythms and melodies you
+   listen to still play). Saved on this device. */
+const fxOff = () => store.get('rdt_fx') === 'off';
+function syncFx() {
+  const b = $('#fxBtn'); if (!b) return; const off = fxOff();
+  b.textContent = off ? '🔇' : '🔊'; b.setAttribute('aria-pressed', String(off));
+  b.setAttribute('aria-label', off ? 'Sound effects and intro off' : 'Sound effects and intro on');
+}
+/* the Big Score intro sound (suspenseful heist drums under his "The Big Score" voice-over; built in docs/sound/):
+   plays every time the page opens, like Rooftop Runner. Browsers often block sound until the first click or key press, so if
+   starting right away is blocked it starts on the first click. Skipped when the 🔊 button is off and in test mode. */
+let introAudio = null, introDone = false;
+function playIntro() {
+  if (introDone || fxOff() || (window.MTGTest && MTGTest.active)) return;
+  try {
+    introAudio = introAudio || new Audio('sounds/bigscore-intro.m4a'); introAudio.volume = .9;
+    const pr = introAudio.play(); if (pr) pr.then(() => { introDone = true; }).catch(() => {});
+  } catch {}
+}
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, e => { if (!e.target.closest || !e.target.closest('#fxBtn')) playIntro(); }, true));
+$('#fxBtn').addEventListener('click', () => {
+  store.set('rdt_fx', fxOff() ? 'on' : 'off'); syncFx();
+  if (fxOff() && introAudio) introAudio.pause();
+});
+syncFx();
 const BOLT_TOP = [34, 59, 84, 109, 134];
 function vaultHTML(bolts = []) {
   const st = i => bolts[i] === true ? 'open' : bolts[i] === false ? 'bad' : '';
@@ -5712,6 +5738,7 @@ applyFocusFromUrl();
 /* MTG_TEST setup */ MTGTest.setup({ game: 'rhythm', hide: ["#teacherBtn", "#mwBtn", "#challengeBtn"], apply: () => { applyFocusFromUrl(); S.settings.mission = 'heist'; }, start: () => { startChallenge(S.settings.level); } }); /* /MTG_TEST setup */
 spyUI();
 if (S.settings.app === 'melody' && S.settings.mission !== 'heist') setApp('melody');
+playIntro();   // the intro sound: try right away; if the browser says no, the first click or key press plays it
 if (/[?&]selftest/.test(location.search)) window.RDT = { heistEndFx, heistBoltFx, SFX, HEIST_PLAN, heistNext, melCheck, generateMelody, melGrade, MLEVELS, MKEYS, degMidi, degStep, setApp, syncProgress, openTeacherView, buildReport, drawReport, reportCode, skillsOf, fitScreen, getZoom: () => zoomNow, selfTest, S, generateRhythm, buildSchedule, pickCell, startChallenge, onCheck, CELLS, BANKS, TIME_SIGS, finishChallenge, diagnoseCell, playDiff, melTip, newPracticeRhythm, melNew, melUI, readyGo, setMission, spyUI, updateUI, showJail, jailCounts };
 /* ---------- Header hints (same in every Music Theory Game): hover, keyboard focus or long-press a header button to see what it does ---------- */
 function headerHints(HINTS) {
@@ -5789,6 +5816,7 @@ headerHints({
   '.mtg-home a[href="https://drkeyzzz.github.io/"]': 'Back to all the games',
   '.mtg-home a[href*="/report/"]': 'Your trophies, badges and what to practice next',
   '#skinBtn': 'Change how the game looks',
+  '#fxBtn': () => fxOff() ? 'Sound effects are off: click to turn them on' : 'Turn off the intro and sound effects',
   '#appTabs [data-app="rhythm"]': 'Rhythm game: hear the beats, write them',
   '#appTabs [data-app="melody"]': 'Melody game: hear the notes, write them',
   '#challengeBtn': () => spyState().jail ? "You're in jail: see how to break out" : 'A scored heist: win loot and rank up',
