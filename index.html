@@ -3321,6 +3321,7 @@ const FirebaseBoard = {
   },
   async myRequest(email) { try { const { fs, db } = await fb(); const d = await withTimeout(fs.getDoc(fs.doc(db, 'teacher_requests', email))); return d.exists() ? d.data() : null; } catch (err) { throw fbError(err); } },
   async requestAccess(email, r) { try { const { fs, db } = await fb(); await withTimeout(fs.setDoc(fs.doc(db, 'teacher_requests', email), { email, name: r.name, school: r.school, note: r.note, created_at: fs.serverTimestamp() })); } catch (err) { throw fbError(err); } },
+  async selfJoin(email, r) { try { const { fs, db } = await fb(); await withTimeout(fs.setDoc(fs.doc(db, 'teachers', email), { name: r.name.slice(0, 60), school: r.school.slice(0, 80), approved_at: fs.serverTimestamp(), approved_by: 'self' })); } catch (err) { throw fbError(err); } },
   async cancelRequest(email) { try { const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, 'teacher_requests', email))); } catch (err) { throw fbError(err); } },
   async requests() { try { const { fs, db } = await fb(); return (await withTimeout(fs.getDocs(fs.collection(db, 'teacher_requests')))).docs.map(d => ({ ...d.data(), email: d.id })); } catch (err) { throw fbError(err); } },
   async teachers() { try { const { fs, db } = await fb(); return (await withTimeout(fs.getDocs(fs.collection(db, 'teachers')))).docs.map(d => ({ ...d.data(), email: d.id })); } catch (err) { throw fbError(err); } },
@@ -3722,6 +3723,8 @@ function teacherLogin() {
   };
 }
 
+/* Teachers with a school email (letters only before the @, on a k12.xx.us or .edu domain) join on their own; student addresses have numbers. Same check as schoolEmail() in the rules. */
+const schoolEmail = e => /^[a-z._-]+@([a-z0-9-]+[.])*(k12[.][a-z][a-z][.]us|edu)$/.test(e) && !/@.*stu/.test(e);
 // Someone who isn't a teacher yet can ask for access; the admin approves it in the Admin tab.
 async function requestScreen(email) {
   let req = null; try { req = await Board.myRequest(email); } catch (e) { /* show the form */ }
@@ -3739,12 +3742,16 @@ async function requestScreen(email) {
       <label>School<input id="rqSchool" maxlength="80"></label>
       <label>Note (optional)<input id="rqNote" maxlength="300" placeholder="What you teach, how you heard about it"></label>
       <div class="form-error" id="rqErr"></div>
-      <div class="modal-actions"><button class="btn" type="button" id="rqClose">Cancel</button><button class="btn btn-primary" type="submit">Request teacher access</button></div></form>`);
+      <div class="modal-actions"><button class="btn" type="button" id="rqClose">Cancel</button><button class="btn btn-primary" type="submit">${schoolEmail(email) ? 'Start now' : 'Request teacher access'}</button></div></form>`);
   $('#rqClose').onclick = done;
   $('#rqForm').onsubmit = async e => {
     e.preventDefault();
     const name = $('#rqName').value.trim(), school = $('#rqSchool').value.trim(), note = $('#rqNote').value.trim();
     if (name.length < 2) { $('#rqErr').textContent = 'Type your name.'; return; }
+    if (schoolEmail(email)) {
+      try { await Board.selfJoin(email, { name, school }); closeModal(); TD.email = email; openTeacherView(); return; }
+      catch (err) { /* blocked by the admin: ask instead */ }
+    }
     try { await Board.requestAccess(email, { name, school, note }); await done(); toast("Request sent. You'll be able to open the Teacher Dashboard once it's approved.", 5000); }
     catch (err) { $('#rqErr').textContent = errMsg(err); }
   };
