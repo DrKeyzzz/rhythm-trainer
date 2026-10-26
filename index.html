@@ -3118,15 +3118,31 @@ async function devRowsFor(fs, db, col, extra = []) {
   catch (e) { if (e.code === 'failed-precondition') console.warn('[index needed]', e.message); }
   try { return (await fs.getDocs(fs.query(fs.collection(db, col), fs.where('dev', '==', true), ...extra, fs.limit(10)))).docs; } catch (e) { return []; }
 }
-// Scores from students in 2+ classes that list this class in class_codes (no orderBy or other where, so no new index: level is filtered here).
-async function multiRowsFor(fs, db, classCode, level) {
-  try { return (await withTimeout(fs.getDocs(fs.query(fs.collection(db, 'rhythm_scores'), fs.where('class_codes', 'array-contains', classCode))))).docs.map(fbRow).filter(r => !level || r.level === level); }
-  catch (e) { console.warn('class_codes read failed:', e); return []; }
+// PRIVACY (2026-10-26): a score with a name is saved inside its class (classes/<code>/rhythm_scores), so reading it needs the code.
+// The World board reads world_scores/rhythm_<level>/runs: only a random game name (like "Blue Trumpet 42"), the score, the icon
+// and "correct/total seconds" in level. The developer's runs (Maestro) stay in the old top level collection.
+const NICK_KEY = 'mtg_nick_v1', NICK_RE = /^[A-Z][a-z]+ [A-Z][a-z]+ [0-9]{1,2}$/;
+const NICK_COLORS = ['Blue', 'Red', 'Green', 'Gold', 'Silver', 'Purple', 'Orange', 'Teal', 'Coral', 'Indigo', 'Amber', 'Jade', 'Ruby', 'Violet', 'Crimson', 'Azure'];
+const NICK_THINGS = ['Trumpet', 'Violin', 'Cello', 'Flute', 'Tuba', 'Oboe', 'Harp', 'Piano', 'Drum', 'Banjo', 'Sax', 'Clarinet', 'Bassoon', 'Viola', 'Guitar', 'Marimba', 'Ukulele', 'Trombone', 'Piccolo', 'Horn'];
+let NICK = '';
+// This device's World name, made once and kept (shared by every game on the site).
+function myNick() {
+  if (NICK) return NICK;
+  try { const n = localStorage.getItem(NICK_KEY); if (n && NICK_RE.test(n)) return NICK = n; } catch (e) {}
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  NICK = `${pick(NICK_COLORS)} ${pick(NICK_THINGS)} ${1 + Math.floor(Math.random() * 99)}`;
+  try { localStorage.setItem(NICK_KEY, NICK); } catch (e) {}
+  return NICK;
 }
-const mergeRows = (rows, more) => { const seen = new Set(rows.map(r => r.id)); return rows.concat(more.filter(r => !seen.has(r.id))); };
+const classCol = (fs, db, code) => fs.collection(db, 'classes', code, 'rhythm_scores');
+const worldCol = (fs, db, level) => fs.collection(db, 'world_scores', 'rhythm_' + level, 'runs');
+const worldRow = level => d => {
+  const r = d.data(), [ct, t] = String(r.level || '').split(' '), [correct, total] = String(ct || '').split('/').map(Number);
+  return { id: d.id, path: d.ref.path, world: true, dev: false, icon: r.icon || '', name: r.nick, level, classCode: '', score: Number(r.score), correct, total, extra: 0, timeSec: Number(t) || 0, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
+};
 const fbRow = d => {
   const r = d.data();
-  return { id: d.id, dev: !!r.dev, icon: r.icon || '', name: r.name, level: r.level || 'easy', classCode: r.class_code || '', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
+  return { id: d.id, path: d.ref.path, dev: !!r.dev, icon: r.icon || '', name: r.name, level: r.level || 'easy', classCode: r.class_code || '', score: Number(r.score), correct: r.correct, total: r.total, extra: r.extra_listens || 0, timeSec: r.time_sec, date: r.created_at && r.created_at.toDate ? r.created_at.toDate().toISOString() : new Date().toISOString(), email: '' };
 };
 const fbError = err => {
   const code = err && err.code;
@@ -3151,20 +3167,17 @@ const FirebaseBoard = {
   teacherAuth: 'google',
   async all(level, classCode) {
     const { fs, db } = await fb();
-    const filters = [];
-    if (level) filters.push(fs.where('level', '==', level));
-    if (classCode) filters.push(fs.where('class_code', '==', classCode));
-    const q = filters.length ? fs.query(fs.collection(db, 'rhythm_scores'), ...filters) : fs.collection(db, 'rhythm_scores');
-    const snap = await withTimeout(fs.getDocs(q));
-    let rows = snap.docs.map(fbRow);
-    if (!classCode) return rows;
-    rows = mergeRows(rows, await multiRowsFor(fs, db, classCode, level));
-    const seen = new Set(rows.map(r => r.id));   // the developer's scores show on every class board
+    if (!classCode) {   // World: the 100 best runs of each level (game names only)
+      const lists = await Promise.all((level ? [level] : LEVELS).map(lv => withTimeout(fs.getDocs(fs.query(worldCol(fs, db, lv), fs.orderBy('score', 'desc'), fs.limit(100)))).then(s => s.docs.map(worldRow(lv)))));
+      return [].concat(...lists);
+    }
+    const snap = await withTimeout(fs.getDocs(level ? fs.query(classCol(fs, db, classCode), fs.where('level', '==', level)) : classCol(fs, db, classCode)));
+    const rows = snap.docs.map(fbRow), seen = new Set(rows.map(r => r.id));   // the developer's scores show on every class board
     return rows.concat((await devRowsFor(fs, db, 'rhythm_scores', level ? [fs.where('level', '==', level)] : [])).map(fbRow).filter(r => !seen.has(r.id)));
   },
-  ranked(fs, db, level, classCode) {   // needs a composite index (logged as [index needed] if missing)
-    return fs.query(fs.collection(db, 'rhythm_scores'), fs.where('level', '==', level), ...(classCode ? [fs.where('class_code', '==', classCode)] : []),
-      fs.orderBy('score', 'desc'), fs.orderBy('time_sec', 'asc'), fs.orderBy('created_at', 'asc'));
+  ranked(fs, db, level, classCode) {   // class: needs the level + score/time/date index (logged as [index needed] if missing); World: score only
+    if (!classCode) return fs.query(worldCol(fs, db, level), fs.orderBy('score', 'desc'));
+    return fs.query(classCol(fs, db, classCode), fs.where('level', '==', level), fs.orderBy('score', 'desc'), fs.orderBy('time_sec', 'asc'), fs.orderBy('created_at', 'asc'));
   },
   async top(level, classCode) {
     const key = boardKey(level, classCode), hit = boardCache.get(key), shape = classCode ? 'class' : 'world';
@@ -3172,9 +3185,9 @@ const FirebaseBoard = {
     let rows = null;
     if (!noIndex[shape]) {
       try {
-        const { fs, db } = await fb(); rows = (await withTimeout(fs.getDocs(fs.query(this.ranked(fs, db, level, classCode), fs.limit(BOARD_N))))).docs.map(fbRow);
+        const { fs, db } = await fb(); rows = (await withTimeout(fs.getDocs(fs.query(this.ranked(fs, db, level, classCode), fs.limit(BOARD_N))))).docs.map(classCode ? fbRow : worldRow(level));
+        if (!classCode) rows.sort(rankSort);
         if (classCode) {   // the developer's scores show on every class board
-          rows = mergeRows(rows, await multiRowsFor(fs, db, classCode, level));
           const seen = new Set(rows.map(r => r.id));
           rows = rows.concat((await devRowsFor(fs, db, 'rhythm_scores', level ? [fs.where('level', '==', level)] : [])).map(fbRow).filter(r => !seen.has(r.id))).sort(rankSort);
         }
@@ -3187,15 +3200,15 @@ const FirebaseBoard = {
   },
   async rankOf(level, classCode, id) {   // rank of a just-posted score below the top BOARD_N: 1 counted read per 1000
     const p = lastPost, key = boardKey(level, classCode), shape = classCode ? 'class' : 'world';
-    if (!p || p.id !== id || p.level !== level) return 0;
+    if (!p || (p.id !== id && p.worldId !== id) || p.level !== level) return 0;
     if (p.rank[key]) return p.rank[key];
     if (!noIndex[shape]) {
       try {
         const { fs, db } = await fb();
-        const snap = await withTimeout(fs.getCountFromServer(fs.query(this.ranked(fs, db, level, classCode), fs.endAt(p.score, p.timeSec))));
-        // plus 2+-class scores whose main class is another class (class_codes only), ranked at or above it
-        const more = classCode ? (await multiRowsFor(fs, db, classCode, level)).filter(r => r.classCode !== classCode && (r.score > p.score || (r.score === p.score && r.timeSec <= p.timeSec))).length : 0;
-        return (p.rank[key] = snap.data().count + more);   // everything ranked at or above (score, time), this score included
+        // class: everything ranked at or above (score, time), this score included; World: every better score, plus this one
+        const q = classCode ? fs.query(this.ranked(fs, db, level, classCode), fs.endAt(p.score, p.timeSec)) : fs.query(worldCol(fs, db, level), fs.where('score', '>', p.score));
+        const snap = await withTimeout(fs.getCountFromServer(q));
+        return (p.rank[key] = snap.data().count + (classCode ? 0 : 1));
       } catch (err) { indexMissing(err, shape); }
     }
     return (p.rank[key] = summarize(await this.all(level, classCode), id, level).rank);   // fallback: old full read
@@ -3265,18 +3278,19 @@ const FirebaseBoard = {
     try { return (await this.all(null, classCode || null)).sort((a, b) => String(a.level).localeCompare(String(b.level)) || rankSort(a, b)); }
     catch (err) { throw fbError(err); }
   },
-  async deleteScore(id) {
-    try { const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, 'rhythm_scores', id))); boardCache.clear(); }
+  async deleteScore(path) {
+    try { const { fs, db } = await fb(); await withTimeout(fs.deleteDoc(fs.doc(db, path))); boardCache.clear(); }
     catch (err) { throw fbError(err); }
   },
   async resetScores(classCode) {
     try {
       const { fs, db } = await fb();
-      const q = classCode ? fs.query(fs.collection(db, 'rhythm_scores'), fs.where('class_code', '==', classCode)) : fs.collection(db, 'rhythm_scores');
-      const snap = await withTimeout(fs.getDocs(q));
-      for (let i = 0; i < snap.docs.length; i += 400) {
+      // a class: every score in it; World (admin): every World run of every level
+      const docs = classCode ? (await withTimeout(fs.getDocs(classCol(fs, db, classCode)))).docs
+        : [].concat(...await Promise.all(LEVELS.map(lv => withTimeout(fs.getDocs(worldCol(fs, db, lv))).then(s => s.docs))));
+      for (let i = 0; i < docs.length; i += 400) {
         const batch = fs.writeBatch(db);
-        snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+        docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
         await withTimeout(batch.commit());
       }
       boardCache.clear();
@@ -3290,25 +3304,35 @@ const FirebaseBoard = {
         correct: entry.correct, total: entry.total, extra_listens: entry.extra || 0, time_sec: entry.timeSec,
         created_at: fs.serverTimestamp(),
       };
-      if (entry.classCode) data.class_code = entry.classCode;     // left out for students not in a class
-      if (entry.classCodes && entry.classCodes.length > 1) data.class_codes = entry.classCodes.slice(0, 3);   // only for students in 2+ classes
       if (iconOf(getProfile())) data.icon = iconOf(getProfile());
-      if (await devPost(entry.name, fb, () => this.signIn())) { data.dev = true; data.name = DEV_NAME; }
-      const ref = await withTimeout(fs.addDoc(fs.collection(db, 'rhythm_scores'), data));
+      let codes = [...new Set((entry.classCodes && entry.classCodes.length ? entry.classCodes : [entry.classCode]).filter(Boolean))].slice(0, 3), id, worldId = null;
+      if (await devPost(entry.name, fb, () => this.signIn())) {   // the developer's runs stay top level
+        data.dev = true; data.name = DEV_NAME; if (entry.classCode) data.class_code = entry.classCode;
+        id = (await withTimeout(fs.addDoc(fs.collection(db, 'rhythm_scores'), data))).id; codes = [];
+      } else {   // one batch: a copy in each class + the anonymous World copy
+        const b = fs.writeBatch(db), refs = codes.map(code => fs.doc(classCol(fs, db, code))), wref = fs.doc(worldCol(fs, db, data.level));
+        refs.forEach((ref, i) => b.set(ref, { ...data, class_code: codes[i] }));
+        const w = { nick: myNick(), level: `${data.correct}/${data.total} ${data.time_sec}`, score: data.score, created_at: data.created_at };
+        if (data.icon) w.icon = data.icon;
+        b.set(wref, w);
+        await withTimeout(b.commit());
+        worldId = wref.id; id = refs.length ? refs[0].id : wref.id;
+      }
       // put the new row into any cached board it belongs to, so it shows right away
-      const row = { id: ref.id, name: data.name, level: data.level, classCode: data.class_code || '', score: data.score, correct: data.correct, total: data.total, extra: data.extra_listens, timeSec: data.time_sec, date: new Date().toISOString(), email: '' };
-      lastPost = { id: ref.id, level: data.level, score: data.score, timeSec: data.time_sec, rank: {} };
-      for (const key of [boardKey(data.level, null), ...(data.class_codes || (data.class_code ? [data.class_code] : [])).map(c => boardKey(data.level, c))]) {
-        const hit = boardCache.get(key);
+      const row = { id, dev: !!data.dev, icon: data.icon || '', name: data.name, level: data.level, classCode: '', score: data.score, correct: data.correct, total: data.total, extra: data.extra_listens, timeSec: data.time_sec, date: new Date().toISOString(), email: '' };
+      lastPost = { id, worldId, level: data.level, score: data.score, timeSec: data.time_sec, rank: {} };
+      for (const [key, r] of [[boardKey(data.level, null), worldId && { ...row, id: worldId, world: true, name: myNick(), extra: 0 }], ...codes.map(c => [boardKey(data.level, c), { ...row, classCode: c }])]) {
+        const hit = r && boardCache.get(key);
         if (!hit) continue;
-        hit.rows.push(row); hit.rows.sort(rankSort);
+        hit.rows.push(r); hit.rows.sort(rankSort);
         if (!hit.rows.full && hit.rows.length > BOARD_N) hit.rows.pop();
       }
-      return ref.id;
+      return id;
     } catch (err) { throw fbError(err); }
   },
   async get(level, classCode, id) {
     try {
+      if (!classCode && id && lastPost && id === lastPost.id) id = lastPost.worldId;   // the World copy has its own id
       const rows = await this.top(level, classCode), res = summarize(rows, id || null, level);
       if (id && !res.rank && !rows.full) res.rank = await this.rankOf(level, classCode, id);
       return res;
@@ -3379,7 +3403,7 @@ const LocalBoard = {
 };
 
 const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // no 0/O or 1/I/L mix-ups
-const newClassCode = () => Array.from({ length: 5 }, () => CODE_CHARS[rand(CODE_CHARS.length)]).join('');
+const newClassCode = () => Array.from({ length: 6 }, () => CODE_CHARS[rand(CODE_CHARS.length)]).join('');
 const cleanCode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 const Board = firebaseOn ? FirebaseBoard : LocalBoard;
@@ -3636,7 +3660,7 @@ function renderBoard(res) {
     if (BS.ranks.world) parts.push(`<b>#${BS.ranks.world}</b> in the world`);
     note = `<p class="rank-note">You're ${parts.join(' · ')}! ${(BS.ranks.cls || BS.ranks.world) <= 10 ? '🎉' : 'Keep practicing to crack the top 10!'}</p>`;
   }
-  const rows = res.top.map((e, i) => `<tr class="${e.id === me ? 'me' : ''}"><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${iconHTML(e.icon)}</span>` : ''}${esc(e.name)}${e.dev ? ' <span class="devtag" title="Developer score">DEV</span>' : ''}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
+  const rows = res.top.map((e, i) => `<tr class="${e.id === me || (lastPost && e.id === lastPost.worldId) ? 'me' : ''}"><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${iconHTML(e.icon)}</span>` : ''}${esc(e.name)}${e.dev ? ' <span class="devtag" title="Developer score">DEV</span>' : ''}</td><td>${e.score}%</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td></tr>`).join('');
   const scopes = classesOf(p).map(c => ['class', c.name, c.code]).concat([['world', '🌎 World']]);   // one button per class, then World
   const scopeTabs = `<div class="seg board-scope" role="group" aria-label="Which leaderboard">${scopes.map(([k, label, code]) => `<button type="button" data-scope="${k}"${code ? ` data-code="${esc(code)}"` : ''} aria-pressed="${k === BS.scope && (!code || code === BS.code)}">${esc(label)}</button>`).join('')}</div> `;
   const tabs = `<div class="seg board-tabs" role="group" aria-label="Leaderboard level">${LEVELS.map(lv => `<button type="button" data-board="${lv}" aria-pressed="${lv === res.level}">${LEVEL_FUN[lv]}</button>`).join('')}</div>`;
@@ -4858,18 +4882,18 @@ function tdClasses() {
 
 // ----- Leaderboard scores -----
 async function tdScores() {
-  const options = TD.classes.map(c => [c.code, c.name]).concat(tdIsAdmin() ? [['__world', '🌎 World (every score)']] : []);
+  const options = TD.classes.map(c => [c.code, c.name]).concat(tdIsAdmin() ? [['__world', '🌎 World (game names only)']] : []);
   if (!options.length) { $('#tdBody').innerHTML = '<p class="muted">Make a class first. Its leaderboard scores show up here.</p>'; return; }
   if (!options.some(([k]) => k === TD.scope)) TD.scope = TD.code || options[0][0];
   const world = TD.scope === '__world';
   let list = [];
   try { list = await Board.scores(world ? null : TD.scope); } catch (err) { $('#tdErr').textContent = errMsg(err); }
   const label = options.find(([k]) => k === TD.scope)[1];
-  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${iconHTML(e.icon)}</span>` : ''}${esc(e.name)}</td>${world ? `<td class="muted">${esc(e.classCode || '—')}</td>` : ''}<td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${e.extra || 0}</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
-    <td style="text-align:right"><button class="btn btn-sm" type="button" data-del="${esc(e.id)}">Delete</button></td></tr>`).join('');
+  const rows = list.map((e, i) => `<tr><td>${i + 1}</td><td>${ICONS.includes(e.icon) ? `<span class="nm-ic">${iconHTML(e.icon)}</span>` : ''}${esc(e.name)}</td><td>${LEVEL_NAME[e.level || 'easy']}</td><td>${e.score}%</td><td>${e.extra || 0}</td><td>${fmtTime(e.timeSec)}</td><td>${fmtDate(e.date)}</td>
+    <td style="text-align:right"><button class="btn btn-sm" type="button" data-del="${esc(e.path || e.id)}">Delete</button></td></tr>`).join('');
   $('#tdBody').innerHTML = `
     <div class="td-sub"><label class="small muted" for="tdScope">Leaderboard</label><select id="tdScope">${options.map(([k, n]) => `<option value="${esc(k)}" ${k === TD.scope ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
-    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th>${world ? '<th>Class</th>' : ''}<th>Level</th><th>Score</th><th>Extra listens</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No posted challenge scores yet.</p>'}
+    ${list.length ? `<div style="overflow-x:auto"><table class="teacher-table"><thead><tr><th>#</th><th>Name</th><th>Level</th><th>Score</th><th>Extra listens</th><th>Time</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">No posted challenge scores yet.</p>'}
     <div class="modal-actions" id="tActions" style="justify-content:flex-start"><button class="btn btn-danger" type="button" id="resetBtn" ${list.length ? '' : 'disabled'}>Reset ${esc(label)}</button></div>`;
   $('#tdScope').onchange = () => { TD.scope = $('#tdScope').value; tdScores(); };
   $('#tdBody').querySelectorAll('[data-del]').forEach(b => {
