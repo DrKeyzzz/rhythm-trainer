@@ -3119,21 +3119,10 @@ async function devRowsFor(fs, db, col, extra = []) {
   try { return (await fs.getDocs(fs.query(fs.collection(db, col), fs.where('dev', '==', true), ...extra, fs.limit(10)))).docs; } catch (e) { return []; }
 }
 // PRIVACY (2026-10-26): a score with a name is saved inside its class (classes/<code>/rhythm_scores), so reading it needs the code.
-// The World board reads world_scores/rhythm_<level>/runs: only a random game name (like "Blue Trumpet 42"), the score, the icon
+// The World board reads world_scores/rhythm_<level>/runs: the student's first name and last initial, the score, the icon
 // and "correct/total seconds" in level. The developer's runs (Maestro) stay in the old top level collection.
-const NICK_KEY = 'mtg_nick_v1', NICK_RE = /^[A-Z][a-z]+ [A-Z][a-z]+ [0-9]{1,2}$/;
-const NICK_COLORS = ['Blue', 'Red', 'Green', 'Gold', 'Silver', 'Purple', 'Orange', 'Teal', 'Coral', 'Indigo', 'Amber', 'Jade', 'Ruby', 'Violet', 'Crimson', 'Azure'];
-const NICK_THINGS = ['Trumpet', 'Violin', 'Cello', 'Flute', 'Tuba', 'Oboe', 'Harp', 'Piano', 'Drum', 'Banjo', 'Sax', 'Clarinet', 'Bassoon', 'Viola', 'Guitar', 'Marimba', 'Ukulele', 'Trombone', 'Piccolo', 'Horn'];
-let NICK = '';
-// This device's World name, made once and kept (shared by every game on the site).
-function myNick() {
-  if (NICK) return NICK;
-  try { const n = localStorage.getItem(NICK_KEY); if (n && NICK_RE.test(n)) return NICK = n; } catch (e) {}
-  const pick = a => a[Math.floor(Math.random() * a.length)];
-  NICK = `${pick(NICK_COLORS)} ${pick(NICK_THINGS)} ${1 + Math.floor(Math.random() * 99)}`;
-  try { localStorage.setItem(NICK_KEY, NICK); } catch (e) {}
-  return NICK;
-}
+// The World board shows the student's own first name and last initial, like the class boards (David, 2026-10-29: no random game names).
+function myNick() { try { const p = JSON.parse(localStorage.getItem('rdt_profile_v1') || 'null'); return p && p.first && p.init ? `${p.first.charAt(0).toUpperCase()}${p.first.slice(1)} ${p.init}.` : ''; } catch (e) { return ''; } }
 const classCol = (fs, db, code) => fs.collection(db, 'classes', code, 'rhythm_scores');
 const worldCol = (fs, db, level) => fs.collection(db, 'world_scores', 'rhythm_' + level, 'runs');
 const worldRow = level => d => {
@@ -3167,7 +3156,7 @@ const FirebaseBoard = {
   teacherAuth: 'google',
   async all(level, classCode) {
     const { fs, db } = await fb();
-    if (!classCode) {   // World: the 100 best runs of each level (game names only)
+    if (!classCode) {   // World: the 100 best runs of each level 
       const lists = await Promise.all((level ? [level] : LEVELS).map(lv => withTimeout(fs.getDocs(fs.query(worldCol(fs, db, lv), fs.orderBy('score', 'desc'), fs.limit(100)))).then(s => s.docs.map(worldRow(lv)))));
       return [].concat(...lists);
     }
@@ -4882,7 +4871,7 @@ function tdClasses() {
 
 // ----- Leaderboard scores -----
 async function tdScores() {
-  const options = TD.classes.map(c => [c.code, c.name]).concat(tdIsAdmin() ? [['__world', '🌎 World (game names only)']] : []);
+  const options = TD.classes.map(c => [c.code, c.name]).concat(tdIsAdmin() ? [['__world', '🌎 World']] : []);
   if (!options.length) { $('#tdBody').innerHTML = '<p class="muted">Make a class first. Its leaderboard scores show up here.</p>'; return; }
   if (!options.some(([k]) => k === TD.scope)) TD.scope = TD.code || options[0][0];
   const world = TD.scope === '__world';
