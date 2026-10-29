@@ -4688,7 +4688,7 @@ async function tdProgress(keepOpen) {
   const body = $('#tdBody');
   if (!keepOpen) body.innerHTML = '<p class="muted">Loading progress…</p>';
   const keep = keepOpen, LOAD = (code, day) => Board.progress(code, day);
-  try { TD.docs = keep && TD.range === 'today' && TD.docsCode === TD.code ? TD.docs.filter(d => d.date !== dayKey()).concat((await LOAD(TD.code, dayKey())).filter(d => d.date === dayKey())) : await LOAD(TD.code); TD.docsCode = TD.code; $('#tdErr').textContent = ''; }
+  try { /* one day reads only that day; a refresh or sort re-reads only today's docs */ const rk = TD.code + '|' + TD.range + '|' + TD.date, day = {today: dayKey(), yesterday: daysAgo(1), week: ''}[TD.range] ?? TD.date; TD.docs = keep && TD.docsKey === rk ? (TD.range === 'today' || TD.range === 'week' ? TD.docs.filter(d => d.date !== dayKey()).concat((await LOAD(TD.code, dayKey())).filter(d => d.date === dayKey())) : TD.docs) : await LOAD(TD.code, day || undefined); TD.docsKey = rk; $('#tdErr').textContent = ''; }
   catch (err) { $('#tdErr').textContent = errMsg(err); TD.docs = []; }
   const studs = mergeDocs(rangeDocs());
   const k = TD.sort.key, dir = TD.sort.dir;
@@ -4755,6 +4755,7 @@ async function tdProgress(keepOpen) {
       <div class="form-error" id="dErr"></div><div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn btn-danger" type="button" id="dYes">Remove</button></div>`);
     $('#dYes').onclick = async () => { try { await Board.deleteStudentProgress(TD.code, s.sid); closeModal(); TD.open = null; tdProgress(); } catch (err) { $('#dErr').textContent = errMsg(err); } };
   };
+  clearInterval(TD.timer); // one timer only (each refresh used to add another)
   if (TD.range === 'today') TD.timer = setInterval(() => { if (!document.hidden && TD.tab === 'progress' && !els.teacherView.hidden) tdProgress(true); }, 120000);
 }
 
