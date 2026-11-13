@@ -4072,7 +4072,7 @@ function fitScreen(force) {
   const worst = worstSwapAreas(scn, staffW, bankW, cellH, 0);
   // after Check the answer bank and hint give way to the correct rhythm (one more staff) and a one or two line message;
   // size the page for whichever is taller, so pressing Check never shrinks the page
-  const checkedH = chrome - (els.hint.hidden ? 0 : els.hint.offsetHeight) + worst.staffH * 2 + 12 + 64;
+  const checkedH = chrome - (els.hint.hidden ? 0 : els.hint.offsetHeight) + worst.staffH * 2 + 12 + 96;
   const needed = Math.max(chrome + worst.staffH + worst.swap, checkedH) + 12;
   const contentW = Math.min(1120, vw) + 40;
 
@@ -4080,8 +4080,17 @@ function fitScreen(force) {
   if (vw >= 1500 && vh >= 850) auto = Math.min(vw / contentW, vh / needed, 2.2);  // big screen: fill it
   else auto = Math.min(1, vh / needed);                                            // laptop/Chromebook: shrink only if needed
   auto = Math.max(0.75, auto);
-  setZoom(Math.max(0.6, Math.min(2.5, Math.round(auto * zoomAdj * 100) / 100)));
+  const seen = checkedFit()[fitMemoKey(scn)];                 // a checked answer on this screen and level needed this much
+  setZoom(Math.max(0.6, Math.min(2.5, Math.round(auto * zoomAdj * 100) / 100, seen || 9)));
   noScroll(); updateZoomLabel();
+}
+// The size a checked answer needed, per window size and level, kept on this device (localStorage bs_fit_v1), so after the first
+// Check every later question starts at that size and pressing Check never shrinks the page.
+const fitMemoKey = scn => [innerWidth, innerHeight, zoomAdj, scn.level, scn.measures, scn.tsIds.join()].join('|');
+function checkedFit(){ try { return JSON.parse(localStorage.getItem('bs_fit_v1') || '{}') || {}; } catch (e) { return {}; } }
+function rememberCheckedFit(){
+  if (S.app === 'melody' || !S.checked || !S.q || innerWidth <= 700) return;
+  try { const m = checkedFit(), k = fitMemoKey(fitScenario()); if (!(m[k] <= zoomNow)) { m[k] = zoomNow; localStorage.setItem('bs_fit_v1', JSON.stringify(m)); } } catch (e) {}
 }
 // David's rule (2026-10-21): no game screen ever scrolls. After the size is picked, shrink a little more
 // if the page (footer and the checked answer included) is still taller than the window. Phones scroll.
@@ -4093,6 +4102,7 @@ function noScroll() {
     if (sh <= ih + 1 || zoomNow <= 0.6) break;
     setZoom(Math.max(0.6, Math.floor(zoomNow * Math.min(0.99, ih / sh) * 100) / 100));
   }
+  rememberCheckedFit();
 }
 
 // Height of the melody screen at 100%, sized for answering (piano showing); while the answer is
