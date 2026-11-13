@@ -350,6 +350,22 @@ h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-
 /* 2026-11-13: the correct rhythm sits right under the answer, slot for slot */
 .fix-row{border-top:1.5px dashed var(--paper-2,#d9dee8);margin-top:2px;padding-top:2px}
 .fix-label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ok);padding-left:4px}
+/* phones (2026-11-12): the header is one short row of icons; students don't need the teacher button up top, so it moves to the footer */
+.teacher-foot{display:none}
+@media (max-width:700px){
+  .top-actions .lbl{display:none}
+  .top-actions{flex-wrap:nowrap}
+  #teacherBtn{display:none}
+  .teacher-foot{display:inline}
+}
+/* laptops and Chromebooks: the checked view stays short, so the page never has to shrink when Check is pressed (2026-11-12) */
+@media (min-width:701px){
+  .fix-row{position:relative;margin-top:8px}
+  .fix-label{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--paper,#fff);padding:0 8px;line-height:14px;white-space:nowrap;z-index:1}
+  .feedback{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;column-gap:12px;margin-top:4px;padding-top:6px}
+  .feedback .fb-msg,.feedback .fb-fix{margin:0}
+  .feedback .fb-next{display:none}
+}
 .fix-label span{font-weight:600;text-transform:none;letter-spacing:0;color:#6b7385}
 .rhythm .slot.same{opacity:.35}
 .rhythm .slot.same .slot-bg{fill:none;stroke:none}
@@ -1039,7 +1055,7 @@ html[data-skin="day"] .mtg-hint { box-shadow: 0 8px 20px -8px rgba(20,40,80,.35)
       <label class="btn btn-sm instr-game" title="Change the instrument the melody notes play on">🎵 <select id="instr-game" aria-label="Instrument"></select></label>
       <button class="btn btn-sm" id="fxBtn" type="button" aria-pressed="false" aria-label="Sound effects and intro on">🔊</button>
       <div class="skin-menu">
-        <button class="btn btn-sm" id="skinBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="skinPop">🎨 Skins</button>
+        <button class="btn btn-sm" id="skinBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="skinPop" aria-label="Skins">🎨<span class="lbl"> Skins</span></button>
         <div class="skin-pop" id="skinPop" role="dialog" aria-label="Skins" hidden>
           <div class="skin-pick" id="skinPick" role="group" aria-label="Skins">
             <button type="button" class="btn skin-btn" data-skin="clean" aria-pressed="false"><span class="sw" aria-hidden="true"><i style="--c:#0f1420"></i><i style="--c:#212a3d"></i><i style="--c:#f0c04a"></i></span>Clean</button>
@@ -1050,7 +1066,7 @@ html[data-skin="day"] .mtg-hint { box-shadow: 0 8px 20px -8px rgba(20,40,80,.35)
         </div>
       </div>
       <button class="btn btn-challenge" id="challengeBtn" type="button">💎 The Heist</button>
-      <button class="btn btn-sm mw-btn" id="mwBtn" type="button">🕵️ Most Wanted</button>
+      <button class="btn btn-sm mw-btn" id="mwBtn" type="button" aria-label="Most Wanted">🕵️<span class="lbl"> Most Wanted</span></button>
       <button class="btn btn-sm teacher-top" id="teacherBtn" type="button">Teacher Dashboard</button>
     </div>
   </header>
@@ -1155,7 +1171,7 @@ html[data-skin="day"] .mtg-hint { box-shadow: 0 8px 20px -8px rgba(20,40,80,.35)
 
     <footer class="foot">
       <div id="statsLine"></div>
-      <div><span class="small" id="modeNote"></span> <button class="linkbtn who" id="whoBtn" type="button" title="Switch student or class"></button> <button class="btn btn-sm" id="reportBtn" type="button">📁 Mission Debrief</button></div>
+      <div><span class="small" id="modeNote"></span> <button class="linkbtn who" id="whoBtn" type="button" title="Switch student or class"></button> <button class="btn btn-sm" id="reportBtn" type="button">📁 Mission Debrief</button> <button class="linkbtn teacher-foot" id="teacherFoot" type="button">For teachers</button></div>
     </footer>
   </div>
 
@@ -3868,6 +3884,7 @@ $('#quitBtn').onclick = quitChallenge;
 $('#againBtn').onclick = () => (spyState().jail ? showJail() : chooseChallenge());
 $('#backBtn').onclick = () => heistExit();
 $('#teacherBtn').onclick = teacherLogin;
+$('#teacherFoot').onclick = teacherLogin;   // phones: the teacher button lives in the footer
 els.submitBtn.onclick = submitScore;
 $('#viewBoardBtn').onclick = viewBoardOnly;
 $('#welcomeForm').addEventListener('submit', submitWelcome);
@@ -4053,7 +4070,10 @@ function fitScreen(force) {
   if (!els.bankWrap.hidden) swapCache = appH - els.staffWrap.offsetHeight - els.bankWrap.offsetHeight;
   const chrome = swapCache != null ? swapCache : appH - els.staffWrap.offsetHeight;
   const worst = worstSwapAreas(scn, staffW, bankW, cellH, 0);
-  const needed = chrome + worst.staffH + worst.swap + 12;
+  // after Check the answer bank and hint give way to the correct rhythm (one more staff) and a one or two line message;
+  // size the page for whichever is taller, so pressing Check never shrinks the page
+  const checkedH = chrome - (els.hint.hidden ? 0 : els.hint.offsetHeight) + worst.staffH * 2 + 12 + 64;
+  const needed = Math.max(chrome + worst.staffH + worst.swap, checkedH) + 12;
   const contentW = Math.min(1120, vw) + 40;
 
   let auto;
@@ -5956,7 +5976,7 @@ updateWho();
 if (!getProfile() && !isGuest()) showWelcome(false);
 else refreshClassInfo();
 applyFocusFromUrl();
-/* MTG_TEST setup */ MTGTest.setup({ game: 'rhythm', hide: ["#teacherBtn", "#mwBtn", "#challengeBtn"], apply: () => { applyFocusFromUrl(); S.settings.mission = 'heist'; }, start: () => { startChallenge(S.settings.level); } }); /* /MTG_TEST setup */
+/* MTG_TEST setup */ MTGTest.setup({ game: 'rhythm', hide: ["#teacherBtn", "#teacherFoot", "#mwBtn", "#challengeBtn"], apply: () => { applyFocusFromUrl(); S.settings.mission = 'heist'; }, start: () => { startChallenge(S.settings.level); } }); /* /MTG_TEST setup */
 spyUI();
 if (S.settings.app === 'melody' && S.settings.mission !== 'heist') setApp('melody');
 playIntro();   // the intro sound: try right away; if the browser says no, the first click or key press plays it
