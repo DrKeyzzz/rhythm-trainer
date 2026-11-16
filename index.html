@@ -4905,6 +4905,10 @@ function tdAssign() {
   const cls = tdClass(), a = (cls && cls.assignment) || {};
   const tsOpts = t => ['random', ...(t === 'compound' ? COMPOUND_TS : t === 'simple' ? SIMPLE_TS : [])].map(v => `<option value="${v}" ${a.lock === v ? 'selected' : ''}>${v === 'random' ? 'Any' : v}</option>`).join('');
   $('#tdBody').innerHTML = `
+    <div style="border:2px solid #4cc9f0;border-radius:14px;padding:12px 14px;margin:0 0 12px"><b style="font-size:1.1em">ASSIGN PRACTICE (ALL GAMES)</b>
+      <p style="margin:4px 0 10px;opacity:.85">Assignments now live on one page for every game: pick the class, the game, the skills, the goal and the dates. Students see it on their home page.</p>
+      <a class="btn" href="https://drkeyzzz.github.io/teacher/?new=1" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">OPEN THE ASSIGN PAGE ↗</a></div>
+    <details><summary style="cursor:pointer;opacity:.8;font-weight:700;margin:6px 0">Old: this game's own banner</summary>
     <p class="muted" style="margin:6px 0">Set what <b>${esc(cls.name)}</b> should practice. Students see it as a banner with a <b>Use these settings</b> button, plus their progress toward the goal. It stays until you change or clear it.</p>
     <form class="td-form" id="assignForm">
       <label>Level<select id="aLevel">${LEVELS.map(l => `<option value="${l}" ${a.level === l ? 'selected' : ''}>${LEVEL_NAME[l]}</option>`).join('')}</select></label>
@@ -4915,7 +4919,8 @@ function tdAssign() {
       <label>Goal: minutes<input id="aMinutes" type="number" min="0" max="240" value="${a.minutes ?? ''}" placeholder="optional"></label>
       <label class="wide">Note to students<input id="aNote" maxlength="140" value="${esc(a.note || '')}" placeholder="optional, e.g. Focus on counting the off-beats"></label>
     </form>
-    <div class="modal-actions" style="justify-content:flex-start"><button class="btn btn-primary" type="button" id="aSave">Save assignment</button>${cls.assignment ? '<button class="btn" type="button" id="aClear">Clear assignment</button>' : ''}</div>`;
+    <div class="modal-actions" style="justify-content:flex-start"><button class="btn btn-primary" type="button" id="aSave">Save assignment</button>${cls.assignment ? '<button class="btn" type="button" id="aClear">Clear assignment</button>' : ''}</div>
+    </details>`;
   $('#aType').onchange = () => { $('#aLock').innerHTML = tsOpts($('#aType').value); };
   $('#aSave').onclick = async () => {
     const assignment = { level: $('#aLevel').value, type: $('#aType').value, lock: $('#aLock').value, measures: +$('#aMeasures').value,
