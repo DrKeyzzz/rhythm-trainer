@@ -4901,35 +4901,16 @@ function tdCsv(studs) {
 }
 
 // ----- Assignment -----
-function tdAssign() {
-  const cls = tdClass(), a = (cls && cls.assignment) || {};
-  const tsOpts = t => ['random', ...(t === 'compound' ? COMPOUND_TS : t === 'simple' ? SIMPLE_TS : [])].map(v => `<option value="${v}" ${a.lock === v ? 'selected' : ''}>${v === 'random' ? 'Any' : v}</option>`).join('');
+function tdAssign(){
+  // 2026-11-16: the old per-game banner form is gone; assignments are made on the one Assign page (hub /teacher/), opened with this game picked
+  const cls = tdClass(), old = cls && cls.assignment;
   $('#tdBody').innerHTML = `
-    <div style="border:2px solid #4cc9f0;border-radius:14px;padding:12px 14px;margin:0 0 12px"><b style="font-size:1.1em">ASSIGN PRACTICE (ALL GAMES)</b>
-      <p style="margin:4px 0 10px;opacity:.85">Assignments now live on one page for every game: pick the class, the game, the skills, the goal and the dates. Students see it on their home page.</p>
-      <a class="btn" href="https://drkeyzzz.github.io/teacher/?new=1" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">OPEN THE ASSIGN PAGE ↗</a></div>
-    <details><summary style="cursor:pointer;opacity:.8;font-weight:700;margin:6px 0">Old: this game's own banner</summary>
-    <p class="muted" style="margin:6px 0">Set what <b>${esc(cls.name)}</b> should practice. Students see it as a banner with a <b>Use these settings</b> button, plus their progress toward the goal. It stays until you change or clear it.</p>
-    <form class="td-form" id="assignForm">
-      <label>Level<select id="aLevel">${LEVELS.map(l => `<option value="${l}" ${a.level === l ? 'selected' : ''}>${LEVEL_NAME[l]}</option>`).join('')}</select></label>
-      <label>Meter<select id="aType"><option value="either" ${!a.type || a.type === 'either' ? 'selected' : ''}>Simple or Compound</option><option value="simple" ${a.type === 'simple' ? 'selected' : ''}>Simple</option><option value="compound" ${a.type === 'compound' ? 'selected' : ''}>Compound</option></select></label>
-      <label>Time signature<select id="aLock">${tsOpts(a.type)}</select></label>
-      <label>Length<select id="aMeasures"><option value="2" ${a.measures !== 4 ? 'selected' : ''}>2 measures</option><option value="4" ${a.measures === 4 ? 'selected' : ''}>4 measures</option></select></label>
-      <label>Goal: rhythms<input id="aGoal" type="number" min="0" max="200" value="${a.goal ?? 20}"></label>
-      <label>Goal: minutes<input id="aMinutes" type="number" min="0" max="240" value="${a.minutes ?? ''}" placeholder="optional"></label>
-      <label class="wide">Note to students<input id="aNote" maxlength="140" value="${esc(a.note || '')}" placeholder="optional, e.g. Focus on counting the off-beats"></label>
-    </form>
-    <div class="modal-actions" style="justify-content:flex-start"><button class="btn btn-primary" type="button" id="aSave">Save assignment</button>${cls.assignment ? '<button class="btn" type="button" id="aClear">Clear assignment</button>' : ''}</div>
-    </details>`;
-  $('#aType').onchange = () => { $('#aLock').innerHTML = tsOpts($('#aType').value); };
-  $('#aSave').onclick = async () => {
-    const assignment = { level: $('#aLevel').value, type: $('#aType').value, lock: $('#aLock').value, measures: +$('#aMeasures').value,
-      goal: Math.max(0, Math.min(200, +$('#aGoal').value || 0)), minutes: Math.max(0, Math.min(240, +$('#aMinutes').value || 0)), note: $('#aNote').value.trim().slice(0, 140), set_at: Date.now() };
-    try { await Board.saveAssignment(TD.code, assignment); cls.assignment = assignment; toast(`Assignment saved for ${cls.name}.`); tdAssign(); }
-    catch (err) { $('#tdErr').textContent = errMsg(err); }
-  };
+    <div style="border:2px solid #4cc9f0;border-radius:14px;padding:14px 16px;margin:0 0 12px"><b style="font-size:1.15em">ASSIGN THE BIG SCORE TO A CLASS</b>
+      <p style="margin:6px 0 12px;opacity:.85">Pick the class, the skills, the goal and the dates on the Assign page. The Big Score is already chosen for you. Students see the assignment on their home page.</p>
+      <a class="btn" href="/teacher/?new=1&amp;game=rhythm" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">OPEN THE ASSIGN PAGE ↗</a></div>
+    ${old ? `<p style="margin:6px 0;opacity:.8">${esc(cls.name)} still has an old The Big Score banner from before the Assign page. <button class="btn" type="button" id="aClear">Clear old banner</button></p>` : ''}`;
   const clr = $('#aClear');
-  if (clr) clr.onclick = async () => { try { await Board.saveAssignment(TD.code, null); cls.assignment = null; toast('Assignment cleared.'); tdAssign(); } catch (err) { $('#tdErr').textContent = errMsg(err); } };
+  if (clr) clr.onclick = async () => { try { await Board.saveAssignment(TD.code, null); cls.assignment = null; toast('Old banner cleared.'); tdAssign(); } catch (err) { $('#tdErr').textContent = errMsg(err); } };
 }
 
 // ----- Classes -----
